@@ -7,13 +7,22 @@ jobs:
   dump:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "action            = ${{ github.event.action }}"
-          echo "label.name        = '${{ github.event.label.name }}'"
-          echo "issue.state       = '${{ github.event.issue.state }}'"
-          echo "author_association= '${{ github.event.issue.author_association }}'"
-          echo "labels            = ${{ toJSON(github.event.issue.labels.*.name) }}"
-          echo "--- 条件の評価 ---"
-          echo "cond1 label==memo  = ${{ github.event.label.name == 'memo' }}"
-          echo "cond2 state==open  = ${{ github.event.issue.state == 'open' }}"
-          echo "cond3 association  = ${{ contains(fromJSON('[\"OWNER\", \"MEMBER\", \"COLLABORATOR\"]'), github.event.issue.author_association) }}"
+      - name: 条件を個別に評価
+        env:
+          ACTION: ${{ github.event.action }}
+          LABEL_NAME: ${{ github.event.label.name }}
+          ISSUE_STATE: ${{ github.event.issue.state }}
+          ASSOC: ${{ github.event.issue.author_association }}
+          COND1: ${{ github.event.label.name == 'memo' }}
+          COND2: ${{ github.event.issue.state == 'open' }}
+        run: |
+          echo "action             = $ACTION"
+          echo "label.name         = [$LABEL_NAME]"
+          echo "issue.state        = [$ISSUE_STATE]"
+          echo "author_association = [$ASSOC]"
+          echo "cond1 label==memo  = $COND1"
+          echo "cond2 state==open  = $COND2"
+      - name: イベントペイロード全体
+        env:
+          EVENT: ${{ toJSON(github.event) }}
+        run: printf '%s\n' "$EVENT" | head -c 2500
