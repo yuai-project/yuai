@@ -1,0 +1,31 @@
+name: PR title lint
+
+# PR タイトルを Conventional Commits 形式に固定する。
+#   OK: feat: 体験談を関係性で絞り込めるようにする
+#       fix(stories): 戻ったときスクロール位置が飛ぶのを直す
+#   NG: 修正 / update / いろいろ直した
+# Squash merge するとこのタイトルがそのままコミットメッセージになるので、
+# 履歴と自動リリースノートがそのまま読める状態になる。
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: タイトル検証
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "PR title: $TITLE"
+          if printf '%s' "$TITLE" | grep -Eq '^(feat|fix|docs|chore|refactor|style|test|perf|revert)(\([a-z0-9 _-]+\))?!?: .+'; then
+            echo "✅ OK"
+            exit 0
+          fi
+          echo "::error::PR タイトルは 'feat: 説明' の形式にしてください。使える種別: feat / fix / docs / chore / refactor / style / test / perf / revert（例: 'fix(stories): 戻ると先頭にスクロールする'）。現在: '$TITLE'"
+          exit 1

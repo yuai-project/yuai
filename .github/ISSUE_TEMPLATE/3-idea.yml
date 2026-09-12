@@ -1,0 +1,37 @@
+name: ✨ 新機能のアイデア
+description: まだ無いものを作りたい。思いつきの段階で OK。
+title: "[アイデア] "
+labels: ["新機能", "memo"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        投稿すると AI が「やりたいこと / なぜ / 完了条件」に整理した Issue を作り直します。
+  - type: textarea
+    id: idea
+    attributes:
+      label: どんなアイデア？
+      placeholder: |
+        体験談を「関係性（親 / パートナー / 友人）」で絞り込めるようにしたい
+        自分と近い立場の人の話だけ読みたいはず
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: なぜ / 誰のため？（任意）
+      placeholder: |
+        親の話と恋人の話では、取れる距離感が全然違う
+    validations:
+      required: false
+  - type: dropdown
+    id: demo
+    attributes:
+      label: デモに必要？
+      options:
+        - 必須（これが無いと発表が成立しない）
+        - あると強い
+        - 余裕があれば
+        - まだ分からない
+    validations:
+      required: true

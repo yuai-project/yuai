@@ -1,0 +1,161 @@
+name: Structure memo issue
+
+# 4つの Issue テンプレ（モヤモヤ / 改善要望 / 新機能 / その他）は、どれも自然言語で
+# 書きなぐるだけの作りになっている。open されたら Claude が構造化 Issue に変換し、
+# 元のメモはクローズする。移動中にスマホから1個 open するだけで運用が回る想定。
+#
+# 必要な準備（リポジトリ管理者のみ設定可能）:
+#   Settings > Secrets and variables > Actions に CLAUDE_CODE_OAUTH_TOKEN を登録する
+#   （ローカルで `claude setup-token` を実行して発行）
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  structure:
+    # 3つのガード:
+    #  1) ループ防止: memo ラベル付きのみ対象（生成する構造化 Issue には memo を付けない）
+    #  2) チーム限定: 外部の人の Issue で AI を乱用させない
+    #  3) シークレットは Actions secrets に置く
+    if: >-
+      contains(github.event.issue.labels.*.name, 'memo') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # gh CLI の実行を明示許可しないと Issue 作成・コメント・クローズが
+          # すべて権限拒否され、何もせず success で終わってしまう。
+          claude_args: |
+            --allowedTools "Bash(gh issue view:*),Bash(gh issue create:*),Bash(gh issue comment:*),Bash(gh issue close:*),Bash(gh issue list:*),Bash(gh label list:*)"
+          prompt: |
+            あなたはリポジトリ ${{ github.repository }}（よりそい / Yorisoi）のメンテナ補助です。
+            Issue #${{ github.event.issue.number }} はチームメンバーが自然言語で書いた未整形のメモです。
+            これを読み、構造化された Issue に作り直してください（gh CLI が使えます）。
+
+            ## 1. 種別を判定する
+
+            元 Issue に付いているラベルが書き手の申告です。ただし中身が明らかに別種別なら
+            中身を優先して構いません（その場合は本文末尾に理由を1行書く）。
+
+            | 種別 | ラベル | タイトル接頭辞 |
+            |---|---|---|
+            | 答えが出ていない・判断に迷っている | `モヤモヤ` | `[モヤモヤ] ` |
+            | 既にあるものを直したい（バグ含む） | `改善要望` | `[改善] ` |
+            | まだ無いものを作りたい | `新機能` | `[アイデア] ` |
+            | どれにも当てはまらない | `その他` | `[その他] ` |
+
+            メモに複数の話題が混ざっている場合は、**話題ごとに別々の Issue に分割**すること。
+
+            ## 2. `gh issue create` で構造化 Issue を作る
+
+            下記テンプレートをそのまま使い、見出しと項目を統一すること。
+            表・HTML エンティティは使わない。不明な項目は「不明」と書き、項目自体は省略しない。
+
+            ### モヤモヤ
+            ```
+            ## モヤモヤの中身
+            <1〜3行で言語化>
+
+            ## 何が引っかかっているか（論点）
+            - <論点1>
+            - <論点2>
+
+            ## 考えられる選択肢
+            - <案A>: <メリット / デメリット>
+            - <案B>: <メリット / デメリット>
+
+            ## 決めるために必要なこと
+            <誰に聞く / 何を試す / いつまでに決めるか。不明なら「不明」>
+
+            ## 原文メモ
+            > <原文の引用>
+            ```
+
+            ### 改善要望
+            ```
+            ## 何が起きているか
+            <現象を1〜3行>
+
+            ## 再現手順
+            1. <手順。バグでなければ「該当なし」>
+
+            ## どうなってほしいか
+            <期待する状態>
+
+            ## 影響範囲
+            <推定される対象ファイル・画面。不明なら「不明」>
+
+            ## 原文メモ
+            > <原文の引用>
+            ```
+
+            ### 新機能
+            ```
+            ## やりたいこと
+            <1〜3行>
+
+            ## なぜ（誰のどんな困りごと）
+            <背景>
+
+            ## 完了条件
+            - [ ] <条件>
+
+            ## 影響範囲
+            <推定される対象ファイル・画面。不明なら「不明」>
+
+            ## 原文メモ
+            > <原文の引用>
+            ```
+
+            ### その他
+            ```
+            ## 内容
+            <1〜3行>
+
+            ## やること / 決めること
+            - [ ] <アクション>
+
+            ## 期限・関係する人
+            <不明なら「不明」>
+
+            ## 原文メモ
+            > <原文の引用>
+            ```
+
+            ## 3. ラベルを付ける
+
+            - 上の表の種別ラベルを必ず1つ付ける。
+            - 領域が分かれば足す: 画面・UI なら `area: ui`、モック/データ層なら `area: data`、
+              ビルド・設定なら `area: infra`、CI なら `area: ci`、文書なら `area: docs`。
+            - 元メモに「デモに必須」「発表で使う」等があれば `デモ必須` を付ける。
+            - **存在しないラベルは作らない**（`gh label list` で確認し、無ければ付けない）。
+            - 生成した Issue に `memo` は絶対に付けない（無限ループ防止）。
+
+            ## 4. 元メモを閉じる
+
+            元の Issue #${{ github.event.issue.number }} に、作成した新 Issue へのリンクを
+            コメントし、`gh issue close ${{ github.event.issue.number }}` でクローズする。
+
+            ## 制約
+
+            - メモに書かれていない要件を勝手に発明しない。推測した箇所は「（推測）」と明記する。
+            - **モヤモヤは無理に結論を出さない。** 答えを出すことではなく、論点と選択肢を
+              見えるようにするのが目的。分からないことは「不明」のまま残す。
+            - このプロダクトは「相手を断定・診断しない / ラベリングしない」という思想を持つ。
+              Issue の文面でも当事者を「陰謀論者」等と呼ばないこと。
+            - コードの編集・コミット・PR 作成は**行わない**。Issue の作成・コメント・クローズのみ。
+
+      # 構造化に失敗したらメモを取りこぼさないよう Issue を作る
+      - name: 失敗したら Issue を作成
+        if: failure()
+        uses: ./.github/actions/report-failure

@@ -1,0 +1,22 @@
+name: 📄 その他
+description: 上の3つに当てはまらないもの。タスク・調査・共有・決めたいことなど。
+title: "[その他] "
+labels: ["その他", "memo"]
+body:
+  - type: textarea
+    id: body
+    attributes:
+      label: 内容
+      placeholder: |
+        例）本番の相談窓口情報、どこの情報を載せるか決めたい
+        例）Vercel のアカウント、チームのどれを使うか共有しておきたい
+        例）発表スライドの構成、誰が作る？
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: 補足（任意）
+      placeholder: 期限・関係する人・参考リンクなど
+    validations:
+      required: false

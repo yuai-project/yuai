@@ -1,0 +1,39 @@
+name: 🔧 改善要望（バグ報告を含む）
+description: 動かない・崩れる・使いにくい。既にあるものを直したいとき。
+title: "[改善] "
+labels: ["改善要望", "memo"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグ報告もこちらで OK です。投稿すると AI が整理した Issue を作り直します。
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きている / 何が気になる？
+      placeholder: |
+        体験談詳細から戻ると一覧の先頭にスクロールが飛ぶ
+        6件くらいなら我慢できるけど、増えたら確実にストレスになる
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: どうなってほしい？（任意）
+      placeholder: 戻ったときに読んでいた位置のままでいてほしい
+    validations:
+      required: false
+  - type: input
+    id: env
+    attributes:
+      label: 環境（バグの場合・任意）
+      placeholder: 例）iPhone 15 / Safari、Chrome DevTools のモバイル表示
+    validations:
+      required: false
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: スクリーンショット・画面録画（任意）
+      description: 画像はここにドラッグ＆ドロップで貼れます。UI の話なら貼ってもらえると一発で伝わります。
+    validations:
+      required: false

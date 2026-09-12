@@ -1,0 +1,38 @@
+name: Claude
+
+# Issue / PR のコメントで @claude とメンションすると Claude が対応する。
+#   例) PR のレビューコメントに「@claude この関数の命名を直して、lint も通して」
+#       Issue に「@claude この不具合の原因になりそうな箇所を調べて」
+#
+# 必要な準備（リポジトリ管理者のみ設定可能）:
+#   Settings > Secrets and variables > Actions に CLAUDE_CODE_OAUTH_TOKEN を登録する
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    # チームメンバーのメンションだけに反応させる（外部からの乱用防止）
+    if: >-
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association) &&
+      (contains(github.event.comment.body, '@claude') || contains(github.event.review.body, '@claude'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --allowedTools "Bash(npm ci),Bash(npm run lint),Bash(npm run build)"

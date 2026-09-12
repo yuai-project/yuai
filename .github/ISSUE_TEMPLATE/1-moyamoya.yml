@@ -1,0 +1,35 @@
+name: 🌀 モヤモヤ（解決できないこと）
+description: 答えが出ていない・言語化できていない違和感。整理はAIに任せて、まず吐き出す。
+title: "[モヤモヤ] "
+labels: ["モヤモヤ", "memo"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        きれいに書かなくて大丈夫です。話し言葉・箇条書きのままで OK。
+        投稿すると AI が整理した Issue を作り直し、このメモは自動でクローズされます。
+  - type: textarea
+    id: moyamoya
+    attributes:
+      label: 何にモヤモヤしている？
+      placeholder: |
+        AI相談の結果画面、情報量は多いんだけど「で、結局どうすればいいの」が残る気がする
+        7セクション全部を読ませるのは重いのでは
+        でもどれか削ると価値が薄くなりそうで決められない
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: 自分なりに考えたこと・試したこと（任意）
+      placeholder: |
+        セクションを折りたたむ案も考えたけど、隠すと読まれない気もする
+    validations:
+      required: false
+  - type: input
+    id: context
+    attributes:
+      label: いつ・どこで感じた？（任意）
+      placeholder: 例）実機で通しで触ったとき / デモリハ中 / ユーザーに見せたとき
+    validations:
+      required: false

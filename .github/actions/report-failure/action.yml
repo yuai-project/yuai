@@ -1,0 +1,32 @@
+name: report-failure
+description: ワークフローが失敗したことを Issue にして取りこぼさないようにする
+
+runs:
+  using: composite
+  steps:
+    - name: 失敗 Issue を作成
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        WF: ${{ github.workflow }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        SHA: ${{ github.sha }}
+        ACTOR: ${{ github.actor }}
+      run: |
+        title="🚨 ${WF} が失敗しました"
+        body=$(printf 'ワークフロー **%s** が失敗しました。\n\n- 実行ログ: %s\n- コミット: `%s`\n- 実行者: @%s\n\n直したらこの Issue をクローズしてください。\n' \
+          "$WF" "$RUN_URL" "$SHA" "$ACTOR")
+
+        gh label create "ci-failure" -R "$REPO" --color "B60205" \
+          --description "CI が壊れている" 2>/dev/null || true
+
+        # 同じワークフローの未解決 Issue があれば重複を作らずコメントを足す
+        existing=$(gh issue list -R "$REPO" --state open --label "ci-failure" \
+          --search "in:title \"$WF\"" --json number --jq '.[0].number' 2>/dev/null || true)
+
+        if [ -n "$existing" ]; then
+          gh issue comment "$existing" -R "$REPO" --body "$body"
+        else
+          gh issue create -R "$REPO" --title "$title" --body "$body" --label "ci-failure"
+        fi

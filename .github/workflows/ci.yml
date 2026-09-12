@@ -1,0 +1,38 @@
+name: CI
+
+# PR と main への push で lint / build を回す。落ちたらマージしない。
+# ハッカソンなので「重いテストで足を止めない」ことを優先し、まずは lint + build のみ。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  issues: write # main で壊れたとき Issue を立てるため
+
+concurrency:
+  # 同じブランチで連投したら古い実行はキャンセル（待ち時間短縮）
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+
+      # main が壊れた場合だけ Issue を作る。PR の失敗は PR 上で見えるので作らない。
+      - name: 失敗したら Issue を作成
+        if: failure() && github.event_name == 'push'
+        uses: ./.github/actions/report-failure

@@ -1,0 +1,41 @@
+# actions/labeler@v5 の設定。変更されたファイルのパスから PR にラベルを自動付与する。
+# https://github.com/actions/labeler
+
+"area: ui":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/components/**"
+          - "src/pages/**"
+          - "src/App.jsx"
+          - "src/index.css"
+          - "index.html"
+          - "public/**"
+          - "src/assets/**"
+
+"area: data":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/data/**"
+          - "src/config.js"
+
+"area: infra":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "package.json"
+          - "package-lock.json"
+          - "vite.config.js"
+          - ".oxlintrc.json"
+          - ".gitignore"
+          - ".nvmrc"
+
+"area: ci":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+          - "scripts/**"
+
+"area: docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
