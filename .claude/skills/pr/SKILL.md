@@ -1,6 +1,6 @@
 ---
 name: pr
-description: 変更をブランチ・コミット・push し、規約に沿った Pull Request を作る。「PR出して」「push して」「プルリク作って」と言われたとき、または main で作業してしまった変更を PR に移したいときに使う。
+description: 作業を終えた変更をコミット・push し、規約に沿った Pull Request を作ってレビューに出す。「PR出して」「push して」「プルリク作って」と言われたとき、または main で作業してしまった変更を PR に移したいときに使う。着手時のブランチ作成は start-issue を使う。
 ---
 
 # PR を作る
@@ -8,22 +8,40 @@ description: 変更をブランチ・コミット・push し、規約に沿っ�
 `main` は ruleset `Protect main` で保護されており、**誰も直 push できない**（admin も不可）。
 変更は必ずこの手順で PR にする。
 
-## 1. ブランチを用意する
+## 1. ブランチを確認する
 
-`main` 上で作業してしまっていた場合も、コミット前ならそのままブランチを切れば移せる。
+**このスキルは作業の終わりに呼ばれる。ブランチを切るのは `start-issue` スキルの仕事。**
+
+まず今いるブランチが Issue から生えているか確かめる:
 
 ```bash
-git switch -c <prefix>/<短い英語の要約>
+git branch --show-current
+gh issue develop --list <Issue番号>
 ```
 
-prefix は変更の性質に合わせる: `feat/` `fix/` `docs/` `chore/` `refactor/`
-例: `feat/story-filter` `fix/scroll-restore` `chore/add-skills`
+`<type>/<Issue番号>-<要約>`（例 `feat/12-story-filter`）になっていれば、
+`link-issue` ワークフローが PR 本文に `Closes #12` を自動で入れる。
+
+### まだブランチを切っていない場合
+
+`start-issue` スキルを先に使う。Issue から生やしたブランチでないと Issue に紐づかない。
+
+### `main` 上で作業してしまった場合（事故の救済）
+
+コミット前ならそのままブランチを切れば移せる。
+
+```bash
+git switch -c <type>/<Issue番号>-<短い英語の要約>
+```
 
 すでにコミットしてしまった場合は `git switch -c <branch>` してから `main` を戻す:
 
 ```bash
 git branch -f main origin/main
 ```
+
+この経路で切ったブランチは Issue の Development 欄に載らないが、
+ブランチ名に Issue 番号が入っていれば `Closes` の自動付与は効く。
 
 ## 2. 変更内容を確認する
 
@@ -81,14 +99,16 @@ CI の `pr-title-lint` が次の正規表現で検証する。**落ちるとマ�
 
 scope を付けるなら小文字英数字・ハイフン・アンダースコア・スペースのみ。
 
-main は squash マージのみ許可されているので、**このタイトルがそのまま履歴に残る**前提で書く。
+main は squash マージのみ許可で、squash コミットの件名は PR タイトルが使われる。
+**このタイトルがそのまま履歴に残る**前提で書く。
 
 ### 本文
 
 `.github/pull_request_template.md` の見出しを使う。埋める内容:
 
 - **何を変えた？** — 1〜3行。レビュアーが最初に読む
-- **なぜ** — 関連 Issue があれば `Closes #12` と書く（マージで自動クローズ）
+- **なぜ** — なぜその変更が要るのか。`Closes #12` は `link-issue` ワークフローが
+  ブランチ名から自動で埋めるので**手で書かなくてよい**。番号なしのブランチのときだけ手で書く
 - **動作確認** — 手順3で実際に通したものだけチェックを入れる
 - **スクリーンショット** — **UI を変えた PR は必須**。手順7を参照
 - **プロダクト思想チェック** — **文言を足した / 変えた PR のみ**。
@@ -117,8 +137,22 @@ before / after が並ぶと最もレビューしやすい。
 
 ## 8. 仕上げ
 
+[ボード](https://github.com/orgs/yuai-project/projects/1)のカードを **`In Review` に動かす**。
+`Todo → In Progress → Done` は自動で動くが、**`In Review` だけは組み込みの自動化が無い**ので手で動かす。
+
+```bash
+ITEM=$(gh project item-list 1 --owner yuai-project --format json \
+  | python3 -c "import json,sys,os;print(next(i['id'] for i in json.load(sys.stdin)['items'] if i.get('content',{}).get('number')==int(os.environ['N'])))" )
+gh project item-edit --id "$ITEM" \
+  --project-id PVT_kwDOE5FHFM4BjRck \
+  --field-id PVTSSF_lADOE5FHFM4BjRckzhiGaHw \
+  --single-select-option-id 37d39e1d    # In Review
+```
+
+（`N=<Issue番号>` を環境変数で渡す。ボード上でドラッグしても同じ）
+
 PR には **approve が1件必須**。作成したら PR の URL をユーザーに伝え、
 レビュー依頼が必要なことを一言添える。
 
-CI（`CI` / `PR title lint` / `PR labeler`）の結果が出るまで数十秒かかる。
+CI（`CI` / `PR title lint` / `PR labeler` / `Link issue`）の結果が出るまで数十秒かかる。
 失敗していたら直してから引き渡す。
