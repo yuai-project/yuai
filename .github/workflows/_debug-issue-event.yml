@@ -1,0 +1,19 @@
+name: DEBUG issue event
+# 一時的な調査用。原因が分かったら削除する。
+on:
+  issues:
+    types: [labeled]
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "action            = ${{ github.event.action }}"
+          echo "label.name        = '${{ github.event.label.name }}'"
+          echo "issue.state       = '${{ github.event.issue.state }}'"
+          echo "author_association= '${{ github.event.issue.author_association }}'"
+          echo "labels            = ${{ toJSON(github.event.issue.labels.*.name) }}"
+          echo "--- 条件の評価 ---"
+          echo "cond1 label==memo  = ${{ github.event.label.name == 'memo' }}"
+          echo "cond2 state==open  = ${{ github.event.issue.state == 'open' }}"
+          echo "cond3 association  = ${{ contains(fromJSON('[\"OWNER\", \"MEMBER\", \"COLLABORATOR\"]'), github.event.issue.author_association) }}"
