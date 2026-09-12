@@ -53,6 +53,11 @@ LABELS=(
   "area: ci|1D76DB|GitHub Actions・スクリプト"
   "area: docs|C2E0C6|README・CLAUDE.md 等"
 
+  # 領域（コード以外。企画・発表まわりのタスク用。labeler の自動付与対象外）
+  "area: 企画|F2D5A0|コンセプト・スコープ・課題整理の決めごと"
+  "area: デザイン|F9C9E0|ロゴ・配色・モックアップなどビジュアル"
+  "area: 発表|BFE5D0|プレゼン資料・デモ・当日の進行"
+
   # 規模（PR に自動付与）
   "size: XS|EDEDED|〜20行"
   "size: S|EDEDED|〜100行"
