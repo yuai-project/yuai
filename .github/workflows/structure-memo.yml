@@ -27,10 +27,15 @@ jobs:
     #  2) 再処理防止: すでにクローズされたメモは対象外
     #  3) チーム限定: 外部の人の Issue で AI を乱用させない
     #  4) シークレットは Actions secrets に置く
+    #
+    # チーム判定に author_association を使わないのは意図的:
+    # org メンバーシップを private にしていると webhook のペイロードでは MEMBER ではなく
+    # CONTRIBUTOR（まだコミットが無い人は NONE）が返るため、判定が当てにならない。
+    # メンバーが増えたらこのリストに login を追加すること。
     if: >-
       github.event.label.name == 'memo' &&
       github.event.issue.state == 'open' &&
-      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association)
+      contains(fromJSON('["Riochin", "arataka1313", "soichirokii", "KitaRuna"]'), github.event.issue.user.login)
     runs-on: ubuntu-latest
     permissions:
       issues: write

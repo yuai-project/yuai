@@ -17,9 +17,11 @@ on:
 
 jobs:
   claude:
-    # チームメンバーのメンションだけに反応させる（外部からの乱用防止）
+    # チームメンバーのメンションだけに反応させる（外部からの乱用防止）。
+    # author_association は org メンバーシップが private だと CONTRIBUTOR / NONE を返して
+    # 当てにならないので、login の許可リストで判定する。メンバーが増えたら追加すること。
     if: >-
-      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association) &&
+      contains(fromJSON('["Riochin", "arataka1313", "soichirokii", "KitaRuna"]'), github.event.comment.user.login || github.event.review.user.login) &&
       (contains(github.event.comment.body, '@claude') || contains(github.event.review.body, '@claude'))
     runs-on: ubuntu-latest
     permissions:
