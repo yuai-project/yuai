@@ -8,18 +8,28 @@ name: Structure memo issue
 #   Settings > Secrets and variables > Actions に CLAUDE_CODE_OAUTH_TOKEN を登録する
 #   （ローカルで `claude setup-token` を実行して発行）
 
+# トリガーが opened ではなく labeled なのは意図的:
+# イシューフォームの labels は Issue 作成の「数秒後」に別イベントとして付与されるため、
+# opened の時点ではペイロードの labels が空で、ラベル判定が必ず false になる。
 on:
   issues:
-    types: [opened]
+    types: [labeled]
+
+# 同じ Issue に対する多重起動を防ぐ（ラベルを付け直したとき等）
+concurrency:
+  group: structure-memo-${{ github.event.issue.number }}
+  cancel-in-progress: true
 
 jobs:
   structure:
-    # 3つのガード:
-    #  1) ループ防止: memo ラベル付きのみ対象（生成する構造化 Issue には memo を付けない）
-    #  2) チーム限定: 外部の人の Issue で AI を乱用させない
-    #  3) シークレットは Actions secrets に置く
+    # 4つのガード:
+    #  1) ループ防止: 付与されたラベルが memo のときだけ（生成する構造化 Issue には memo を付けない）
+    #  2) 再処理防止: すでにクローズされたメモは対象外
+    #  3) チーム限定: 外部の人の Issue で AI を乱用させない
+    #  4) シークレットは Actions secrets に置く
     if: >-
-      contains(github.event.issue.labels.*.name, 'memo') &&
+      github.event.label.name == 'memo' &&
+      github.event.issue.state == 'open' &&
       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
     permissions:
@@ -145,6 +155,12 @@ jobs:
 
             元の Issue #${{ github.event.issue.number }} に、作成した新 Issue へのリンクを
             コメントし、`gh issue close ${{ github.event.issue.number }}` でクローズする。
+
+            ## 0. 先に重複チェック
+
+            `gh issue view` で Issue #${{ github.event.issue.number }} を確認し、
+            **すでに構造化 Issue へのリンクがコメントされている場合は、何もせずに終了**すること
+            （ラベルの付け直しで二重起動した場合の重複作成を防ぐ）。
 
             ## 制約
 
