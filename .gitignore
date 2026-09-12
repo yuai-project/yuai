@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code の個人設定（許可したツールなどが入る。共有しない）
+# 共有する設定は .claude/settings.json / .claude/skills/ に置く
+.claude/settings.local.json
