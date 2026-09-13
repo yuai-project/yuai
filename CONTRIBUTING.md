@@ -67,7 +67,7 @@ gh pr create --fill --draft   # 作業中は Draft、レビューしてほしく
 
 ## 6. ボード
 
-タスクの現在地は [よりそい 開発ボード](https://github.com/orgs/yuai-project/projects/1) で見ます。
+タスクの現在地は [Yorido 開発ボード](https://github.com/orgs/yuai-project/projects/1) で見ます。
 
 | 列 | 意味 |
 |---|---|
