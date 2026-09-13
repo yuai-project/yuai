@@ -133,13 +133,28 @@ jobs:
                          areas: [.labels[].name | select(startswith("area: "))],
                          today: (.mergedAt >= $s)}]' > .report/prs.json
 
+          # Issue も PR と同じ「期間全体を取ってから当日を切り出す」形にする。
+          #
+          # 「誰が閉じたか」は gh issue list では取れない（closedBy というフィールドが無い）。
+          # 代わりに assignees を使い、閉じた Issue の担当者を完了者とみなす。
+          # start-issue スキルが着手時に必ず --add-assignee @me を実行する運用なので、
+          # アサインが実作業とほぼ一致する。Timeline API を Issue ごとに叩けば正確に
+          # 取れるが、リクエスト数が Issue 数ぶん増えるので割に合わない。
+          #
+          # 起票数だけを出すと「課題を挙げるだけ」が高く出てしまうため、必ず完了数と
+          # 並べる。両方並ぶと、出した課題を自分で片付けたかが見える。
           gh issue list --repo "$REPO" --state all --limit 300 \
-            --json number,title,url,createdAt,closedAt,author,labels \
-            | jq --arg s "$START" --arg e "$END" \
-                '{opened: [.[] | select(.createdAt >= $s and .createdAt < $e)
-                               | {number, title, url, who: .author.login}],
-                  closed: [.[] | select(.closedAt != null and .closedAt >= $s and .closedAt < $e)
-                               | {number, title, url}],
+            --json number,title,url,createdAt,closedAt,author,labels,assignees \
+            | jq --arg f "$FROM" --arg s "$START" --arg e "$END" \
+                '{created: [.[] | select(.createdAt >= $f and .createdAt < $e)
+                                | {number, title, url, who: .author.login,
+                                   areas: [.labels[].name | select(startswith("area: "))],
+                                   today: (.createdAt >= $s)}],
+                  closed: [.[] | select(.closedAt != null and .closedAt >= $f and .closedAt < $e)
+                               | {number, title, url,
+                                  who: [.assignees[].login],
+                                  areas: [.labels[].name | select(startswith("area: "))],
+                                  today: (.closedAt >= $s)}],
                   open_now: [.[] | select(.closedAt == null)
                                  | {number, title, url,
                                     labels: [.labels[].name]}]}' > .report/issues.json
@@ -338,6 +353,19 @@ jobs:
               then "::warning::メンバー表に無い発言者が \(length) 人います（ID 末尾: \(map(.[-4:]) | join(", "))）。DISCORD_MEMBERS に追加してください"
               else empty end' .report/messages.json
 
+          # メンバーの絵文字。キーは GitHub の login で、これは既に公開情報
+          # （structure-memo.yml の許可リストやコミット作者に出ている）。
+          # secret 側の書式を変えずに済むので、日報のマージ前後で表記が壊れない。
+          emoji_for() {
+            case "$1" in
+              Riochin)     echo "💜" ;;
+              KitaRuna)    echo "❤️" ;;
+              arataka1313) echo "💙" ;;
+              soichirokii) echo "💛" ;;
+              *)           echo "" ;;
+            esac
+          }
+
           echo '[]' > .report/stats.json
           for entry in "${MEMBERS[@]}"; do
             duid="${entry%%:*}"
@@ -347,11 +375,14 @@ jobs:
 
             jq -n \
               --arg disp "$disp" --arg d "$duid" --arg g "$gh_login" \
+              --arg emoji "$(emoji_for "$gh_login")" \
               --slurpfile msgs .report/messages.json \
               --slurpfile prs .report/prs.json \
               --slurpfile commits .report/commits.json \
+              --slurpfile issues .report/issues.json \
               '{
                 name: $disp,
+                emoji: $emoji,
                 discord: {
                   today: [$msgs[0][].messages[] | select(.uid == $d and .today)] | length,
                   total: [$msgs[0][].messages[] | select(.uid == $d)] | length
@@ -364,7 +395,18 @@ jobs:
                   today: [$commits[0][] | select(.who == $g and .today)] | length,
                   total: [$commits[0][] | select(.who == $g)] | length
                 },
-                areas: ([$prs[0][] | select(.who == $g) | .areas[]]
+                issues: {
+                  created_today: [$issues[0].created[] | select(.who == $g and .today)] | length,
+                  created_total: [$issues[0].created[] | select(.who == $g)] | length,
+                  closed_today: [$issues[0].closed[]
+                                 | select((.who | index($g)) and .today)] | length,
+                  closed_total: [$issues[0].closed[] | select(.who | index($g))] | length
+                },
+                # 領域は PR だけでなく Issue のラベルからも取る。企画・調査に寄っている
+                # 人は PR も commit も 0 のままで、領域が空欄になってしまうため。
+                areas: (([$prs[0][] | select(.who == $g) | .areas[]]
+                         + [$issues[0].created[] | select(.who == $g) | .areas[]]
+                         + [$issues[0].closed[] | select(.who | index($g)) | .areas[]])
                         | map(ltrimstr("area: ")) | unique)
               }' > .report/_m.json
 
@@ -385,12 +427,16 @@ jobs:
           claude_args: |
             --allowedTools "Read,Write,Bash(cat:*)"
           prompt: |
-            あなたはハッカソンチーム「よりそい / Yorisoi」の日報係です。
+            あなたはハッカソンチーム「ゆーあい」の日報係です。
+            チームが作っているプロダクトの名前は「Yorido」です（チーム名と混同しないこと）。
             下記を読み、チームの1日をまとめた日報を `.report/report.md` に書いてください。
 
             - `.report/stats.json`         メンバーごとの活動数（**すでに数えてある**）
             - `.report/prs.json`           マージされた PR（`today` が当日、無印を含め全件が期間通算）
-            - `.report/issues.json`        立った / 閉じた Issue と、いま open な Issue
+            - `.report/issues.json`        `created` 立った Issue / `closed` 閉じた Issue /
+                                           `open_now` いま open な Issue。
+                                           `created` と `closed` は `today` が当日、
+                                           無印を含め全件が期間通算
             - `.report/commits.json`       コミット
             - `.report/discord_today.json` 当日の Discord の会話（チャンネルごと）
 
@@ -402,37 +448,52 @@ jobs:
 
             ## 出力の形
 
+            Markdown で書きます。見出しの記号・絵文字・順番は下記のまま変えないでください。
+
             ```
-            【${{ steps.window.outputs.label }} よりそい】
+            # 【${{ steps.window.outputs.label }} 今日のゆーあい】
 
-            ■ 動いたもの
-            - <実装・マージされたもの。PR 番号と URL を添える>
+            ## ✅ 動いたもの
+            - <実装・マージされたもの>（<名前>, PR [#77](https://github.com/.../pull/77)）
 
-            ■ 決めたこと
-            - <会話の中で結論が出た判断>
+            ## 🧭 決めたこと
+            - <会話の中で結論が出た判断>（<名前>, PR [#7](...)）
 
-            ■ 詰まっていること
+            ## 🧱 詰まっていること
             - <手が止まっている障害>
 
-            ■ まだ決まっていないこと
-            - <判断待ちの論点>
+            ## 💭 まだ決まっていないこと
+            - <判断待ちの論点>（[#69](https://github.com/.../issues/69)）
 
-            ■ もらったフィードバック
+            ## 💯 もらったフィードバック
             - <外部からの声と、それにどう反応したか>
 
-            ■ メンバーごとの動き（括弧内は期間通算）
-            - <名前>  発言 N(N)  PR N(N)  commit N(N)  領域: <area>
+            ## 👥 メンバーごとの動き（括弧内は期間通算）
+            - <絵文字><名前>  発言 N(N)  PR N(N)  Issue 起票 N(N) / 完了 N(N)  領域: <area>
               └ <その人が何をして何を決めたかを1〜2行>
             ```
+
+            ## リンクの付け方
+
+            - PR / Issue は `[#番号](URL)` の形にする。**URL は必ず材料の `url` フィールドから
+              そのまま取ること。組み立てたり推測したりしない**（存在しないリンクは審査で最悪）
+            - 「まだ決まっていないこと」の各項目にも、元になった Issue のリンクを付ける。
+              審査員が自分で裏を取れる状態にするため
+            - 「メンバーごとの動き」の `└` の行にはリンクを入れない（行が長くなるため）
 
             ## 数値の扱い（重要）
 
             **メンバーごとの数値は `.report/stats.json` の値をそのまま書き写してください。**
             自分で数え直したり、概算に置き換えたりしないこと。審査で個人評価に使われる数字です。
 
+            - `emoji` → 名前の直前に付ける（例 `- 💜りおちん  発言 ...`）。空なら何も付けない
             - `discord.today` / `discord.total` → 発言 today(total)
             - `prs.today` / `prs.total` → PR today(total)
-            - `commits.today` / `commits.total` → commit today(total)
+            - `issues.created_today` / `issues.created_total` → Issue 起票 today(total)
+            - `issues.closed_today` / `issues.closed_total` → Issue 完了 today(total)
+              （その人が担当者だった Issue が閉じた数）
+            - `commits` は **日報には出さない**。commit 数は細かく刻めばいくらでも増やせて、
+              PR とも重複するため。材料としては残してあるので本文の裏取りには使ってよい
             - `areas` → 領域（接頭辞は除去済みなのでそのまま並べる。空なら「領域: -」）
 
             並び順は `stats.json` の順序のまま変えないこと。**発言数の多い順に並べ替えない。**
@@ -444,7 +505,7 @@ jobs:
             - 「詰まっていること」と「まだ決まっていないこと」は分ける。
               前者は**手が止まっている障害**、後者は**判断待ちの論点**。
               後者は `issues.json` の `open_now` のうち `モヤモヤ` や `status: 要相談` が
-              付いているものが有力な材料になる
+              付いているものが有力な材料になる（`url` を添えること）
             - **動いたもの・決めたことは書いた人の名前を添える**（全員が動いている証拠になる）。
               **「詰まっていること」は名前を出さず、事実だけ**を書く。
               メンバーごとの欄は名前を出す欄なので、そこでは通常どおり書いてよい
@@ -454,9 +515,12 @@ jobs:
             - 材料に無いことを推測で補わない。**該当が無い欄は「特になし」**と書いて欄は残す
             - **全体で1800文字以内。** Discord の1メッセージに収めて、運営サーバーへの
               転記を1回で済ませるため
+            - プロダクトに言及するときは必ず **Yorido**。`Yorisoi` や `よりそい` とは書かない
+            - **「ほそく」の類は書かない。** 補足は転送担当が人力で足す場所なので、
+              材料に無い文脈を機械が埋めようとしないこと
             - このプロダクトは「相手を断定・診断しない / ラベリングしない」思想を持つ。
               日報の文面でも当事者を「陰謀論者」等と呼ばない
-            - 見出しの記号と順番は上の形のまま変えない
+            - 見出しの記号・絵文字・順番は上の形のまま変えない
             - **`.report/report.md` を書く以外のことはしない。** コミット・PR 作成・Issue 操作は行わない
 
       - name: Discord に投稿する
@@ -477,22 +541,51 @@ jobs:
           import json, pathlib
           LIMIT = 1900
           text = pathlib.Path(".report/report.md").read_text()
-          chunks, cur = [], ""
+
+          # Markdown になったので、まず "## " の見出しでブロックに割り、ブロック単位で詰める。
+          # 行単位で機械的に割ると見出しと中身が別メッセージに分かれて描画が崩れる。
+          blocks, cur = [], ""
           for line in text.splitlines(keepends=True):
-              # 1行だけで上限を超える場合は行の途中で割る。割らないと webhook が 400 を返し、
-              # 日報がまるごと落ちる（行単位の分割だけでは防げない）
-              while len(line) > LIMIT:
+              if line.startswith("## ") and cur:
+                  blocks.append(cur)
+                  cur = ""
+              cur += line
+          if cur:
+              blocks.append(cur)
+
+          def split_hard(block):
+              # 1ブロックだけで上限を超える場合は行単位、それでも溢れるなら文字単位で割る
+              out, buf = [], ""
+              for line in block.splitlines(keepends=True):
+                  while len(line) > LIMIT:
+                      if buf:
+                          out.append(buf)
+                          buf = ""
+                      out.append(line[:LIMIT])
+                      line = line[LIMIT:]
+                  if len(buf) + len(line) > LIMIT and buf:
+                      out.append(buf)
+                      buf = ""
+                  buf += line
+              if buf:
+                  out.append(buf)
+              return out
+
+          chunks, cur = [], ""
+          for b in blocks:
+              if len(b) > LIMIT:
                   if cur:
                       chunks.append(cur)
                       cur = ""
-                  chunks.append(line[:LIMIT])
-                  line = line[LIMIT:]
-              if len(cur) + len(line) > LIMIT and cur:
+                  chunks.extend(split_hard(b))
+                  continue
+              if len(cur) + len(b) > LIMIT and cur:
                   chunks.append(cur)
                   cur = ""
-              cur += line
+              cur += b
           if cur.strip():
               chunks.append(cur)
+
           pathlib.Path(".report/chunks.json").write_text(json.dumps(chunks, ensure_ascii=False))
           PY
 
