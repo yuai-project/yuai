@@ -13,6 +13,16 @@
 
 ---
 
+## 開発に参加する
+
+いまのタスクと進捗は **[開発ボード](https://github.com/orgs/yuai-project/projects/1/views/3)** にまとまっています。
+何から手を付けるか迷ったら、まずボードの `Todo` を上から見てください。
+
+- 開発の進め方（Issue → ブランチ → PR）→ [CONTRIBUTING.md](CONTRIBUTING.md)
+- 気づいたこと・困っていることは [新規 Issue](../../issues/new/choose) から。話し言葉・箇条書きのままで大丈夫です
+
+---
+
 ## 起動方法
 
 WSL2 上の Linux ファイルシステムでの実行を前提にしています。
