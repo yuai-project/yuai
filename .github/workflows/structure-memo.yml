@@ -15,9 +15,18 @@ on:
   issues:
     types: [labeled]
 
-# 同じ Issue に対する多重起動を防ぐ（ラベルを付け直したとき等）
+# 同じ Issue に対する多重起動を防ぐ（ラベルを付け直したとき等）。
+#
+# group にラベル名まで含めるのは意図的:
+# イシューフォームは種別ラベルと memo の「2つ」を付けるため、1回の Issue 作成で
+# labeled イベントが2回飛び、run が2本立つ。group が Issue 番号だけだと2本が同じ
+# group に入り、cancel-in-progress で後発が先発を打ち消す。
+# ジョブの if ガードは concurrency の「後」に評価されるので、種別ラベル側の
+# （どのみち skip される）run が memo 側の本命 run を殺すことが起きる。
+# どちらが後になるかは運なので、メモがおよそ半分の確率で構造化されないまま残る。
+# ラベル名で group を分ければ、memo の run は memo の run としか競合しない。
 concurrency:
-  group: structure-memo-${{ github.event.issue.number }}
+  group: structure-memo-${{ github.event.issue.number }}-${{ github.event.label.name }}
   cancel-in-progress: true
 
 jobs:
