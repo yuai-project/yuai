@@ -1,0 +1,530 @@
+name: Daily report
+
+# 毎日 21:00 JST に、その日の GitHub 活動と自前 Discord サーバーの会話から日報を生成し、
+# 日報チャンネルに投稿する。転送担当が1行添えて、運営サーバーのチームチャンネルへ
+# 人手で転記する（#76）。審査員に働きぶりが見える状態を保つのが目的。
+#
+# 運営サーバーへ自動投稿しないのは意図的:
+#   - プログラム側のサーバーには webhook / bot を入れられない
+#   - ユーザーアカウントのトークンによる自動投稿（self-bot）は Discord 利用規約違反で、
+#     アカウント停止のリスクがある
+#   - 人が挟まることで、内輪の発言が審査チャンネルに直行する事故の安全装置にもなる
+#   - 転送時に担当が1行添える。審査員に効くのは自動生成部分よりその1行
+#
+# 必要な準備（リポジトリ管理者のみ設定可能。#75 で実施済み）:
+#   DISCORD_BOT_TOKEN           自前サーバーの読み取り用。Message Content Intent が必要
+#   DISCORD_REPORT_WEBHOOK_URL  日報の投稿先チャンネルの webhook
+#   DISCORD_DUTY_USER_ID        転送担当のメンション先。public リポジトリなので secret に置く
+#   CLAUDE_CODE_OAUTH_TOKEN     日報の文章生成
+
+on:
+  schedule:
+    # cron は UTC。12:00 UTC = 21:00 JST。
+    # Actions の schedule は混雑時に10〜60分遅れる。転送は人がやるので実害はないが、
+    # 集計の窓は実行時刻ではなく固定境界で切ること（「集計の窓を決める」ステップ参照）。
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '集計の窓の取り方'
+        type: choice
+        default: auto
+        options:
+          # cron と同じ「直近の確定した窓」。同じ日を何度回しても同じ結果になるので、
+          # 失敗した日の作り直しはこちら
+          - auto
+          # 実行時刻から遡って24時間。いま書いた発言がそのまま入るので、動作確認はこちら
+          - last24h
+      date:
+        description: '特定の日を作り直す (YYYY-MM-DD)。指定すると mode より優先'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Discord に投稿せず、生成結果をジョブサマリーに出すだけ'
+        type: boolean
+        default: false
+
+# schedule と手動実行が重なっても先行 run を殺さない。
+# cancel-in-progress: true にすると #65 と同じ事故（後から来た run が先行 run を消す）になる。
+concurrency:
+  group: daily-report
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  id-token: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    env:
+      # 累積集計の起点。ハッカソンは2ヶ月かけて個人評価も行われるため、
+      # その日の数字だけでなく通算も出す（単日は「会議した日に跳ねる」ブレが大きい）。
+      # 累積は毎回ここから数え直す。状態を持たないので、1日落ちても翌日に自己修復する。
+      PROGRAM_START: '2026-09-12'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 集計の窓を決める
+        id: window
+        env:
+          MODE: ${{ inputs.mode }}
+          DATE_IN: ${{ inputs.date }}
+        run: |
+          set -euo pipefail
+          # 既定は固定境界: 前日 21:00 JST 〜 当日 21:00 JST（= 12:00 UTC 区切り）。
+          # 実行時刻を起点にすると cron の遅れの分だけ窓が毎日ずれ、取りこぼしと
+          # 二重計上が出る。「21時を過ぎたら翌日分」がそのまま境界の定義になっている。
+          #
+          # schedule から起動したときは inputs が空文字で来るので auto に倒す。
+          MODE="${MODE:-auto}"
+          NOW=$(date -u +%s)
+
+          if [ -n "${DATE_IN:-}" ]; then
+            # 特定の日を作り直す。その日の 21:00 JST が窓の終わり
+            if ! END=$(date -u -d "${DATE_IN}T12:00:00Z" +%s 2>/dev/null); then
+              echo "::error::date は YYYY-MM-DD で指定してください（受け取った値: $DATE_IN）"
+              exit 1
+            fi
+          elif [ "$MODE" = "last24h" ]; then
+            # 動作確認用。いま書いた発言がそのまま窓に入る
+            END=$NOW
+          else
+            BOUNDARY=$(date -u -d "$(date -u +%F) 12:00:00" +%s)
+            if [ "$NOW" -lt "$BOUNDARY" ]; then
+              # 午前中に回したケース。直近の確定した窓を使う
+              END=$((BOUNDARY - 86400))
+            else
+              END=$BOUNDARY
+            fi
+          fi
+          START=$((END - 86400))
+
+          {
+            echo "start_iso=$(date -u -d "@$START" +%Y-%m-%dT%H:%M:%SZ)"
+            echo "end_iso=$(date -u -d "@$END" +%Y-%m-%dT%H:%M:%SZ)"
+            echo "start_ms=$((START * 1000))"
+            echo "end_ms=$((END * 1000))"
+            echo "label=$(TZ=Asia/Tokyo date -d "@$END" +%-m/%-d)"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "::notice::集計の窓 $(date -u -d "@$START" +%F\ %T)Z 〜 $(date -u -d "@$END" +%F\ %T)Z"
+
+      - name: GitHub の活動を集める
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          START: ${{ steps.window.outputs.start_iso }}
+          END: ${{ steps.window.outputs.end_iso }}
+        run: |
+          set -euo pipefail
+          mkdir -p .report
+          FROM="${PROGRAM_START}T00:00:00Z"
+
+          # ISO8601 の UTC 文字列同士なので、辞書順比較がそのまま時刻比較になる。
+          # 期間全体を取ってから当日を切り出す。累積と当日で2回 API を叩かないため。
+          gh pr list --repo "$REPO" --state merged --limit 300 \
+            --json number,title,url,mergedAt,author,labels \
+            | jq --arg f "$FROM" --arg s "$START" --arg e "$END" \
+                '[.[] | select(.mergedAt >= $f and .mergedAt < $e)
+                      | {number, title, url, who: .author.login, at: .mergedAt,
+                         areas: [.labels[].name | select(startswith("area: "))],
+                         today: (.mergedAt >= $s)}]' > .report/prs.json
+
+          gh issue list --repo "$REPO" --state all --limit 300 \
+            --json number,title,url,createdAt,closedAt,author,labels \
+            | jq --arg s "$START" --arg e "$END" \
+                '{opened: [.[] | select(.createdAt >= $s and .createdAt < $e)
+                               | {number, title, url, who: .author.login}],
+                  closed: [.[] | select(.closedAt != null and .closedAt >= $s and .closedAt < $e)
+                               | {number, title, url}],
+                  open_now: [.[] | select(.closedAt == null)
+                                 | {number, title, url,
+                                    labels: [.labels[].name]}]}' > .report/issues.json
+
+          gh api --paginate "repos/$REPO/commits?since=$FROM&until=$END&per_page=100" \
+            --jq '.[] | {sha: .sha[0:7], message: (.commit.message | split("\n")[0]),
+                         who: (.author.login // .commit.author.name), at: .commit.author.date}' \
+            | jq -s --arg s "$START" '[.[] | . + {today: (.at >= $s)}]' > .report/commits.json
+
+          echo "::notice::PR 当日 $(jq '[.[]|select(.today)]|length' .report/prs.json) / 通算 $(jq length .report/prs.json)"
+
+      - name: Discord の会話を集める
+        env:
+          BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          START_MS: ${{ steps.window.outputs.start_ms }}
+          END_MS: ${{ steps.window.outputs.end_ms }}
+        run: |
+          set -euo pipefail
+
+          # 読む対象チャンネルは bot 自身に引かせる。IDを手で集めて貼ると、
+          # 拾い間違えても「そのチャンネルが0件」になるだけでエラーが出ず気づけない。
+          # チャンネルが増えても追従するので、貼り直しの手間もなくなる。
+          #
+          # 「どのチャンネルを読んだか」は下の EXCLUDE と実行ログで追える。
+          # bot に閲覧権限が無いチャンネルはそもそも返ってこないので、
+          # 読ませたくないチャンネルは Discord 側で権限を外すのが一番確実。
+          EXCLUDE=(
+            # リンクや資料が貼られるだけで、日報の材料にならないチャンネル
+            "🔗-便利リンクたち"
+            "📚-参考資料"
+          )
+
+          GUILD_ID=$(curl -sS -H "Authorization: Bot $BOT_TOKEN" \
+            "https://discord.com/api/v10/users/@me/guilds" | jq -r '.[0].id // empty')
+          if [ -z "$GUILD_ID" ]; then
+            echo "::error::bot がどのサーバーにも参加していません（招待を確認してください）"
+            exit 1
+          fi
+
+          # type 0 = テキストチャンネル。position 順に並べるとサイドバーの並びと揃う
+          curl -sS -H "Authorization: Bot $BOT_TOKEN" \
+            "https://discord.com/api/v10/guilds/$GUILD_ID/channels" \
+            | jq -r 'sort_by(.position)[] | select(.type == 0) | "\(.id):\(.name)"' \
+            > .report/_channels.txt
+
+          CHANNELS=()
+          while IFS= read -r line; do
+            cname="${line#*:}"
+            skip=""
+            for ex in "${EXCLUDE[@]}"; do
+              [ "$cname" = "$ex" ] && skip=1 && break
+            done
+            [ -n "$skip" ] && { echo "::notice::除外: $cname"; continue; }
+            CHANNELS+=("$line")
+          done < .report/_channels.txt
+
+          if [ ${#CHANNELS[@]} -eq 0 ]; then
+            echo "::error::読めるテキストチャンネルがありません"
+            exit 1
+          fi
+          echo "::notice::読む対象 ${#CHANNELS[@]} チャンネル: $(printf '%s ' "${CHANNELS[@]#*:}")"
+
+          # Discord のスノーフレークは上位42bitがミリ秒（Discord epoch = 1420070400000）。
+          # ?after= に変換して渡すと、それより古いメッセージを取りに行かずに済む。
+          #
+          # 当日ではなく PROGRAM_START から取り直しているのは、発言数の累積を出すため。
+          # 通算を別途どこかに保存する手もあるが、毎回数え直す方が状態を持たず、
+          # 1日落ちても翌日に自己修復する。期間が延びて遅くなったら保存方式に切り替える。
+          PROGRAM_START_MS=$(date -u -d "${PROGRAM_START}T00:00:00Z" +%s000)
+          AFTER=$(( (PROGRAM_START_MS - 1420070400000) << 22 ))
+
+          echo '[]' > .report/messages.json
+
+          for entry in "${CHANNELS[@]}"; do
+            id="${entry%%:*}"
+            name="${entry#*:}"
+            cursor="$AFTER"
+            echo '[]' > .report/_ch.json
+
+            # 1回のリクエストで最大100件。100件返ってきたら続きがある可能性があるので、
+            # 見えた中で最大の ID を次のカーソルにして取り直す。
+            while : ; do
+              page=$(curl -sS -H "Authorization: Bot $BOT_TOKEN" \
+                "https://discord.com/api/v10/channels/$id/messages?limit=100&after=$cursor")
+
+              if [ "$(jq -r 'type' <<<"$page")" != "array" ]; then
+                # 1チャンネルの失敗で日報全体を落とさない。権限漏れは警告として残す
+                echo "::warning::$name を読めませんでした: $(jq -rc '.message // .' <<<"$page")"
+                break
+              fi
+
+              got=$(jq 'length' <<<"$page")
+              [ "$got" -eq 0 ] && break
+
+              # bot と webhook の投稿を除く。これを入れないと、前日の日報や
+              # GitHub webhook の通知を翌日また読み込む自己参照ループになる。
+              jq --argjson s "$START_MS" --argjson e "$END_MS" '
+                # Discord は "....123000+00:00" 形式を返す。jq の fromdateiso8601 は
+                # "%Y-%m-%dT%H:%M:%SZ" しか受け付けず、小数秒とオフセットで必ず落ちる
+                def ms: sub("\\.[0-9]+"; "") | sub("\\+00:00"; "Z") | fromdateiso8601 * 1000;
+                [ .[]
+                  | select(.webhook_id == null)
+                  | select((.author.bot // false) | not)
+                  | select((.content // "") != "")
+                  | select((.timestamp | ms) < $e)
+                  | {uid: .author.id,
+                     who: (.author.global_name // .author.username),
+                     at: .timestamp,
+                     text: .content,
+                     today: ((.timestamp | ms) >= $s)}
+                ]' <<<"$page" > .report/_page.json
+
+              jq -s 'add' .report/_ch.json .report/_page.json > .report/_tmp.json
+              mv .report/_tmp.json .report/_ch.json
+
+              [ "$got" -lt 100 ] && break
+              cursor=$(jq -r '[.[].id] | max' <<<"$page")
+              sleep 0.3   # レート制限に当たらないよう間隔を空ける
+            done
+
+            jq -s --arg n "$name" \
+              '.[0] + [{channel: $n, messages: (.[1] | sort_by(.at))}]' \
+              .report/messages.json .report/_ch.json > .report/_tmp.json
+            mv .report/_tmp.json .report/messages.json
+          done
+
+          rm -f .report/_ch.json .report/_page.json
+
+          # モデルに渡すのは当日分だけ。累積まで渡すとトークンを食うし、
+          # 「今日の話」と「先週の話」が混ざって要約が濁る。
+          jq '[.[] | {channel, messages: [.messages[] | select(.today) | del(.today, .uid)]}
+                   | select(.messages | length > 0)]' \
+            .report/messages.json > .report/discord_today.json
+
+          echo "::notice::Discord 当日 $(jq '[.[].messages|length]|add // 0' .report/discord_today.json) 件 / 通算 $(jq '[.[].messages|length]|add // 0' .report/messages.json) 件"
+
+      - name: 人ごとの活動を数える
+        env:
+          BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          MEMBERS_RAW: ${{ secrets.DISCORD_MEMBERS }}
+        run: |
+          set -euo pipefail
+
+          # 数値は jq で決定的に数える。モデルに数えさせない。
+          # 審査で個人評価に使われる数字なので、生成のブレで数が変わるのは許容できない。
+          #
+          # メンバー表: "Discord の数値 User ID:GitHub の login:日報での表記"
+          # 表示名ではなく数値 ID で突き合わせる。表示名は本人がいつでも変えられて、
+          # 変わった日からその人の発言が静かに0件になるため。
+          # GitHub の login は大文字小文字まで API の返り値と一致させること。
+          # メンバー表は secret DISCORD_MEMBERS から読む。1行1人で
+          #   "Discord の数値 User ID:GitHub の login:日報での表記"
+          # の形。並びはこの順がそのまま日報の並びになる（名前順で固定）。
+          #
+          # ワークフローに直書きしないのは、この表が Discord と GitHub の身元の
+          # 対応そのものだから。public リポジトリなので、本人以外3名の識別子を
+          # 公開の場に置かないため secret に寄せた（転送担当の ID と同じ扱い / #76）。
+          # 複数行 secret は GitHub が行ごとにマスクするので、ログにも出ない。
+          #
+          # 突き合わせに表示名ではなく数値 ID を使うのは、表示名は本人がいつでも
+          # 変えられ、変わった日からその人の発言が静かに0件になるため。
+          MEMBERS=()
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            MEMBERS+=("$line")
+          done <<< "$MEMBERS_RAW"
+
+          if [ ${#MEMBERS[@]} -eq 0 ]; then
+            echo "::error::secret DISCORD_MEMBERS が未設定か空です"
+            exit 1
+          fi
+
+          # 表の ID が実在するか毎回確かめる。ID を取り違えても「その人が0件」に
+          # なるだけでエラーが出ないため、個人評価の材料が静かに欠ける。ここで落とす。
+          for entry in "${MEMBERS[@]}"; do
+            duid="${entry%%:*}"
+            uname=$(curl -sS -H "Authorization: Bot $BOT_TOKEN" \
+              "https://discord.com/api/v10/users/$duid" | jq -r '.username // empty')
+            if [ -z "$uname" ]; then
+              # public リポジトリの Actions ログは誰でも読めるので、
+              # 失敗時も ID や Discord のユーザー名そのものは出さない。
+              # 末尾4桁だけ出せば、表を持っている人には特定できる
+              echo "::error::メンバー表の Discord User ID が解決できません（ID 末尾 ...${duid:(-4)}）"
+              exit 1
+            fi
+          done
+          echo "::notice::メンバー ${#MEMBERS[@]} 名を確認しました"
+
+          # 表に無い人の発言を検出する。メンバー追加の入れ忘れで、その人の活動が
+          # 日報から丸ごと落ちるのを防ぐ（落とさず警告に留めて日報自体は出す）。
+          KNOWN=$(printf '%s\n' "${MEMBERS[@]}" | cut -d: -f1 | jq -R . | jq -s .)
+          jq --argjson known "$KNOWN" -r '
+            [.[].messages[].uid] | unique
+            | map(select(. as $u | $known | index($u) | not))
+            | if length > 0
+              then "::warning::メンバー表に無い発言者が \(length) 人います（ID 末尾: \(map(.[-4:]) | join(", "))）。DISCORD_MEMBERS に追加してください"
+              else empty end' .report/messages.json
+
+          echo '[]' > .report/stats.json
+          for entry in "${MEMBERS[@]}"; do
+            duid="${entry%%:*}"
+            rest="${entry#*:}"
+            gh_login="${rest%%:*}"
+            disp="${rest#*:}"
+
+            jq -n \
+              --arg disp "$disp" --arg d "$duid" --arg g "$gh_login" \
+              --slurpfile msgs .report/messages.json \
+              --slurpfile prs .report/prs.json \
+              --slurpfile commits .report/commits.json \
+              '{
+                name: $disp,
+                discord: {
+                  today: [$msgs[0][].messages[] | select(.uid == $d and .today)] | length,
+                  total: [$msgs[0][].messages[] | select(.uid == $d)] | length
+                },
+                prs: {
+                  today: [$prs[0][] | select(.who == $g and .today)] | length,
+                  total: [$prs[0][] | select(.who == $g)] | length
+                },
+                commits: {
+                  today: [$commits[0][] | select(.who == $g and .today)] | length,
+                  total: [$commits[0][] | select(.who == $g)] | length
+                },
+                areas: ([$prs[0][] | select(.who == $g) | .areas[]]
+                        | map(ltrimstr("area: ")) | unique)
+              }' > .report/_m.json
+
+            jq -s '.[0] + [.[1]]' .report/stats.json .report/_m.json > .report/_tmp.json
+            mv .report/_tmp.json .report/stats.json
+          done
+          rm -f .report/_m.json
+
+          # 並びはメンバー表の順（＝名前順で固定）のまま。発言数で並べ替えない。
+          # 毎日同じ並びの方が推移を追いやすく、順位付けによる「数を作る」動きも生まない。
+          cat .report/stats.json
+
+      - name: 日報の文章を生成する
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # ファイルの読み書きを明示的に許可しないと、何もせず success で終わる
+          claude_args: |
+            --allowedTools "Read,Write,Bash(cat:*)"
+          prompt: |
+            あなたはハッカソンチーム「よりそい / Yorisoi」の日報係です。
+            下記を読み、チームの1日をまとめた日報を `.report/report.md` に書いてください。
+
+            - `.report/stats.json`         メンバーごとの活動数（**すでに数えてある**）
+            - `.report/prs.json`           マージされた PR（`today` が当日、無印を含め全件が期間通算）
+            - `.report/issues.json`        立った / 閉じた Issue と、いま open な Issue
+            - `.report/commits.json`       コミット
+            - `.report/discord_today.json` 当日の Discord の会話（チャンネルごと）
+
+            ## 読み手
+
+            ハッカソンの審査員です。チームの外の人で、コードは読まず、Discord も見られません。
+            **手を動かした量より、何を決めて何が動くようになったかが伝わること**を優先してください。
+            このハッカソンは2ヶ月かけて個人評価も行われるため、誰が何をしたかも書きます。
+
+            ## 出力の形
+
+            ```
+            【${{ steps.window.outputs.label }} よりそい】
+
+            ■ 動いたもの
+            - <実装・マージされたもの。PR 番号と URL を添える>
+
+            ■ 決めたこと
+            - <会話の中で結論が出た判断>
+
+            ■ 詰まっていること
+            - <手が止まっている障害>
+
+            ■ まだ決まっていないこと
+            - <判断待ちの論点>
+
+            ■ もらったフィードバック
+            - <外部からの声と、それにどう反応したか>
+
+            ■ メンバーごとの動き（括弧内は期間通算）
+            - <名前>  発言 N(N)  PR N(N)  commit N(N)  領域: <area>
+              └ <その人が何をして何を決めたかを1〜2行>
+            ```
+
+            ## 数値の扱い（重要）
+
+            **メンバーごとの数値は `.report/stats.json` の値をそのまま書き写してください。**
+            自分で数え直したり、概算に置き換えたりしないこと。審査で個人評価に使われる数字です。
+
+            - `discord.today` / `discord.total` → 発言 today(total)
+            - `prs.today` / `prs.total` → PR today(total)
+            - `commits.today` / `commits.total` → commit today(total)
+            - `areas` → 領域（接頭辞は除去済みなのでそのまま並べる。空なら「領域: -」）
+
+            並び順は `stats.json` の順序のまま変えないこと。**発言数の多い順に並べ替えない。**
+
+            ## 守ること
+
+            - **「検討中」を「決定」に昇格させない。** ブレストで案が出ただけのものを
+              「〜することにした」と書かない。迷っているものは「まだ決まっていないこと」に置く
+            - 「詰まっていること」と「まだ決まっていないこと」は分ける。
+              前者は**手が止まっている障害**、後者は**判断待ちの論点**。
+              後者は `issues.json` の `open_now` のうち `モヤモヤ` や `status: 要相談` が
+              付いているものが有力な材料になる
+            - **動いたもの・決めたことは書いた人の名前を添える**（全員が動いている証拠になる）。
+              **「詰まっていること」は名前を出さず、事実だけ**を書く。
+              メンバーごとの欄は名前を出す欄なので、そこでは通常どおり書いてよい
+            - リンクや資料が貼られただけの話題は本文に出さない。リンクだけでは何も言えない
+            - 「盛り上がった」「活発だった」等の**雰囲気や評価は書かない**。決定と事実だけ。
+              発言が少ない人を否定的に書かない（設計や実装に集中した日ほど発言は減る）
+            - 材料に無いことを推測で補わない。**該当が無い欄は「特になし」**と書いて欄は残す
+            - **全体で1800文字以内。** Discord の1メッセージに収めて、運営サーバーへの
+              転記を1回で済ませるため
+            - このプロダクトは「相手を断定・診断しない / ラベリングしない」思想を持つ。
+              日報の文面でも当事者を「陰謀論者」等と呼ばない
+            - 見出しの記号と順番は上の形のまま変えない
+            - **`.report/report.md` を書く以外のことはしない。** コミット・PR 作成・Issue 操作は行わない
+
+      - name: Discord に投稿する
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL }}
+          DUTY: ${{ secrets.DISCORD_DUTY_USER_ID }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          if [ ! -s .report/report.md ]; then
+            echo "::error::日報が生成されていません（.report/report.md が空）"
+            exit 1
+          fi
+
+          # Discord の1メッセージは2000文字まで。余白を見て1900で行単位に割る。
+          python3 - <<'PY'
+          import json, pathlib
+          LIMIT = 1900
+          text = pathlib.Path(".report/report.md").read_text()
+          chunks, cur = [], ""
+          for line in text.splitlines(keepends=True):
+              # 1行だけで上限を超える場合は行の途中で割る。割らないと webhook が 400 を返し、
+              # 日報がまるごと落ちる（行単位の分割だけでは防げない）
+              while len(line) > LIMIT:
+                  if cur:
+                      chunks.append(cur)
+                      cur = ""
+                  chunks.append(line[:LIMIT])
+                  line = line[LIMIT:]
+              if len(cur) + len(line) > LIMIT and cur:
+                  chunks.append(cur)
+                  cur = ""
+              cur += line
+          if cur.strip():
+              chunks.append(cur)
+          pathlib.Path(".report/chunks.json").write_text(json.dumps(chunks, ensure_ascii=False))
+          PY
+
+          # 動作確認のたびに日報チャンネルが汚れ、担当者にメンションが飛ぶのを避ける。
+          # dry_run ではジョブサマリーに出すだけで、Discord には何も送らない。
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            {
+              echo "### dry run（Discord には投稿していません）"
+              echo '```'
+              cat .report/report.md
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice::dry run のため投稿をスキップしました"
+            exit 0
+          fi
+
+          COUNT=$(jq 'length' .report/chunks.json)
+          for i in $(seq 0 $((COUNT - 1))); do
+            jq -c --argjson i "$i" '{content: .[$i]}' .report/chunks.json > .report/payload.json
+            curl -sS -f -X POST -H "Content-Type: application/json" \
+              -d @.report/payload.json "$WEBHOOK"
+            sleep 1   # webhook のレート制限に当たらないよう間隔を空ける
+          done
+
+          # メンションは本文と別メッセージで送る。
+          # 本文に混ぜると、運営サーバーへコピーするときに内部向けの依頼文まで付いてくる。
+          jq -n --arg d "$DUTY" \
+            '{content: "<@\($d)> 運営サーバーへの転送をおねがいします"}' > .report/ping.json
+          curl -sS -f -X POST -H "Content-Type: application/json" \
+            -d @.report/ping.json "$WEBHOOK"
+
+      # 日報が落ちても誰も気づかないのが一番困るので、失敗を Issue にして残す
+      - name: 失敗したら Issue を作成
+        if: failure()
+        uses: ./.github/actions/report-failure
