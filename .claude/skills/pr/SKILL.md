@@ -137,8 +137,11 @@ before / after が並ぶと最もレビューしやすい。
 
 ## 8. 仕上げ
 
-[ボード](https://github.com/orgs/yuai-project/projects/1)のカードを **`In Review` に動かす**。
-`Todo → In Progress → Done` は自動で動くが、**`In Review` だけは組み込みの自動化が無い**ので手で動かす。
+[ボード](https://github.com/orgs/yuai-project/projects/1)のカードは、
+**Issue に PR が紐づいた時点で自動的に `In Review` へ動く**。
+手順1でブランチが `<type>/<Issue番号>-<要約>` になっていれば、これは勝手に起きる。
+
+動かないときだけ手で直す（Issue から生やしていないブランチの PR は紐づかない）:
 
 ```bash
 ITEM=$(gh project item-list 1 --owner yuai-project --format json \

@@ -76,8 +76,17 @@ gh pr create --fill --draft   # 作業中は Draft、レビューしてほしく
 | **In Review** | PR を出してレビュー待ち |
 | **Done** | マージ済み |
 
-`Todo` への追加・`Done` への移動は自動です。**`In Review` だけは手で動かしてください**
-（GitHub 側に組み込みの自動化が無いため）。
+**手で動かすのは `In Progress` だけ**です。あとはボードの Workflows が面倒を見ます。
+
+| きっかけ | カードの行き先 |
+|---|---|
+| Issue を作る | `Todo` |
+| Issue に PR が紐づく | `In Review` |
+| PR がマージされる / Issue が閉じる | `Done` |
+| カードを `Done` に動かす | Issue がクローズされる（`completed`） |
+
+`In Review` が自動で動くのは、**`gh issue develop` で Issue から生やしたブランチ**の PR だけです。
+自分で切ったブランチの PR は Issue に紐づかないので、その場合は手で動かしてください。
 
 ---
 
