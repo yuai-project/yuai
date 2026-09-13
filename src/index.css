@@ -1,46 +1,48 @@
 @import 'tailwindcss';
 
-/* ===== よりそい / Yorisoi — design tokens =====
-   落ち着き・やさしさ・安心感を大切にした、暖かみのあるセージ×クリーム系。
-   医療っぽくなりすぎない、メンタルケアに近い清潔感。 */
+/* ===== Yorido — design tokens =====
+   「よりどころ」をイメージした、白を主役にしたやさしいトーン。
+   アクセントは淡いオレンジ #ffb37c（= brand）。医療・診断サービスのように見せすぎない。 */
 @theme {
-  /* base surfaces */
-  --color-cream: #f7f4ef;
-  --color-surface: #fffdfa;
+  /* base — 白が基本。cream はごく薄いアイボリーの補助背景 */
+  --color-surface: #ffffff;
+  --color-cream: #faf8f5;
 
-  /* primary — おだやかなセージ／ティール */
-  --color-sage-50: #eef5f2;
-  --color-sage-100: #dcece6;
-  --color-sage-200: #bcdad0;
-  --color-sage-400: #6fae9f;
-  --color-sage-500: #4f9688;
-  --color-sage-600: #3f7d72;
-  --color-sage-700: #33655c;
+  /* brand — 基準色は #ffb37c。派生色はコントラストを確保するために使い分ける */
+  --color-brand-50: #fff7f0; /* ごく薄い背景（選択中カード・アイコン背景） */
+  --color-brand-100: #ffeddf; /* 薄い背景（activeナビ・タグ） */
+  --color-brand-200: #ffd9bb; /* 罫線・hover */
+  --color-brand: #ffb37c; /* 基準色：CTA・選択中・ステップ表示 */
+  --color-brand-400: #ffa05f; /* CTAのhover / active */
+  --color-brand-600: #c8661f; /* アイコン・フォーカス枠（白背景で3:1以上） */
+  --color-brand-700: #a3500f; /* オレンジ系の文字（白・brand-50/100背景で4.5:1以上） */
+  --color-brand-ink: #4a2a12; /* brand塗りの上に載せる文字（7.3:1） */
 
-  /* warm secondary — 体温を感じるアプリコット */
-  --color-warm-50: #fdf3ea;
-  --color-warm-100: #fbe7d5;
-  --color-warm-400: #e0a878;
-  --color-warm-500: #cf8f5c;
-  --color-warm-600: #b5744a;
+  /* semantic — 状態を表す色はブランド色と分ける */
+  /* 注意（避けたい対応・入力エラー）：落ち着いたローズ */
+  --color-notice-50: #fcf1f1;
+  --color-notice-200: #f1d3d3;
+  --color-notice-700: #a14b4b;
 
-  /* gentle notice — 警告に赤黒を使わない */
-  --color-notice-50: #fbf1e9;
-  --color-notice-200: #f2d9c4;
-  --color-notice-700: #a5673e;
-
-  /* care / 安全 — おだやかなブルー */
+  /* 安全・プライバシー・相談窓口の案内：おだやかなブルー */
   --color-calm-50: #eef3f7;
   --color-calm-200: #cfe0ec;
   --color-calm-700: #4a6c86;
 
+  /* 完了・成功（コピー済み・投稿完了）：やわらかいグリーン */
+  --color-success-50: #edf7f1;
+  --color-success-700: #2f7a57;
+
   /* ink */
   --color-ink: #3a3a42;
-  --color-ink-soft: #6b6b76;
-  --color-ink-faint: #9a9aa2;
-  --color-line: #ece7df;
+  --color-ink-soft: #5a5a65; /* 本文の補助。どの背景でも5.9:1以上 */
+  --color-ink-faint: #6b6b75; /* 注記・補足。淡い色付き背景の上でも4.6:1以上 */
+  --color-line: #ece8e2;
 
   --radius-xl2: 1.25rem;
+
+  /* PC（Webサイト型レイアウト）のコンテンツ最大幅 → max-w-page */
+  --container-page: 72.5rem;
   --font-sans: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', system-ui, -apple-system,
     'Segoe UI', Roboto, sans-serif;
 }
@@ -53,7 +55,7 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--color-ink);
-  background: #e9e4dc;
+  background: #f1efec;
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -64,12 +66,18 @@ body {
   min-height: 100dvh;
 }
 
+/* キーボード操作時のフォーカス表示（白背景で3:1以上の濃いオレンジ） */
+:where(a, button, summary, [role='radio'], [role='checkbox']):focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+
 /* やさしいスクロール */
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
-@keyframes yorisoi-fade-up {
+@keyframes yorido-fade-up {
   from {
     opacity: 0;
     transform: translateY(8px);
@@ -81,5 +89,71 @@ body {
 }
 
 .animate-fade-up {
-  animation: yorisoi-fade-up 0.45s ease both;
+  animation: yorido-fade-up 0.45s ease both;
+}
+
+/* 相談フォームのスライダー：指で操作しやすい大きめのつまみ。
+   --fill（0〜100%）で選択済みの範囲をセージ色に。data-unset 時は未回答のグレー。 */
+.yorido-range {
+  appearance: none;
+  width: 100%;
+  height: 2.75rem;
+  background: transparent;
+  cursor: pointer;
+}
+.yorido-range:focus {
+  outline: none;
+}
+.yorido-range::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--color-brand) var(--fill, 0%),
+    var(--color-line) var(--fill, 0%)
+  );
+}
+.yorido-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.625rem;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  border: 3px solid var(--color-brand-600);
+  box-shadow: 0 2px 6px rgba(60, 50, 40, 0.18);
+  transition: box-shadow 0.2s;
+}
+.yorido-range::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-line);
+}
+.yorido-range::-moz-range-progress {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-brand);
+}
+.yorido-range::-moz-range-thumb {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  border: 3px solid var(--color-brand-600);
+  box-shadow: 0 2px 6px rgba(60, 50, 40, 0.18);
+}
+.yorido-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 5px var(--color-brand-200);
+}
+.yorido-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 5px var(--color-brand-200);
+}
+.yorido-range[data-unset='true']::-webkit-slider-thumb {
+  border-color: var(--color-ink-faint);
+}
+.yorido-range[data-unset='true']::-moz-range-thumb {
+  border-color: var(--color-ink-faint);
+}
+.yorido-range[data-unset='true']::-moz-range-progress {
+  background: transparent;
 }
