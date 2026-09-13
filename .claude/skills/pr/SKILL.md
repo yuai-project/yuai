@@ -141,7 +141,7 @@ before / after が並ぶと最もレビューしやすい。
 **Issue に PR が紐づいた時点で自動的に `In Review` へ動く**。
 手順1でブランチが `<type>/<Issue番号>-<要約>` になっていれば、これは勝手に起きる。
 
-動かないときだけ手で直す（Issue から生やしていないブランチの PR は紐づかない）:
+動かないときだけ手で直す（ブランチ名に Issue 番号が無い PR は紐づかないので自動で動かない）:
 
 ```bash
 ITEM=$(gh project item-list 1 --owner yuai-project --format json \

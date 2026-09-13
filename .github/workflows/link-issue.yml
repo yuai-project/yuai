@@ -35,8 +35,11 @@ jobs:
             exit 0
           fi
 
-          if ! gh issue view "$NUM" --repo "$REPO" --json number >/dev/null 2>&1; then
-            echo "::warning::Issue #$NUM が見つかりません。本文は変更しません。"
+          # gh pr edit / gh issue view は Projects (classic) 廃止の影響で
+          # 一部の gh 版が失敗する。ランナーの版に左右されないよう REST を直接叩く。
+          KIND=$(gh api "repos/$REPO/issues/$NUM" --jq 'if .pull_request then "pr" else "issue" end' 2>/dev/null) || KIND="none"
+          if [ "$KIND" != "issue" ]; then
+            echo "::warning::#$NUM は Issue ではありません（$KIND）。本文は変更しません。"
             exit 0
           fi
 
@@ -56,5 +59,5 @@ jobs:
             printf '%s\n\nCloses #%s\n' "$BODY_LF" "$NUM" > body.md
           fi
 
-          gh pr edit "$PR" --repo "$REPO" --body-file body.md
+          gh api -X PATCH "repos/$REPO/pulls/$PR" -F body=@body.md --silent
           echo "::notice::PR #$PR を Issue #$NUM に紐づけました"
