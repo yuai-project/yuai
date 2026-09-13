@@ -46,7 +46,13 @@ jobs:
           # GitHub の本文は CRLF で届くので LF に正規化してから扱う
           BODY_LF=$(printf '%s' "$BODY" | tr -d '\r')
 
-          if printf '%s' "$BODY_LF" | grep -Eiq "(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#${NUM}([^0-9]|$)"; then
+          # 重複判定は HTML コメントを除いた本文で行う。
+          # PR テンプレートの注釈には書き方の例が入っており、そこに現れる番号を
+          # 「既に紐づいている」と誤判定してしまうため（例: Issue #12）。
+          BODY_CHECK=$(printf '%s' "$BODY_LF" \
+            | python3 -c "import sys,re;sys.stdout.write(re.sub(r'<!--.*?-->','',sys.stdin.read(),flags=re.S))")
+
+          if printf '%s' "$BODY_CHECK" | grep -Eiq "(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#${NUM}([^0-9]|$)"; then
             echo "既に Issue #$NUM が紐づいています。何もしません。"
             exit 0
           fi
