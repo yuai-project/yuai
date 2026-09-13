@@ -24,17 +24,24 @@
 
 優先度（`P0`〜`P2`）と `デモ必須` は手で付けてください。
 
-## 2. ブランチを切る
+## 2. Issue からブランチを生やす
 
 ```bash
-git switch main && git pull
-git switch -c feat/story-filter     # feat/ fix/ docs/ chore/ refactor/
+gh issue develop 12 --name feat/12-story-filter --base main --checkout
 ```
 
-Issue から直接ブランチを作ることもできます（Issue 画面右下の「Create a branch」）。
+**`git switch -c` で自分では切らないでください。** `gh issue develop` は Issue の
+Development 欄にブランチを登録します。これがあると、そのブランチから出した PR が
+**自動で Issue に紐づき、マージで Issue が閉じます**。自分で切ったブランチにはこの紐づけが無く、
+後から付け直す手段もありません。
 
-**main への直 push はしない**でください。全員が同じファイルを触るので、
-壊れたときに誰の変更か分からなくなります。
+- 命名は `<type>/<Issue番号>-<英語の短い要約>`。type は `feat` `fix` `docs` `chore` `refactor`
+- **番号を先頭に入れる**と、PR 本文の `Closes #12` が自動で埋まります（`Link issue` ワークフロー）
+- 着手したら `gh issue edit 12 --add-assignee @me` と、ボードのカードを `In Progress` へ
+
+**main への直 push はできません**（ruleset で保護されています）。
+
+Claude Code を使っているなら `start-issue` スキルがここを面倒見ます。
 
 ## 3. PR を出す
 
@@ -48,14 +55,41 @@ gh pr create --fill --draft   # 作業中は Draft、レビューしてほしく
 
 ## 4. レビュー
 
-- **1人以上の approve でマージ**。ただし詰まって待つくらいなら、チャットで声をかけて先に進む
+- **1人以上の approve をもらってからマージ**する。ただし詰まって待つくらいなら、チャットで声をかけて先に進む
+  （approve は設定では強制していません。CI は必須なので、赤いままではマージできません）
 - レビューは「動くか」「思想に反していないか」を優先。細かい書き方の好みは後回し
 - PR コメントで `@claude ○○して` とメンションすると Claude が直接直してくれます
 
 ## 5. マージ
 
-**Squash and merge** を使ってください。PR タイトルがそのまま履歴に残ります。
+マージ方法は **Squash and merge のみ**に絞ってあります。**PR タイトルがそのまま履歴に残ります。**
 マージ後のブランチは削除して構いません。
+
+## 6. ボード
+
+タスクの現在地は [よりそい 開発ボード](https://github.com/orgs/yuai-project/projects/1) で見ます。
+
+| 列 | 意味 |
+|---|---|
+| **Backlog** | やると決めたが今は着手しない |
+| **Todo** | 着手待ち。**上から取る** |
+| **In Progress** | 作業中。担当者を必ず立てる |
+| **In Review** | PR を出してレビュー待ち |
+| **Done** | マージ済み |
+
+**手で動かすのは `In Progress` だけ**です。あとはボードの Workflows が面倒を見ます。
+
+| きっかけ | カードの行き先 |
+|---|---|
+| Issue を作る | `Todo` |
+| Issue に PR が紐づく | `In Review` |
+| PR がマージされる / Issue が閉じる | `Done` |
+| カードを `Done` に動かす | Issue がクローズされる（`completed`） |
+
+`In Review` が自動で動くのは、**PR が Issue に紐づいているとき**だけです。
+`gh issue develop` で生やしたブランチなら確実に紐づきます。自分で切った場合も、
+ブランチ名に Issue 番号が入っていれば `Link issue` ワークフローが `Closes #12` を入れるので紐づきます。
+番号の無いブランチ（`feat/story-filter` など）のときだけ、手で動かしてください。
 
 ---
 

@@ -71,9 +71,21 @@ src/
 - `package-lock.json` を手で書き換えない
 - モックデータを消さない（デモで使う）
 
+## 使える Skill
+
+`.claude/skills/` に置いてあり、チーム全員で共有される。
+
+- **`start-issue`** — Issue に着手するときの入り口。`gh issue develop` で Issue から
+  ブランチを生やし、assign とボードの状態を合わせる。**作業はここから始める**
+- **`pr`** — コミット・push・PR 作成。main は保護されていて直 push できないので、
+  変更を出すときは基本これを通す。PR タイトルの規約や動作確認の埋め方も面倒を見る
+- **`tone-check`** — 利用者に見える日本語が上の「絶対に守るルール」7項目に反していないか検査する。
+  文言を足した・変えたときと、PR の思想チェック欄を埋める前に実行する
+
 ## Git / PR の約束
 
-- ブランチ: `feat/xxx` `fix/xxx` `docs/xxx` `chore/xxx`
+- ブランチ: `<type>/<Issue番号>-<英語の要約>`（例 `feat/12-story-filter`）。`gh issue develop` で Issue から生やす
+- タスクの現在地は [開発ボード](https://github.com/orgs/yuai-project/projects/1)。手で動かすのは `In Progress` だけ
 - main への直 push はしない。必ず PR を経由する
 - PR タイトルは `feat: 体験談の絞り込みを実装` のように Conventional Commits 形式
 - 詳細は [CONTRIBUTING.md](CONTRIBUTING.md) を参照
