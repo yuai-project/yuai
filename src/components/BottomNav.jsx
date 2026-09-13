@@ -8,10 +8,11 @@ const items = [
   { to: '/mypage', label: 'マイpage', icon: User },
 ]
 
-// 下部タブナビ。モバイルシェル幅に固定。
+// 下部タブナビ。スマホ・タブレット用（PC幅では SiteHeader の上部ナビを使う）。
+// 現在地はアイコン背後の淡いオレンジのピル＋太字で示す（色だけに頼らない）。
 export default function BottomNav() {
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
+    <nav className="sticky bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] lg:hidden">
       <ul className="grid grid-cols-4">
         {items.map(({ to, label, icon: Icon, end }) => (
           <li key={to}>
@@ -19,18 +20,20 @@ export default function BottomNav() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition ${
-                  isActive ? 'text-sage-600' : 'text-ink-faint'
+                `flex flex-col items-center gap-0.5 pb-2 pt-1.5 text-[11px] transition ${
+                  isActive ? 'font-bold text-brand-700' : 'font-medium text-ink-faint hover:text-ink-soft'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon
-                    size={22}
-                    strokeWidth={isActive ? 2.4 : 1.9}
-                    className="transition"
-                  />
+                  <span
+                    className={`flex h-7 w-12 items-center justify-center rounded-full transition ${
+                      isActive ? 'bg-brand-100' : ''
+                    }`}
+                  >
+                    <Icon size={21} strokeWidth={isActive ? 2.4 : 1.9} />
+                  </span>
                   <span>{label}</span>
                 </>
               )}

@@ -73,8 +73,11 @@ export const mockAdvice = {
 }
 
 // APIに差し替えるときはこの関数だけを書き換える。
-// 例: const res = await fetch('/api/advice', { method:'POST', body: JSON.stringify({ text, chips }) })
-export async function getAdvice(/* { text, chips } */) {
+// request は相談フォームの buildAdviceRequest()（src/data/consultationIntake.js）の戻り値:
+//   { userAge, userGender, relationship, duration, immersionLevel, topics,
+//     concerns, concernsOther, hasSupportPerson, desiredRelationship, desiredSupport, freeText }
+// 例: const res = await fetch('/api/advice', { method:'POST', body: JSON.stringify(request) })
+export async function getAdvice(/* request */) {
   // モックのローディング演出
   await new Promise((r) => setTimeout(r, 1600))
   return mockAdvice

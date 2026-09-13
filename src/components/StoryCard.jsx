@@ -11,10 +11,10 @@ export default function StoryCard({ story }) {
   return (
     <article
       onClick={() => navigate(`/stories/${story.id}`)}
-      className="cursor-pointer rounded-2xl border border-line bg-surface p-4 shadow-[0_1px_2px_rgba(60,50,40,0.04)] transition hover:border-sage-200 hover:shadow-[0_6px_18px_rgba(60,50,40,0.06)] active:scale-[0.99]"
+      className="cursor-pointer rounded-2xl border border-line bg-surface p-4 shadow-[0_1px_2px_rgba(60,50,40,0.04)] transition hover:border-brand-200 hover:shadow-[0_6px_18px_rgba(60,50,40,0.06)] active:scale-[0.99]"
     >
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        <Tag tone="sage">{story.relation}</Tag>
+        <Tag tone="brand">{story.relation}</Tag>
         {story.tags.slice(0, 2).map((t) => (
           <Tag key={t}>{t}</Tag>
         ))}
@@ -34,7 +34,7 @@ export default function StoryCard({ story }) {
               setLiked((v) => !v)
             }}
             className={`flex items-center gap-1 text-xs transition active:scale-90 ${
-              liked ? 'text-warm-500' : 'hover:text-warm-500'
+              liked ? 'text-brand-600' : 'hover:text-brand-600'
             }`}
             aria-label="共感する"
           >
@@ -48,7 +48,7 @@ export default function StoryCard({ story }) {
         </div>
       </div>
 
-      <span className="mt-2 inline-block text-xs font-semibold text-sage-600">
+      <span className="mt-2 inline-block text-xs font-semibold text-brand-700">
         続きを読む →
       </span>
     </article>
