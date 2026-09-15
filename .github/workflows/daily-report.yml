@@ -1,6 +1,6 @@
 name: Daily report
 
-# 毎日 21:00 JST に、その日の GitHub 活動と自前 Discord サーバーの会話から日報を生成し、
+# 毎日 21:07 JST に、その日の GitHub 活動と自前 Discord サーバーの会話から日報を生成し、
 # 日報チャンネルに投稿する。転送担当が1行添えて、運営サーバーのチームチャンネルへ
 # 人手で転記する（#76）。審査員に働きぶりが見える状態を保つのが目的。
 #
@@ -19,10 +19,15 @@ name: Daily report
 
 on:
   schedule:
-    # cron は UTC。12:00 UTC = 21:00 JST。
-    # Actions の schedule は混雑時に10〜60分遅れる。転送は人がやるので実害はないが、
+    # cron は UTC。12:07 UTC = 21:07 JST。
+    # Actions の schedule は混雑時に10〜60分遅れ、高負荷時は発火自体が見送られる。
+    # 毎時0分は全リポジトリの cron が集中する最混雑枠なので、7分ずらして山を外す（#87）。
+    # 「21時ちょうど」に意味はなく、転送は人の作業なのでずらしても困らない。
+    #
     # 集計の窓は実行時刻ではなく固定境界で切ること（「集計の窓を決める」ステップ参照）。
-    - cron: '0 12 * * *'
+    # 遅れても内容は変わらないので、実害が出るのは完全にスキップされた場合だけ。
+    # スキップは「前日の日報が出ているか確認する」ステップが翌日の実行で拾う。
+    - cron: '7 12 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -85,7 +90,7 @@ jobs:
           if [ -n "${DATE_IN:-}" ]; then
             # 特定の日を作り直す。その日の 21:00 JST が窓の終わり
             if ! END=$(date -u -d "${DATE_IN}T12:00:00Z" +%s 2>/dev/null); then
-              echo "::error::date は YYYY-MM-DD で指定してください（受け取った値: $DATE_IN）"
+              echo "::error::date は YYYY-MM-DD で指定してください（受け取った値: ${DATE_IN}）"
               exit 1
             fi
           elif [ "$MODE" = "last24h" ]; then
@@ -111,6 +116,82 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
           echo "::notice::集計の窓 $(date -u -d "@$START" +%F\ %T)Z 〜 $(date -u -d "@$END" +%F\ %T)Z"
+
+      # schedule がまるごとスキップされた日は、失敗 run すら作られないので report-failure が
+      # 反応しない。抜けた日に誰も気づけないのが #87 で一番まずかった点なので、翌日の実行が
+      # 「前日分が日報チャンネルに出ているか」を見て、無ければ転送担当へのメンションに添える。
+      #
+      # 2日続けてスキップされると翌日の実行自体が来ないので、この経路でも拾えない。
+      # そこまで面倒を見るには別の schedule ワークフローが要り、それも同じ賭けになるため、
+      # 「発火率を上げる（cron をずらす）＋1日の抜けは翌日に気づく」で止めている。
+      - name: 前日の日報が出ているか確認する
+        id: gap
+        env:
+          BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          WEBHOOK: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL }}
+          MODE: ${{ inputs.mode }}
+          DATE_IN: ${{ inputs.date }}
+          START_MS: ${{ steps.window.outputs.start_ms }}
+          END_MS: ${{ steps.window.outputs.end_ms }}
+        run: |
+          set -euo pipefail
+
+          # 判定できなかったときは missing=false に倒す。日報本体はここで落とさない。
+          # 「確認できなかった」を「抜けた」として扱うと、毎日オオカミ少年になって
+          # 本当に抜けた日の警告まで読み飛ばされる。
+          finish() {
+            {
+              echo "missing=${1}"
+              echo "missing_date=${2:-}"
+              echo "missing_label=${3:-}"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          MODE="${MODE:-auto}"
+          # 過去日の作り直しと last24h は窓が通常運転とずれる。
+          # 「昨日出たか」を見て意味があるのは、直近の確定した窓を扱うときだけ。
+          if [ -n "${DATE_IN:-}" ] || [ "$MODE" = "last24h" ]; then
+            echo "::notice::窓が通常運転と異なるため、前日の日報の有無は確認しません"
+            finish false
+          fi
+
+          # 日報チャンネルの ID は webhook 自身に教えてもらう（GET は認証不要）。
+          # secret を1つ増やして人手で貼るより、貼り間違いの余地が無い。
+          CH=$(curl -sS "$WEBHOOK" | jq -r '.channel_id // empty')
+          if [ -z "$CH" ]; then
+            echo "::warning::webhook から日報チャンネルを特定できませんでした"
+            finish false
+          fi
+
+          # 前日の日報は「今回の窓の始まり（前日 21:00 JST）」の直後に投稿されているはず。
+          # つまり今回の窓の中に webhook の投稿があるかが、そのまま前日分が出たかになる。
+          # 今日の日報はまだ投稿していないので窓（END = 今日の 21:00 JST）には入らない。
+          AFTER=$(( (START_MS - 1420070400000) << 22 ))
+          PAGE=$(curl -sS -H "Authorization: Bot $BOT_TOKEN" \
+            "https://discord.com/api/v10/channels/$CH/messages?limit=100&after=$AFTER")
+
+          if [ "$(jq -r 'type' <<<"$PAGE")" != "array" ]; then
+            echo "::warning::日報チャンネルを読めませんでした: $(jq -rc '.message // .' <<<"$PAGE")"
+            finish false
+          fi
+
+          # 日報本文もメンションも同じ webhook から出る。どちらが残っていても
+          # 「前日の日報は出た」と言えるので、webhook 投稿の有無だけを見れば足りる。
+          POSTED=$(jq --argjson e "$END_MS" '
+            def ms: sub("\\.[0-9]+"; "") | sub("\\+00:00"; "Z") | fromdateiso8601 * 1000;
+            [ .[] | select(.webhook_id != null) | select((.timestamp | ms) < $e) ] | length' <<<"$PAGE")
+
+          MISSING_DATE=$(date -u -d "@$((START_MS / 1000))" +%F)
+          MISSING_LABEL=$(TZ=Asia/Tokyo date -d "@$((START_MS / 1000))" +%-m/%-d)
+
+          if [ "$POSTED" -gt 0 ]; then
+            echo "::notice::前日（${MISSING_LABEL}）の日報は投稿済みです"
+            finish false
+          fi
+
+          echo "::warning::$MISSING_LABEL の日報が日報チャンネルに見当たりません（date: $MISSING_DATE で作り直せます）"
+          finish true "$MISSING_DATE" "$MISSING_LABEL"
 
       - name: GitHub の活動を集める
         env:
@@ -528,6 +609,9 @@ jobs:
           WEBHOOK: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL }}
           DUTY: ${{ secrets.DISCORD_DUTY_USER_ID }}
           DRY_RUN: ${{ inputs.dry_run }}
+          MISSING: ${{ steps.gap.outputs.missing }}
+          MISSING_DATE: ${{ steps.gap.outputs.missing_date }}
+          MISSING_LABEL: ${{ steps.gap.outputs.missing_label }}
         run: |
           set -euo pipefail
 
@@ -594,6 +678,8 @@ jobs:
           if [ "${DRY_RUN:-false}" = "true" ]; then
             {
               echo "### dry run（Discord には投稿していません）"
+              [ "${MISSING:-false}" = "true" ] \
+                && echo "> ⚠️ ${MISSING_LABEL} の日報が見当たりません（本番なら転送担当に警告が付きます）"
               echo '```'
               cat .report/report.md
               echo '```'
@@ -612,8 +698,18 @@ jobs:
 
           # メンションは本文と別メッセージで送る。
           # 本文に混ぜると、運営サーバーへコピーするときに内部向けの依頼文まで付いてくる。
-          jq -n --arg d "$DUTY" \
-            '{content: "<@\($d)> 運営サーバーへの転送をおねがいします"}' > .report/ping.json
+          #
+          # 前日分が抜けていたら、この依頼文に添えて出す。本文側に足すと転送でそのまま
+          # 運営サーバーへ流れてしまうし、警告だけ別メッセージにすると流れて見落とされる。
+          # 転送担当が必ず見るメンションに乗せるのが、一番確実に人の目に入る。
+          NOTE=""
+          if [ "${MISSING:-false}" = "true" ]; then
+            NOTE=$(printf '\n⚠️ %s の日報が投稿されていません。Actions → Daily report → Run workflow → date: `%s` で作り直せます（集計の窓は固定なので、後から回しても中身は同じです）。' \
+              "$MISSING_LABEL" "$MISSING_DATE")
+          fi
+
+          jq -n --arg d "$DUTY" --arg n "$NOTE" \
+            '{content: "<@\($d)> 運営サーバーへの転送をおねがいします\($n)"}' > .report/ping.json
           curl -sS -f -X POST -H "Content-Type: application/json" \
             -d @.report/ping.json "$WEBHOOK"
 
