@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "validate:articles": "node scripts/validate-articles.mjs",
+    "test": "node --test \"tests/**/*.test.js\"",
     "preview": "vite preview"
   },
   "dependencies": {
