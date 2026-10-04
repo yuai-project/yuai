@@ -57,6 +57,10 @@ export const ARTICLE_SINGLE_AXES = {
 }
 
 // topics に health を含む記事は、この発信元のものに限る。
+// - topics の 'any' は、特定の話題の内容を含まない記事にだけ付ける。
+// - 健康に関する情報を含む記事には、必ず health を付ける。
+// - この制限は検証だけでは完結しない。'any' の記事やフォールバックは検証を通るため、
+//   健康を選んだ相談での発信元の絞り込みは #104 の推薦処理で行う。
 export const HEALTH_TOPIC = 'health'
 export const HEALTH_ALLOWED_SOURCE_TYPES = ['public_agency', 'academic', 'professional']
 
