@@ -31,6 +31,8 @@ jobs:
         run: npm run lint
       - name: Build
         run: npm run build
+      - name: 記事データの検証
+        run: npm run validate:articles
 
       # main が壊れた場合だけ Issue を作る。PR の失敗は PR 上で見えるので作らない。
       - name: 失敗したら Issue を作成
