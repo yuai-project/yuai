@@ -149,12 +149,40 @@ export async function openSheet({
       return body.map((r) => r[col]).filter(Boolean)
     },
 
+    // { 見出し: 値 } の配列を、タブの見出しの順に並べて追記する。見出しに無い列は空のまま。
+    // 見出しは先頭が一致すれば同じ列とみなす（「AIの下書きメモ（参考。…）」のような補足を許す）
+    async appendByHeader(tab, objects, requiredHeaders) {
+      const [header = []] = await getValues(`${quoteTab(tab)}!1:1`)
+      const columnOf = (key) => header.findIndex((h) => h === key || h.startsWith(`${key}（`) || h.startsWith(`${key}(`))
+      const missing = requiredHeaders.filter((h) => columnOf(h) === -1)
+      if (missing.length > 0) {
+        throw new Error(`「${tab}」の見出しに ${missing.map((h) => `"${h}"`).join(' / ')} がありません`)
+      }
+      const rows = objects.map((o) => {
+        const row = header.map(() => '')
+        for (const [key, value] of Object.entries(o)) {
+          const col = columnOf(key)
+          if (col !== -1) row[col] = value ?? ''
+        }
+        return row
+      })
+      await this.appendRows(tab, rows)
+    },
+
+    // 最後の行の次から、A 列を起点に書く。
+    // values.append は追記先の「表」を推測し、列の途中から書き始めることがある（「レビュー」タブで M 列から書かれた）ので使わない
     async appendRows(tab, rows) {
       if (rows.length === 0) return
-      await api(
-        `/values/${encodeURIComponent(`${quoteTab(tab)}!A1`)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
-        { method: 'POST', body: { values: rows } },
-      )
+      const start = (await getValues(quoteTab(tab))).length + 1
+      await this.updateRange(`${quoteTab(tab)}!A${start}`, rows)
+    },
+
+    async updateRange(range, values) {
+      await api(`/values/${encodeURIComponent(range)}?valueInputOption=RAW`, { method: 'PUT', body: { values } })
+    },
+
+    async clearRange(range) {
+      await api(`/values/${encodeURIComponent(range)}:clear`, { method: 'POST', body: {} })
     },
   }
 }

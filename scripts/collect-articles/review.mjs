@@ -82,6 +82,7 @@ function toReview(message, page) {
     tags,
     warnings,
     pageFetched: page.ok ? page.kind : `失敗: ${page.error}`,
+    siteName: page.siteName ?? null,
   }
 }
 

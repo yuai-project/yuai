@@ -2,7 +2,8 @@
 // 記事候補を集める（#107）。
 //
 // 検索 → 除外ドメイン・既知の URL との重複を除く → AI の下読み → 判定用シートへ追記。
-// 既知の URL は articles.json と、--write-sheet のときは判定用シートの全行（却下済みも含む）。
+// 既知の URL は articles.json と、--write-sheet のときは判定用シートの「レビュー」「収集候補」の全行（却下済みも含む）。
+// 追記は、AI が「使える」「要確認」としたものを「レビュー」に、全件を「収集候補」に。
 //
 //   npm run collect:articles                          # 全クエリを検索して下読みまで
 //   npm run collect:articles -- --limit 2             # 先頭2クエリだけ（試し打ち用）
@@ -18,7 +19,17 @@ import { COLLECT_EXCLUDED_DOMAINS, createDeduper, pickFresh } from './dedupe.mjs
 import { buildQueries } from './queries.mjs'
 import { estimateCost, reviewCandidates } from './review.mjs'
 import { createSearch } from './search/index.mjs'
-import { CANDIDATE_TAB, HEADER, JUDGMENT_COLUMN, JUDGMENT_VALUES, toRow } from './sheetRow.mjs'
+import {
+  CANDIDATE_TAB,
+  HEADER,
+  JUDGMENT_COLUMN,
+  JUDGMENT_VALUES,
+  REVIEW_REQUIRED_HEADERS,
+  REVIEW_TAB,
+  REVIEW_TARGET_LABELS,
+  toReviewRow,
+  toRow,
+} from './sheetRow.mjs'
 import { openSheet } from './sheets.mjs'
 
 // 検索 API はページ送りができず、同じクエリの上位は毎週ほぼ同じになる。
@@ -48,15 +59,21 @@ const knownUrls = JSON.parse(await readFile(articlesPath, 'utf8')).map((a) => a.
 
 // 判定用シートの URL も既知として扱う。読めなければ openSheet / readUrls が例外を投げて止まる
 let sheet = null
+let nextReviewNo = 1
 if (args['write-sheet']) {
   sheet = await openSheet()
   const { created } = await sheet.ensureTab(CANDIDATE_TAB, HEADER, {
     judgmentColumn: JUDGMENT_COLUMN,
     judgmentValues: JUDGMENT_VALUES,
   })
-  // 手で候補を入れていたタブなど、重複判定にだけ使うタブ（カンマ区切り）
+  // 「レビュー」の No は通し番号。今ある最大の次から振る
+  const [reviewHeader = [], ...reviewRows] = await sheet.readRows(REVIEW_TAB)
+  const noCol = reviewHeader.indexOf('No')
+  nextReviewNo = Math.max(0, ...reviewRows.map((r) => Number(r[noCol])).filter(Number.isFinite)) + 1
+
+  // ほかに重複判定にだけ使うタブがあれば足す（カンマ区切り）
   const extraTabs = (process.env.SHEET_DEDUPE_TABS ?? '').split(',').map((t) => t.trim()).filter(Boolean)
-  for (const tab of [CANDIDATE_TAB, ...extraTabs]) {
+  for (const tab of [REVIEW_TAB, CANDIDATE_TAB, ...extraTabs]) {
     const urls = await sheet.readUrls(tab)
     knownUrls.push(...urls)
     console.error(`シート「${tab}」: 既知の URL ${urls.length} 件${tab === CANDIDATE_TAB && created ? '（タブを作成）' : ''}`)
@@ -184,6 +201,16 @@ if (reviewBroken) {
 if (sheet) {
   // 下読みの結果が無いもの（失敗した・--from のファイルに無かった）は入れない
   const rows = candidates.filter((c) => c.review?.label)
+
+  // 「レビュー」を先に書く。ここで失敗すれば「収集候補」にも入らず、次の回にまた候補になる
+  const forReview = rows.filter((c) => REVIEW_TARGET_LABELS.includes(c.review.label))
+  await sheet.appendByHeader(
+    REVIEW_TAB,
+    forReview.map((c, i) => toReviewRow(c, nextReviewNo + i)),
+    REVIEW_REQUIRED_HEADERS,
+  )
+  console.error(`シート「${REVIEW_TAB}」に ${forReview.length} 件を追記しました（${REVIEW_TARGET_LABELS.join('・')}）`)
+
   await sheet.appendRows(CANDIDATE_TAB, rows.map(toRow))
   console.error(
     `シート「${CANDIDATE_TAB}」に ${rows.length} 件を追記しました${rows.length < candidates.length ? `（下読みの結果が無い ${candidates.length - rows.length} 件は次の回に回す）` : ''}`,
