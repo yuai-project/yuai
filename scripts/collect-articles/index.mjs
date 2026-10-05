@@ -135,9 +135,16 @@ let candidates = args.from ? await loadFrom(args.from) : await collect()
 if (!args['skip-review']) {
   console.error(`\n下読み: ${candidates.length} 件`)
   const { reviewed, usage } = await reviewCandidates(candidates, {
-    onProgress: (done, total) => {
-      if (done % 20 === 0 || done === total) console.error(`  ${done} / ${total}`)
-    },
+    // ページ取得は20件ごと、下読み（バッチ）は件数が変わったときだけ出す
+    onProgress: (() => {
+      let last = ''
+      return (phase, done, total) => {
+        const line = `  ${phase}: ${done} / ${total}`
+        if (line === last || (phase === 'ページ取得' && done % 20 !== 0 && done !== total)) return
+        last = line
+        console.error(line)
+      }
+    })(),
   })
   candidates = reviewed
 
