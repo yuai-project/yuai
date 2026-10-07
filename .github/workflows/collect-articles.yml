@@ -1,0 +1,84 @@
+name: Collect articles
+
+# 毎週月曜の朝に記事候補を集め、AI に下読みさせて、判定用スプレッドシートに追記する（#107）。
+# AI が「使える」「要確認」としたものは監修者が判定する「レビュー」タブに、全件は台帳の「収集候補」タブに入る。
+# 監修者がその週のうちに判定できるよう、週の頭に回す。中身は scripts/collect-articles/README.md。
+#
+# このリポジトリは public で、Actions のログは誰でも読める。そのため:
+#   - 候補ごとの一覧（タイトル・URL・AI の判定）はログに出さない。標準出力は捨て、件数の集計だけを残す
+#     （実在のサイトに「危険・陰謀論側」などのラベルが付いたまま公開されないように。
+#       Exa の規約 4.2(a) の許可が出るまで、検索結果を外に出さないためでもある）
+#   - 候補の中身はシートでだけ見る
+#
+# 必要な Secrets:
+#   EXA_API_KEY                 検索
+#   ANTHROPIC_API_KEY           AI の下読み
+#   GOOGLE_SHEET_ID             判定用スプレッドシート
+#   GOOGLE_SERVICE_ACCOUNT_KEY  シートの編集者として共有したサービスアカウントの鍵（JSON を base64 にしたもの）
+
+on:
+  schedule:
+    # cron は UTC。日曜 23:23 UTC = 月曜 8:23 JST。
+    # 毎時0分は全リポジトリの cron が集中するので、ずらして山を外す（#87）。
+    # 遅れても重複判定はシートとの突き合わせなので、結果は変わらない
+    - cron: '23 23 * * 0'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: '先頭から何クエリだけ流すか（空なら全部）。動作確認用'
+        required: false
+        default: ''
+      dry_run:
+        description: 'シートに触らず、件数の集計だけ出す（シートとの重複判定もしない）'
+        type: boolean
+        default: false
+
+# 同時に2本走ると、どちらもシートを読んだあとに追記して重複が入る。後から来た方は待たせる
+concurrency:
+  group: collect-articles
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write # 失敗したとき Issue を立てるため
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    # 下読みは Batches API で、待つ上限は3時間（review.mjs の MAX_WAIT_MS）。それより長く取る
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      - name: 記事候補を集めてシートに追記
+        env:
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          LIMIT: ${{ inputs.limit }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=()
+          [ -n "$LIMIT" ] && args+=(--limit "$LIMIT")
+          [ "$DRY_RUN" != "true" ] && args+=(--write-sheet)
+
+          # 標準出力（候補ごとの一覧）は捨て、標準エラー（件数の集計）だけを残す
+          npm run -s collect:articles -- "${args[@]}" 2>&1 >/dev/null | tee summary.txt
+
+          {
+            echo '## 記事候補の収集'
+            [ "$DRY_RUN" = "true" ] && echo '> dry run のため、シートには追記していません'
+            echo '```'
+            cat summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 失敗したら Issue を作成
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/report-failure
