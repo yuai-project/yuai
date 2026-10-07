@@ -76,7 +76,6 @@ export const DESIRED_SUPPORT_UNSURE = 'unsure'
 export const DESIRED_SUPPORT = [
   { value: 'coping_tips', label: '具体的な対処法を知りたい' },
   { value: 'read_stories', label: '同じような体験談を読みたい' },
-  { value: 'ai_consultation', label: 'AIに相談したい' },
   { value: 'talk_with_peers', label: '同じ悩みを持つ人と話したい' },
   { value: 'talk_with_experienced', label: '似た状況を経験し、乗り越えた人と話したい' },
   { value: 'professional_referral', label: '専門家・NPOなどの相談先を知りたい' },

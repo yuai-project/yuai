@@ -5,7 +5,7 @@ import Logo from './Logo'
 
 const items = [
   { to: '/', label: 'ホーム', icon: Home, end: true },
-  { to: '/consult', label: 'AI相談', icon: MessageCircleHeart },
+  { to: '/consult', label: '相談する', icon: MessageCircleHeart },
   { to: '/stories', label: '体験談', icon: BookOpen },
   { to: '/mypage', label: 'マイページ', icon: User },
 ]

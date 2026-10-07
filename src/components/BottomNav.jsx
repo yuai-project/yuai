@@ -3,9 +3,9 @@ import { NavLink } from 'react-router-dom'
 
 const items = [
   { to: '/', label: 'ホーム', icon: Home, end: true },
-  { to: '/consult', label: 'AI相談', icon: MessageCircleHeart },
+  { to: '/consult', label: '相談する', icon: MessageCircleHeart },
   { to: '/stories', label: '体験談', icon: BookOpen },
-  { to: '/mypage', label: 'マイpage', icon: User },
+  { to: '/mypage', label: 'マイページ', icon: User },
 ]
 
 // 下部タブナビ。スマホ・タブレット用（PC幅では SiteHeader の上部ナビを使う）。

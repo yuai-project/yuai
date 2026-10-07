@@ -29,6 +29,7 @@ import {
   buildAdviceRequest,
   initialIntake,
 } from '../data/consultationIntake'
+import { APP } from '../config'
 import { getAdvice } from '../data/mockAdvice'
 
 const STEP_TITLES = [
@@ -94,7 +95,7 @@ export default function Consultation() {
 
   return (
     <div>
-      <Header title="AIに相談する" back onBack={goBack} />
+      <Header title="相談する" back onBack={goBack} />
 
       <div className="px-5 pb-10 pt-4 lg:mx-auto lg:grid lg:max-w-page lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:px-8 lg:pb-16 lg:pt-6">
         {/* 進捗（PCでは左列に固定） */}
@@ -151,7 +152,7 @@ export default function Consultation() {
                 ) : (
                   <>
                     <MessageCircleHeart size={20} />
-                    AIに相談する
+                    ヒントを見る
                   </>
                 )}
               </button>
@@ -170,7 +171,7 @@ export default function Consultation() {
           <p className="mt-4 text-center text-xs leading-relaxed text-ink-faint lg:text-right">
             {isLast ? (
               <>
-                このAIは相手を論破するためのものではありません。<br />
+                {APP.name}は相手を論破するためのものではありません。<br />
                 あなたと大切な人の関係を、そっと支えます。
               </>
             ) : (
