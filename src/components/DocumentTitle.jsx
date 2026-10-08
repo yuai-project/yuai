@@ -5,7 +5,7 @@ import { APP } from '../config'
 // 画面ごとのブラウザタブのタイトル（例: 「AIに相談する | Yorido」）
 const titles = [
   ['/consult/result', 'あなたへのヒント'],
-  ['/consult', 'AIに相談する'],
+  ['/consult', '相談する'],
   ['/stories/new', '体験を投稿する'],
   ['/stories/:id', '体験談'],
   ['/stories', 'みんなの体験談'],

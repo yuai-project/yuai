@@ -29,7 +29,7 @@ export default function AdviceResult() {
 
   return (
     <div>
-      <Header title="あなたへのヒント" subtitle="AIが整理した対応のヒント" back />
+      <Header title="あなたへのヒント" subtitle="あなたの状況に合わせたヒント" back />
 
       <div className="px-5 pb-12 pt-4 lg:mx-auto lg:max-w-page lg:px-8 lg:pb-16 lg:pt-6">
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-4">
