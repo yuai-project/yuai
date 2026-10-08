@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "validate:articles": "node scripts/validate-articles.mjs",
+    "test": "node --test \"tests/**/*.test.js\"",
     "preview": "vite preview",
     "collect:articles": "node --env-file-if-exists=.env.local scripts/collect-articles/index.mjs"
   },
