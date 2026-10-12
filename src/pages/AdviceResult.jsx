@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AdviceCard from '../components/AdviceCard'
+import ArticleRecommendations from '../components/ArticleRecommendations'
 import CopyableLine from '../components/CopyableLine'
 import Header from '../components/Header'
 import DesiredSupportCard from '../components/intake/DesiredSupportCard'
@@ -17,15 +18,18 @@ import StoryCard from '../components/StoryCard'
 import Tag from '../components/Tag'
 import { mockAdvice } from '../data/mockAdvice'
 import { getStoriesByIds } from '../data/mockStories'
+import { recommendArticles } from '../data/recommendArticles'
 
-// スマホ: イントロ → サポート/まとめ → アドバイス → 似た体験談 の1カラム。
-// PC: 左2/3にイントロとアドバイス、右1/3に サポート/まとめ/似た体験談 の追従サイドバー。
+// スマホ: イントロ → サポート/記事/まとめ → アドバイス → 似た体験談 の1カラム。
+// PC: 左2/3にイントロとアドバイス、右1/3に サポート/記事/まとめ/似た体験談 の追従サイドバー。
 export default function AdviceResult() {
   const navigate = useNavigate()
   // 相談フォームから来た場合は入力内容と回答を受け取る。直接開いた場合はモックのみ表示。
   const { intake, request, advice } = useLocation().state ?? {}
   const a = advice ?? mockAdvice
   const related = getStoriesByIds(a.relatedStoryIds)
+  // フォームの回答に合う記事。直接開いた場合は出さない。
+  const recommended = request ? recommendArticles(request) : null
 
   return (
     <div>
@@ -51,6 +55,7 @@ export default function AdviceResult() {
             {request && (
               <>
                 <DesiredSupportCard values={request.desiredSupport} />
+                <ArticleRecommendations result={recommended} />
                 <IntakeSummary
                   request={request}
                   onEdit={
