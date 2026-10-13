@@ -9,13 +9,14 @@ import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import {
   ARTICLE_MULTI_AXES,
+  ARTICLE_OPTIONAL_BOOLEAN_FIELDS,
   ARTICLE_OPTIONAL_DATE_FIELDS,
   ARTICLE_REQUIRED_TEXT_FIELDS,
   ARTICLE_SINGLE_AXES,
   EXCLUDED_DOMAINS,
   HEALTH_ALLOWED_SOURCE_TYPES,
-  HEALTH_TOPIC,
   TAG_ANY,
+  isRestrictedMedicalArticle,
 } from '../src/data/articleTags.js'
 import { FALLBACK_ARTICLE_IDS } from '../src/data/articles.js'
 
@@ -26,6 +27,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const KNOWN_FIELDS = new Set([
   ...ARTICLE_REQUIRED_TEXT_FIELDS,
   ...ARTICLE_OPTIONAL_DATE_FIELDS,
+  ...ARTICLE_OPTIONAL_BOOLEAN_FIELDS,
   ...Object.keys(ARTICLE_MULTI_AXES),
   ...Object.keys(ARTICLE_SINGLE_AXES),
 ])
@@ -99,13 +101,17 @@ function validateArticle(a, label) {
     else if (!values.includes(v)) err(`${axis} にスキーマ外の値 ${JSON.stringify(v)}`)
   }
 
-  if (
-    Array.isArray(a.topics) &&
-    a.topics.includes(HEALTH_TOPIC) &&
-    !HEALTH_ALLOWED_SOURCE_TYPES.includes(a.sourceType)
-  ) {
+  for (const field of ARTICLE_OPTIONAL_BOOLEAN_FIELDS) {
+    if (a[field] !== undefined && typeof a[field] !== 'boolean') {
+      err(`${field} ${JSON.stringify(a[field])} が true / false ではない`)
+    }
+  }
+
+  // 医療・健康の情報そのものを扱う記事だけ、発信元を限る。
+  // topics に health があっても、medicalInfo が true でなければ制限しない
+  if (isRestrictedMedicalArticle(a)) {
     err(
-      `topics に "${HEALTH_TOPIC}" を含む記事の sourceType は ${HEALTH_ALLOWED_SOURCE_TYPES.join(' / ')} に限る（"${a.sourceType}"）`,
+      `medicalInfo が true の記事の sourceType は ${HEALTH_ALLOWED_SOURCE_TYPES.join(' / ')} に限る（"${a.sourceType}"）`,
     )
   }
 

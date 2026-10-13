@@ -85,7 +85,11 @@ export function buildAdvice(request) {
     safetyNote: freeText.danger ? SAFETY_NOTE : null,
     // safety の枠の中に出す、電話で相談できる窓口（7つの枠の外）。
     // 番号を間違えると危ないので、AI を足すときも AI には作らせず、supportLines.js から入れる
-    supportLines: getSupportLines({ crisis: freeText.crisis }),
+    // 消費者ホットラインは、「お金の使い方が心配」を選んだか、詳しい内容から読み取ったときだけ
+    supportLines: getSupportLines({
+      crisis: freeText.crisis,
+      money: freeText.concerns.includes('money_worries'),
+    }),
 
     // angry に専用の文章はないので default を使う
     forYou: FOR_YOU[cardKey] ?? FOR_YOU.default,

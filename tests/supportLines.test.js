@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import {
+  CONSUMER_SUPPORT_LINE,
   CRISIS_SUPPORT_LINE,
   SUPPORT_LINES,
   getSupportLines,
@@ -32,7 +33,28 @@ describe('相談窓口', () => {
     assert.equal(new Set(lines.map((l) => l.id)).size, lines.length)
     assert.equal(telHref(CRISIS_SUPPORT_LINE.tel), 'tel:0120061338')
     // 一覧そのものは書き換えない
-    assert.equal(SUPPORT_LINES.length, 3)
+    assert.equal(SUPPORT_LINES.length, 2)
+  })
+
+  test('いつもの一覧（マイページ）に消費者ホットラインは入らない。money のときだけ最後に足す', () => {
+    assert.deepEqual(
+      getSupportLines().map((l) => l.id),
+      ['yorisoi', 'kokoro'],
+    )
+    assert.ok(!getSupportLines().some((l) => l.tel === '188'))
+    const lines = getSupportLines({ money: true })
+    assert.deepEqual(lines.slice(0, -1), SUPPORT_LINES)
+    assert.equal(lines.at(-1), CONSUMER_SUPPORT_LINE)
+    assert.equal(telHref(CONSUMER_SUPPORT_LINE.tel), 'tel:188')
+    assert.equal(SUPPORT_LINES.length, 2)
+  })
+
+  test('crisis と money の両方 → #いのちSOS が先頭、消費者ホットラインが最後', () => {
+    const lines = getSupportLines({ crisis: true, money: true })
+    assert.deepEqual(
+      lines.map((l) => l.id),
+      ['inochi-sos', 'yorisoi', 'kokoro', 'consumer'],
+    )
   })
 
   test('telHref は数字だけの tel: リンクを作る', () => {

@@ -25,7 +25,11 @@ import {
   recommendArticles,
   toRecommendationProfile,
 } from '../src/data/recommendArticles.js'
-import { CRISIS_SUPPORT_LINE, SUPPORT_LINES } from '../src/data/supportLines.js'
+import {
+  CONSUMER_SUPPORT_LINE,
+  CRISIS_SUPPORT_LINE,
+  SUPPORT_LINES,
+} from '../src/data/supportLines.js'
 import { FIXTURE_FALLBACK_IDS, fixtureArticles } from './fixtures/recommendArticles.js'
 
 const requestOf = (intake = {}) => buildAdviceRequest({ ...initialIntake, ...intake })
@@ -235,6 +239,26 @@ describe('アドバイスへの反映', () => {
       assert.equal(advice.safetyNote, DANGER_NOTE, keyword)
       assert.deepEqual(advice.freeTextNotes, [], keyword)
     }
+  })
+
+  test('「お金の使い方が心配」を選んだときだけ、消費者ホットラインが窓口に入る', () => {
+    const advice = adviceOf({ concerns: ['money_worries'] })
+    assert.deepEqual(advice.supportLines, [...SUPPORT_LINES, CONSUMER_SUPPORT_LINE])
+    for (const intake of [{}, { concerns: ['self_exhausted'] }, { freeText: PLAIN }]) {
+      assert.ok(!adviceOf(intake).supportLines.includes(CONSUMER_SUPPORT_LINE))
+    }
+  })
+
+  test('自由記述からお金の心配を読み取ったときも、消費者ホットラインが入る', () => {
+    const advice = adviceOf({ freeText: '高額なものを次々に買ってきます' })
+    assert.deepEqual(advice.supportLines, [...SUPPORT_LINES, CONSUMER_SUPPORT_LINE])
+    // 「死にたい」などと一緒のときは、#いのちSOS が先頭、消費者ホットラインが最後
+    const both = adviceOf({ freeText: '借金のことを考えると消えたいです' })
+    assert.deepEqual(both.supportLines, [
+      CRISIS_SUPPORT_LINE,
+      ...SUPPORT_LINES,
+      CONSUMER_SUPPORT_LINE,
+    ])
   })
 
   test('ほかの危険のキーワードでは、#いのちSOS は足さない（いつもの窓口だけ）', () => {

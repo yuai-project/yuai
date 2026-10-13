@@ -80,7 +80,7 @@ export const fixtureArticles = [
     supportTypes: ['background'],
     sourceType: 'media',
   }),
-  // 健康を選んだ相談では出してはいけない（topics: any でも発信元で外す）
+  // 報道機関の、どの話題にも出せる記事。medicalInfo が無いので、健康を選んだ相談にも出る
   article('f-media-any', {
     concerns: ['angry_when_disagreed'],
     supportTypes: ['coping_tips'],
