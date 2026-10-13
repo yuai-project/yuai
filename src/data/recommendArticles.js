@@ -3,7 +3,7 @@
 // - AI は使わない。変換表とスコア表は #95 のコメントで合意したもの。
 // - 純関数のみ。日時・乱数を使わず、入力を書き換えない。同じ入力なら同じ順序で返る。
 // - 自動で除外するのは「approved でない記事」「健康を選んだ相談での、許可外の発信元」
-//   「話題を選んだ相談での、話題の合わない記事」だけ。
+//   「話題を選んだ相談での、話題の合わない記事」「相手との関係の合わない記事」だけ。
 //   stance / burden は専門家の確認（#93 / #99）が済むまで減点にとどめる。
 // - 重み・減点・最大件数は WEIGHTS の1か所だけに書く。
 
@@ -184,6 +184,15 @@ function isCandidate(article, profile) {
     profile.topics.length > 0 &&
     !isAny(article.topics) &&
     !overlaps(article.topics, profile.topics)
+  ) {
+    return false
+  }
+  // 相手との関係の合わない記事（恋人・パートナーの相談に、父についての記事など）も同じく出さない。
+  // 関係が「その他」・未回答の相談では絞らない
+  if (
+    profile.relationship &&
+    !isAny(article.relationships) &&
+    !article.relationships.includes(profile.relationship)
   ) {
     return false
   }
