@@ -371,34 +371,94 @@ describe('recommendArticles', () => {
     }
   })
 
-  test('健康を選んだ相談 → 許可された発信元以外の記事が返らない', () => {
-    const intakes = [
-      // 通常の採用（topics: any の media 記事が候補にいる）
-      { topics: ['health'], concerns: ['angry_when_disagreed'], desiredSupport: ['coping_tips'] },
-      // 話題の一致だけ
-      { topics: ['health'] },
-      // 安全枠
-      { topics: ['health'], concerns: ['self_exhausted'], hasSupportPerson: 'no' },
-    ]
-    for (const intake of intakes) {
-      const result = recommend(intake)
-      assert.ok(result.articles.length > 0, JSON.stringify(intake))
-      for (const { article } of result.articles) {
-        assert.ok(
-          HEALTH_ALLOWED_SOURCE_TYPES.includes(article.sourceType),
-          `${article.id}（${article.sourceType}）: ${JSON.stringify(intake)}`,
-        )
-      }
+  describe('健康を選んだ相談と、医療・健康の情報そのものを扱う記事（medicalInfo）', () => {
+    // 検証スクリプトを通らないはずのデータ（medicalInfo: true なのに media）。
+    // 紛れ込んでも、健康を選んだ相談には出さないことを推薦処理でも確かめる
+    const medicalMedia = {
+      ...byId('f-health-pro'),
+      id: 'f-medical-media',
+      sourceType: 'media',
+      medicalInfo: true,
+      concerns: ['angry_when_disagreed', 'self_exhausted'],
+      supportTypes: ['coping_tips', 'consultation_service'],
     }
-    // 健康だけを選んだ相談は、話題の一致で、許可された発信元の健康の記事が出る
-    const healthOnly = recommend({ topics: ['health'] })
-    assert.equal(healthOnly.isFallback, false)
-    assert.deepEqual(ids(healthOnly), ['f-health-pro'])
-    // 健康の記事が無ければフォールバック。support_org の f-selfcare は発信元で外れる
-    const withoutHealthArticle = fixtureArticles.filter((a) => a.id !== 'f-health-pro')
-    const fallback = recommend({ topics: ['health'] }, withoutHealthArticle)
-    assert.equal(fallback.isFallback, true)
-    assert.deepEqual(ids(fallback), ['f-consult'])
+    const medicalPro = { ...byId('f-health-pro'), id: 'f-medical-pro', medicalInfo: true }
+    // 健康の話題を含む体験談（報道機関）。medicalInfo は付けない
+    const healthStoryMedia = {
+      ...byId('f-health-pro'),
+      id: 'f-health-story-media',
+      sourceType: 'media',
+      supportTypes: ['experience'],
+    }
+    const articles = [...fixtureArticles, medicalMedia, medicalPro, healthStoryMedia]
+    const run = (intake, list = articles) =>
+      recommendArticles(requestOf(intake), list, {
+        fallbackIds: ['f-medical-media', ...FIXTURE_FALLBACK_IDS],
+      })
+
+    test('medicalInfo: true で許可外の発信元の記事は、健康を選んだ相談に返らない', () => {
+      const intakes = [
+        // 通常の採用
+        { topics: ['health'], concerns: ['angry_when_disagreed'], desiredSupport: ['coping_tips'] },
+        // 話題の一致だけ
+        { topics: ['health'] },
+        // 安全枠
+        { topics: ['health'], concerns: ['self_exhausted'], hasSupportPerson: 'no' },
+      ]
+      for (const intake of intakes) {
+        const result = run(intake)
+        assert.ok(result.articles.length > 0, JSON.stringify(intake))
+        assert.ok(!ids(result).includes('f-medical-media'), JSON.stringify(intake))
+      }
+      // フォールバックにも出さない
+      const anyOnly = [medicalMedia, byId('f-selfcare'), byId('f-consult')].map((a) =>
+        a.id === 'f-medical-media' ? { ...a, topics: ['any'] } : a,
+      )
+      const fallback = run({ topics: ['health'] }, anyOnly)
+      assert.equal(fallback.isFallback, true)
+      assert.deepEqual(ids(fallback), FIXTURE_FALLBACK_IDS)
+    })
+
+    test('medicalInfo: true でも、許可された発信元の記事は返る', () => {
+      for (const sourceType of HEALTH_ALLOWED_SOURCE_TYPES) {
+        const result = run({ topics: ['health'] }, [{ ...medicalPro, sourceType }])
+        assert.deepEqual(ids(result), ['f-medical-pro'], sourceType)
+      }
+    })
+
+    test('topics に health があっても、medicalInfo がなければ発信元で制限しない', () => {
+      const result = run({ topics: ['health'], desiredSupport: ['read_stories'] })
+      assert.equal(result.articles[0].article.id, 'f-health-story-media')
+      // medicalInfo: false と書いてあっても同じ
+      const explicit = run({ topics: ['health'] }, [{ ...healthStoryMedia, medicalInfo: false }])
+      assert.deepEqual(ids(explicit), ['f-health-story-media'])
+    })
+
+    test('topics: any の報道機関の記事も、medicalInfo がなければ健康を選んだ相談に返る', () => {
+      const result = recommend({
+        topics: ['health'],
+        concerns: ['angry_when_disagreed'],
+        desiredSupport: ['coping_tips'],
+      })
+      assert.ok(ids(result).includes('f-media-any'), ids(result).join(','))
+    })
+
+    test('健康だけを選んだ相談 → 話題の一致で健康の記事が出る。無ければフォールバック', () => {
+      const healthOnly = recommend({ topics: ['health'] })
+      assert.equal(healthOnly.isFallback, false)
+      assert.deepEqual(ids(healthOnly), ['f-health-pro'])
+      const withoutHealthArticle = fixtureArticles.filter((a) => a.id !== 'f-health-pro')
+      const fallback = recommend({ topics: ['health'] }, withoutHealthArticle)
+      assert.equal(fallback.isFallback, true)
+      assert.deepEqual(ids(fallback), FIXTURE_FALLBACK_IDS)
+    })
+
+    test('健康を選んでいない相談では、medicalInfo で絞らない', () => {
+      const result = run({ concerns: ['angry_when_disagreed'], desiredSupport: ['coping_tips'] }, [
+        { ...medicalMedia, topics: ['any'] },
+      ])
+      assert.deepEqual(ids(result), ['f-medical-media'])
+    })
   })
 
   test('同じ入力なら同じ順序で返る。記事の並び順を入れ替えても結果が同じ', () => {

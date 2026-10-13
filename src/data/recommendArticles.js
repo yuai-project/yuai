@@ -2,16 +2,17 @@
 //
 // - AI は使わない。変換表とスコア表は #95 のコメントで合意したもの。
 // - 純関数のみ。日時・乱数を使わず、入力を書き換えない。同じ入力なら同じ順序で返る。
-// - 自動で除外するのは「approved でない記事」「健康を選んだ相談での、許可外の発信元」
+// - 自動で除外するのは「approved でない記事」
+//   「健康を選んだ相談での、医療・健康の情報そのものを扱う（medicalInfo）許可外の発信元の記事」
 //   「話題を選んだ相談での、話題の合わない記事」「相手との関係の合わない記事」だけ。
 //   stance / burden は専門家の確認（#93 / #99）が済むまで減点にとどめる。
 // - 重み・減点・最大件数は WEIGHTS の1か所だけに書く。
 
 import {
   ARTICLE_SINGLE_AXES,
-  HEALTH_ALLOWED_SOURCE_TYPES,
   HEALTH_TOPIC,
   TAG_ANY,
+  isRestrictedMedicalArticle,
 } from './articleTags.js'
 import { FALLBACK_ARTICLE_IDS, mockArticles } from './articles.js'
 import { mergeFreeText } from './freeTextKeywords.js'
@@ -203,9 +204,9 @@ function isCandidate(article, profile) {
   ) {
     return false
   }
-  if (profile.restrictHealthSources) {
-    return HEALTH_ALLOWED_SOURCE_TYPES.includes(article.sourceType)
-  }
+  // 健康を選んだ相談では、医療・健康の情報そのものを扱う記事（medicalInfo: true）を、
+  // 許可された発信元のものに限る。体験談や接し方の記事（medicalInfo なし）は制限しない
+  if (profile.restrictHealthSources && isRestrictedMedicalArticle(article)) return false
   return true
 }
 

@@ -56,13 +56,22 @@ export const ARTICLE_SINGLE_AXES = {
   status: ['approved', 'paused'],
 }
 
-// topics に health を含む記事は、この発信元のものに限る。
+// 医療・健康の情報そのものを扱う記事（medicalInfo: true）は、この発信元のものに限る（#145）。
+// - medicalInfo は任意の項目（true / false）。省略は false と同じ。
+//   病気・治療・ワクチン・健康法などについて「何が正しいか」を説明する記事に true を付ける。
+// - 健康の話題を含む体験談や接し方の記事（topics に health があるだけ）は、制限しない。
 // - topics の 'any' は、特定の話題の内容を含まない記事にだけ付ける。
-// - 健康に関する情報を含む記事には、必ず health を付ける。
-// - この制限は検証だけでは完結しない。'any' の記事やフォールバックは検証を通るため、
-//   健康を選んだ相談での発信元の絞り込みは #104 の推薦処理で行う。
+// - 検証（scripts/validate-articles.mjs）は、記事そのものが決まりに沿っているかを見る。
+//   推薦処理（recommendArticles.js）も、健康を選んだ相談で同じ決まりを確かめる。
 export const HEALTH_TOPIC = 'health'
 export const HEALTH_ALLOWED_SOURCE_TYPES = ['public_agency', 'academic', 'professional']
+
+// 任意の真偽値の項目。
+export const ARTICLE_OPTIONAL_BOOLEAN_FIELDS = ['medicalInfo']
+
+// medicalInfo: true なのに、許可外の発信元になっている記事か。
+export const isRestrictedMedicalArticle = (article) =>
+  article?.medicalInfo === true && !HEALTH_ALLOWED_SOURCE_TYPES.includes(article.sourceType)
 
 // 必須の文字列項目（タグの軸以外）。publishedAt だけ任意。
 export const ARTICLE_REQUIRED_TEXT_FIELDS = [
