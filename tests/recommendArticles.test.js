@@ -148,6 +148,64 @@ describe('recommendArticles', () => {
     assert.ok(religion.articles[0].reasons.includes(REASONS.safetySlot))
   })
 
+  describe('話題を選んだ相談には、話題の合わない記事を出さない', () => {
+    // 霊感商法の窓口（宗教・スピリチュアルの話題の記事）と、どの話題にも出せる記事
+    const reikan = {
+      ...byId('f-consult'),
+      id: 'f-consult-reikan',
+      topics: ['religion_spiritual'],
+      concerns: ['money_worries'],
+    }
+    const anyTopic = { ...byId('f-selfcare'), id: 'f-any-topic', topics: ['any'] }
+    const articles = [reikan, anyTopic]
+    // フォールバックにも安全枠にも reikan が入りうる状態で確かめる
+    const run = (intake) =>
+      recommendArticles(requestOf(intake), articles, {
+        fallbackIds: ['f-consult-reikan', 'f-any-topic'],
+      })
+
+    test('政治＋お金が心配 → 霊感商法の窓口が出ない（通常の候補・安全枠）', () => {
+      const result = run({ topics: ['politics_society'], concerns: ['money_worries'] })
+      assert.ok(!ids(result).includes('f-consult-reikan'), ids(result).join(','))
+      for (const r of result.articles) assert.ok(!r.reasons.includes(REASONS.safetySlot))
+    })
+
+    test('政治だけ → フォールバックにも霊感商法の窓口が出ない', () => {
+      const result = run({ topics: ['politics_society'] })
+      assert.equal(result.isFallback, true)
+      assert.deepEqual(ids(result), ['f-any-topic'])
+    })
+
+    test('宗教＋お金が心配 → 霊感商法の窓口が先頭に出る', () => {
+      const result = run({ topics: ['religion_spiritual'], concerns: ['money_worries'] })
+      assert.equal(result.articles[0].article.id, 'f-consult-reikan')
+      assert.ok(result.articles[0].reasons.includes(REASONS.safetySlot))
+    })
+
+    test('複数の話題を選んだ → どれか1つと重なれば出る', () => {
+      const result = run({
+        topics: ['politics_society', 'religion_spiritual'],
+        concerns: ['money_worries'],
+      })
+      assert.ok(ids(result).includes('f-consult-reikan'))
+    })
+
+    test('話題なし → 今までどおり（困りごとの一致で出る。安全枠には入らない）', () => {
+      for (const topics of [[], ['other']]) {
+        const result = run({ topics, concerns: ['money_worries'] })
+        assert.equal(result.isFallback, false)
+        assert.deepEqual(ids(result), ['f-consult-reikan'])
+        assert.deepEqual(result.articles[0].reasons, [REASONS.concerns])
+      }
+    })
+
+    test('話題なし → フォールバックも今までどおり', () => {
+      const result = run({})
+      assert.equal(result.isFallback, true)
+      assert.deepEqual(ids(result), ['f-consult-reikan', 'f-any-topic'])
+    })
+  })
+
   test('かなり距離を置きたい → keep_connection の記事が、同じ条件の distance の記事より下', () => {
     const pair = [byId('f-keep'), byId('f-distance')]
     const result = recommend(
