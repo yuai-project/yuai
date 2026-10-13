@@ -1,84 +1,81 @@
-// AI相談結果のモックデータ。
-// 後で LLM API (OpenAI / Anthropic 等) に差し替える際は、
+// 結果画面のアドバイスを、フォームの回答から組み立てる。
+// AI は使わない。人が書いた文章（adviceCards.js）を、決まったルールで選ぶ。
+//
+// 後で LLM API (OpenAI / Anthropic 等) を足す際は、
 // getAdvice() の中身をfetch呼び出しに置き換えるだけでUIは変更不要。
 //
-// レスポンスの「形」= このオブジェクトの構造。
+// レスポンスの「形」= buildAdvice() の戻り値の構造（7つの枠）。
 // APIにはこの構造でJSONを返させるようプロンプト設計する。
+//
+//   forYou             1. まず、あなた自身へ            { title, body }
+//   whatMayBeHappening 2. 今起きていること              { title, hypotheses[], note } | null
+//   avoid              3. 避けたい対応（やさしい警告色） { title, items[], reason }
+//   tryReplies         4. こんな返し方（コピー可能）     { title, items[] }
+//   askNext            5. 次に聞いてみる質問            { title, items[] } | null
+//   safety             6. 無理に話さなくていいサイン     { title, signs[], body }
+//   relatedStoryIds    7. 似た体験談（IDでmockStoriesと紐づけ）
+//
+// null の枠は画面に出さない。whatMayBeHappening は相手の状況の見立てで、
+// 人が書いた固定の文章では回答に合わせられないため、今は常に null（AI を足すときに使う）。
 
-export const mockAdvice = {
-  // 1. まず、あなた自身へ
-  forYou: {
-    title: 'まず、あなた自身へ',
-    body: '相手の考えを変える責任を、あなた一人で背負う必要はありません。会話を続けることがつらいときは、少し距離を取ることも大切な選択肢です。まずは、ここまで向き合ってきたご自身をねぎらってあげてください。',
-  },
+import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.js'
+import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.js'
 
-  // 2. 今起きていること（断定せず「かもしれない」）
-  whatMayBeHappening: {
-    title: '今、起きているかもしれないこと',
-    hypotheses: [
-      'お父さまは、社会や将来への不安、既存の情報やメディアへの不信感を抱えているのかもしれません。',
-      '「隠されている」という話は、不確かな世の中で「自分は真実を知っている」という安心感につながっている場合があります。',
-      'あなたに話すのは、否定したいからではなく、身近なあなたに分かってほしい気持ちの表れかもしれません。',
-    ],
-    note: 'これはあくまで一つの見立てです。相手の心理状態を決めつけたり、診断したりするものではありません。',
-  },
+const DISTANCE_VALUES = ['some_distance', 'more_distance']
 
-  // 3. 避けたい対応（やさしい警告色）
-  avoid: {
-    title: 'できれば避けたい対応',
-    items: [
-      'そんなのデマだよ',
-      '騙されているだけだよ',
-      'そんなことを信じるなんておかしいよ',
-    ],
-    reason:
-      '頭ごなしに否定すると、相手は「分かってもらえない」と感じて防御的になり、かえって会話が続きにくくなることがあります。',
-  },
-
-  // 4. こんな返し方を試してみる（コピー可能）
-  tryReplies: {
-    title: 'こんな返し方を試してみる',
-    items: [
-      'それを知ったきっかけって、何だったの？',
-      'その話の、どんなところが一番気になってる？',
-      'よかったら、一緒に情報源を確認してみてもいい？',
-      'そう感じるくらい、心配なことがあるんだね。',
-    ],
-  },
-
-  // 5. 次に聞いてみる質問
-  askNext: {
-    title: '次に聞いてみる質問',
-    items: [
-      'その話を知って、どんな気持ちになった？',
-      '何が一番、不安に感じている？',
-      '私にできることって、何かある？',
-    ],
-  },
-
-  // 6. 無理に話さなくていいサイン
-  safety: {
-    title: 'こんなときは、無理に話さなくて大丈夫',
-    signs: [
-      '怒鳴られる・暴言を受ける',
-      '脅されていると感じる',
-      '精神的に追い詰められている',
-      '生活や仕事に重大な影響が出ている',
-    ],
-    body: 'あなた自身の安全と心の健康が最優先です。ひとりで抱えず、信頼できる第三者や、公的な相談窓口・専門機関に頼ることも検討してください。',
-  },
-
-  // 7. 似た体験談（IDでmockStoriesと紐づけ）
-  relatedStoryIds: ['s1', 's3'],
+// どのカードを出すか。上から順に判定し、最初に当てはまったものを使う。
+export function selectCardKey(request) {
+  const concerns = request?.concerns ?? []
+  if (DISTANCE_VALUES.includes(request?.desiredRelationship)) return 'distance'
+  if (concerns.includes('self_exhausted')) return 'exhausted'
+  if (concerns.includes('angry_when_disagreed')) return 'angry'
+  return 'default'
 }
 
-// APIに差し替えるときはこの関数だけを書き換える。
+// 「どの回答に合わせたか」の一行。default のときは出さない（null）。
+function matchedLabelOf(cardKey, request) {
+  switch (cardKey) {
+    case 'distance':
+      return `${labelOf(DESIRED_RELATIONSHIP, request.desiredRelationship)}あなたへ`
+    case 'exhausted':
+      return `「${labelOf(CONCERNS, 'self_exhausted')}」を選んだあなたへ`
+    case 'angry':
+      return `「${labelOf(CONCERNS, 'angry_when_disagreed')}」を選んだあなたへ`
+    default:
+      return null
+  }
+}
+
+const withTitle = (key, section) =>
+  section ? { title: SECTION_TITLES[key], ...section } : null
+
+// フォームの回答 → アドバイス。同じ回答なら必ず同じ結果を返す純関数。
 // request は相談フォームの buildAdviceRequest()（src/data/consultationIntake.js）の戻り値:
 //   { userAge, userGender, relationship, duration, immersionLevel, topics,
 //     concerns, concernsOther, hasSupportPerson, desiredRelationship, desiredSupport, freeText }
+export function buildAdvice(request) {
+  const cardKey = selectCardKey(request)
+  const card = ADVICE_CARDS[cardKey]
+
+  return {
+    // どの回答に合わせたか（7つの枠の外。画面ではアドバイスの先頭に出す）
+    matchedLabel: matchedLabelOf(cardKey, request),
+
+    // angry に専用の文章はないので default を使う
+    forYou: FOR_YOU[cardKey] ?? FOR_YOU.default,
+    whatMayBeHappening: null,
+    avoid: withTitle('avoid', card.avoid),
+    tryReplies: withTitle('tryReplies', card.tryReplies),
+    askNext: withTitle('askNext', card.askNext),
+    safety: SAFETY,
+    relatedStoryIds: ['s1', 's3'],
+  }
+}
+
+// APIに差し替えるときはこの関数だけを書き換える。
 // 例: const res = await fetch('/api/advice', { method:'POST', body: JSON.stringify(request) })
-export async function getAdvice(/* request */) {
+export async function getAdvice(request) {
   // モックのローディング演出
   await new Promise((r) => setTimeout(r, 1600))
-  return mockAdvice
+  return buildAdvice(request)
 }
