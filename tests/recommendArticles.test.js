@@ -206,6 +206,56 @@ describe('recommendArticles', () => {
     })
   })
 
+  describe('相手との関係の合わない記事を出さない', () => {
+    // 父についての記事（窓口でもある）と、どの関係にも出せる記事
+    const fatherOnly = {
+      ...byId('f-consult'),
+      id: 'f-father-only',
+      relationships: ['father'],
+      concerns: ['angry_when_disagreed', 'money_worries'],
+    }
+    const anyRelation = { ...byId('f-selfcare'), id: 'f-any-relation', relationships: ['any'] }
+    const articles = [fatherOnly, anyRelation]
+    // フォールバックにも安全枠にも fatherOnly が入りうる状態で確かめる
+    const run = (intake) =>
+      recommendArticles(requestOf(intake), articles, {
+        fallbackIds: ['f-father-only', 'f-any-relation'],
+      })
+
+    test('恋人・パートナー＋否定すると怒ってしまう → 父についての記事が出ない（通常の候補）', () => {
+      const result = run({ relationship: 'partner', concerns: ['angry_when_disagreed'] })
+      assert.ok(!ids(result).includes('f-father-only'), ids(result).join(','))
+    })
+
+    test('恋人・パートナー＋お金が心配 → 父についての窓口が安全枠にも入らない', () => {
+      const result = run({ relationship: 'partner', concerns: ['money_worries'] })
+      assert.ok(!ids(result).includes('f-father-only'), ids(result).join(','))
+      for (const r of result.articles) assert.ok(!r.reasons.includes(REASONS.safetySlot))
+    })
+
+    test('恋人・パートナーだけ → フォールバックにも父についての記事が出ない', () => {
+      const result = run({ relationship: 'partner' })
+      assert.equal(result.isFallback, true)
+      assert.deepEqual(ids(result), ['f-any-relation'])
+    })
+
+    test('父 → 父についての記事が出る', () => {
+      const result = run({ relationship: 'father', concerns: ['money_worries'] })
+      assert.equal(result.articles[0].article.id, 'f-father-only')
+      assert.ok(result.articles[0].reasons.includes(REASONS.relationships))
+      assert.ok(result.articles[0].reasons.includes(REASONS.safetySlot))
+    })
+
+    test('関係が「その他」・未回答 → 絞らない（今までどおり）', () => {
+      for (const relationship of ['other', '']) {
+        const result = run({ relationship, concerns: ['angry_when_disagreed'] })
+        assert.deepEqual(ids(result), ['f-father-only'], relationship)
+        const fallback = run({ relationship })
+        assert.deepEqual(ids(fallback), ['f-father-only', 'f-any-relation'], relationship)
+      }
+    })
+  })
+
   test('かなり距離を置きたい → keep_connection の記事が、同じ条件の distance の記事より下', () => {
     const pair = [byId('f-keep'), byId('f-distance')]
     const result = recommend(

@@ -20,6 +20,7 @@
 
 import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.js'
 import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.js'
+import { selectRelatedStoryIds } from './relatedStories.js'
 
 const DISTANCE_VALUES = ['some_distance', 'more_distance']
 
@@ -68,7 +69,7 @@ export function buildAdvice(request) {
     tryReplies: withTitle('tryReplies', card.tryReplies),
     askNext: withTitle('askNext', card.askNext),
     safety: SAFETY,
-    relatedStoryIds: ['s1', 's3'],
+    relatedStoryIds: selectRelatedStoryIds(request),
   }
 }
 
