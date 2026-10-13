@@ -36,6 +36,8 @@ const recommend = (intake) =>
 // キーワードを含まない、ふつうの文
 const PLAIN = '最近、実家に帰ると話題に困ります。'
 const DANGER_NOTE = '詳しい内容から、あなたの安全が心配な状況かもしれないと考えました'
+// 「怖い」を外した分を補う言葉
+const ADDED_DANGER_KEYWORDS = ['家に帰れない', '帰りたくない']
 
 describe('readFreeText', () => {
   test('キーワードの表が、フォームの困りごとの value だけでできている', () => {
@@ -199,8 +201,9 @@ describe('アドバイスへの反映', () => {
       const advice = adviceOf({ freeText: `${keyword}ことがありました` })
       assert.equal(advice.safetyFirst, true, keyword)
       assert.equal(advice.safety, SAFETY)
-      assert.deepEqual(advice.freeTextNotes, [DANGER_NOTE], keyword)
-      for (const note of advice.freeTextNotes) assert.ok(!note.includes(keyword), keyword)
+      assert.equal(advice.safetyNote, DANGER_NOTE, keyword)
+      assert.ok(!advice.safetyNote.includes(keyword), keyword)
+      assert.deepEqual(advice.freeTextNotes, [], keyword)
     }
   })
 
@@ -229,7 +232,8 @@ describe('アドバイスへの反映', () => {
       assert.equal(advice.supportLines[0].tel, '0120-061-338')
       assert.deepEqual(advice.supportLines.slice(1), SUPPORT_LINES, keyword)
       // どの言葉に反応したかは、一行には出さない
-      assert.deepEqual(advice.freeTextNotes, [DANGER_NOTE], keyword)
+      assert.equal(advice.safetyNote, DANGER_NOTE, keyword)
+      assert.deepEqual(advice.freeTextNotes, [], keyword)
     }
   })
 
@@ -239,13 +243,32 @@ describe('アドバイスへの反映', () => {
     assert.deepEqual(advice.supportLines, SUPPORT_LINES)
   })
 
-  test('危険と困りごとの両方を読み取ったら、安全の一行を先に出す', () => {
+  test('危険と困りごとの両方を読み取ったら、安全の一行と困りごとの一行を分けて持つ', () => {
     const advice = adviceOf({ freeText: 'お金のことで怒鳴られました' })
     assert.equal(advice.safetyFirst, true)
+    assert.equal(advice.safetyNote, DANGER_NOTE)
     assert.deepEqual(advice.freeTextNotes, [
-      DANGER_NOTE,
       '詳しい内容から「お金の使い方が心配」も合わせて考えました',
     ])
+  })
+
+  test('「家に帰れない」「帰りたくない」→ 安全のカードを先に出す', () => {
+    for (const keyword of ADDED_DANGER_KEYWORDS) assert.ok(DANGER_KEYWORDS.includes(keyword))
+    for (const text of ['父といると落ち着かず、家に帰れない日があります', '実家に帰りたくないです']) {
+      const advice = adviceOf({ freeText: text })
+      assert.equal(advice.safetyFirst, true, text)
+      assert.equal(advice.safetyNote, DANGER_NOTE, text)
+      // 「死にたい」などではないので、#いのちSOS は足さない
+      assert.deepEqual(advice.supportLines, SUPPORT_LINES, text)
+    }
+  })
+
+  test('危険の言葉がなければ、安全の一行は無い（今の並びのまま）', () => {
+    for (const intake of [{}, { freeText: PLAIN }, { freeText: '疲れました' }]) {
+      const advice = adviceOf(intake)
+      assert.equal(advice.safetyFirst, false)
+      assert.equal(advice.safetyNote, null)
+    }
   })
 
   test('キーワードが無ければ今までどおり', () => {

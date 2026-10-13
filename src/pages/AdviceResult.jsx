@@ -48,13 +48,26 @@ export default function AdviceResult() {
 
       <div className="px-5 pb-12 pt-4 lg:mx-auto lg:max-w-page lg:px-8 lg:pb-16 lg:pt-6">
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-4">
-          {/* イントロ */}
-          <div className="rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4 text-center lg:col-start-1 lg:row-start-1 lg:py-6">
-            <p className="text-sm leading-relaxed text-ink-soft">
-              お話を受け止めました。すぐに全部を解決しようとしなくて大丈夫です。
-              <br />
-              できそうなものから、ひとつずつ。
-            </p>
+          <div className="space-y-4 lg:col-start-1 lg:row-start-1">
+            {/* イントロ */}
+            <div className="rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4 text-center lg:py-6">
+              <p className="text-sm leading-relaxed text-ink-soft">
+                お話を受け止めました。すぐに全部を解決しようとしなくて大丈夫です。
+                <br />
+                できそうなものから、ひとつずつ。
+              </p>
+            </div>
+
+            {/* 詳しい内容に危険を示す言葉があったときは、無理に話さなくていいカードを
+                イントロのすぐ下（スマホでも記事・相談内容のまとめより上）に出す */}
+            {a.safetyFirst && (
+              <>
+                {a.safetyNote && (
+                  <p className="px-1 text-sm leading-relaxed text-ink-soft">{a.safetyNote}</p>
+                )}
+                <SafetyCard safety={a.safety} lines={supportLines} />
+              </>
+            )}
           </div>
 
           {/* サイドバー（PCでは右列・追従） */}
@@ -92,15 +105,12 @@ export default function AdviceResult() {
               </p>
             )}
 
-            {/* 詳しい内容（自由記述）から読み取ったこと */}
+            {/* 詳しい内容（自由記述）から読み取った困りごと */}
             {a.freeTextNotes?.map((note) => (
               <p key={note} className="px-1 text-sm leading-relaxed text-ink-soft">
                 {note}
               </p>
             ))}
-
-            {/* 詳しい内容に危険を示す言葉があったときは、無理に話さなくていいカードを一番上に */}
-            {a.safetyFirst && <SafetyCard safety={a.safety} lines={supportLines} />}
 
             {/* 1. まず、あなた自身へ */}
             <AdviceCard
@@ -194,7 +204,7 @@ export default function AdviceResult() {
               </AdviceCard>
             )}
 
-            {/* 6. 無理に話さなくていい（safetyFirst のときは一番上に出している） */}
+            {/* 6. 無理に話さなくていい（safetyFirst のときはイントロのすぐ下に出している） */}
             {!a.safetyFirst && <SafetyCard safety={a.safety} lines={supportLines} />}
 
             {/* 7. 似た体験談（スマホ。PCではサイドバーに表示） */}
@@ -230,7 +240,7 @@ export default function AdviceResult() {
   )
 }
 
-// 無理に話さなくていいサイン。ふだんはアドバイスの最後、safetyFirst のときは一番上に出す
+// 無理に話さなくていいサイン。ふだんはアドバイスの最後、safetyFirst のときはイントロのすぐ下に出す
 // lines は電話で相談できる窓口。危険を示す言葉がないときも、このカードには常に出す
 function SafetyCard({ safety, lines }) {
   return (
