@@ -123,6 +123,31 @@ describe('recommendArticles', () => {
     assert.ok(top.reasons.includes(REASONS.safetySlot))
   })
 
+  test('政治の話題の相談 → 宗教の窓口が先頭に入らない（安全枠は話題が合う窓口だけ）', () => {
+    const religionConsult = {
+      ...byId('f-consult'),
+      id: 'f-consult-religion',
+      topics: ['religion_spiritual'],
+    }
+    const politicsCoping = {
+      ...byId('f-coping-angry'),
+      id: 'f-coping-politics',
+      topics: ['politics_society'],
+      concerns: ['money_worries'],
+    }
+    const articles = [religionConsult, politicsCoping]
+    const intake = { concerns: ['money_worries'], desiredSupport: ['coping_tips'] }
+
+    const politics = recommend({ ...intake, topics: ['politics_society'] }, articles)
+    assert.equal(politics.articles[0].article.id, 'f-coping-politics')
+    for (const r of politics.articles) assert.ok(!r.reasons.includes(REASONS.safetySlot))
+
+    // 話題が重なる相談では、今までどおり先頭に入る
+    const religion = recommend({ ...intake, topics: ['religion_spiritual'] }, articles)
+    assert.equal(religion.articles[0].article.id, 'f-consult-religion')
+    assert.ok(religion.articles[0].reasons.includes(REASONS.safetySlot))
+  })
+
   test('かなり距離を置きたい → keep_connection の記事が、同じ条件の distance の記事より下', () => {
     const pair = [byId('f-keep'), byId('f-distance')]
     const result = recommend(

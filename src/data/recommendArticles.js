@@ -215,7 +215,12 @@ export function recommendArticles(
   }
 
   if (profile.needsSafetySlot) {
-    const safety = scored.find((s) => s.article.supportTypes.includes('consultation_service'))
+    // 話題の合わない窓口（政治の相談に宗教の窓口など）は先頭に入れない。該当がなければ入れない
+    const safety = scored.find(
+      (s) =>
+        s.article.supportTypes.includes('consultation_service') &&
+        (isAny(s.article.topics) || overlaps(s.article.topics, profile.topics)),
+    )
     if (safety) {
       const rest = picked.filter((s) => s.article.id !== safety.article.id)
       const already = picked.find((s) => s.article.id === safety.article.id)
