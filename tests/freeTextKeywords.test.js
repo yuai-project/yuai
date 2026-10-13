@@ -14,6 +14,7 @@ import {
 } from '../src/data/consultationIntake.js'
 import {
   CONCERN_KEYWORDS,
+  CRISIS_KEYWORDS,
   DANGER_KEYWORDS,
   mergeFreeText,
   readFreeText,
@@ -24,6 +25,7 @@ import {
   recommendArticles,
   toRecommendationProfile,
 } from '../src/data/recommendArticles.js'
+import { CRISIS_SUPPORT_LINE, SUPPORT_LINES } from '../src/data/supportLines.js'
 import { FIXTURE_FALLBACK_IDS, fixtureArticles } from './fixtures/recommendArticles.js'
 
 const requestOf = (intake = {}) => buildAdviceRequest({ ...initialIntake, ...intake })
@@ -57,18 +59,45 @@ describe('readFreeText', () => {
     for (const keyword of DANGER_KEYWORDS) {
       assert.equal(readFreeText(`${keyword}ことがありました`).danger, true, keyword)
     }
-    assert.deepEqual(readFreeText('脅されています'), { concerns: [], danger: true })
+    assert.deepEqual(readFreeText('脅されています'), { concerns: [], danger: true, crisis: false })
+  })
+
+  test('「死にたい」「消えたい」「いなくなりたい」は danger かつ crisis', () => {
+    assert.deepEqual(CRISIS_KEYWORDS, ['死にたい', '消えたい', 'いなくなりたい'])
+    for (const keyword of CRISIS_KEYWORDS) {
+      assert.ok(DANGER_KEYWORDS.includes(keyword), keyword)
+      const read = readFreeText(`もう${keyword}と思うことがあります`)
+      assert.equal(read.danger, true, keyword)
+      assert.equal(read.crisis, true, keyword)
+    }
+  })
+
+  test('ほかの危険のキーワードは crisis にしない', () => {
+    for (const keyword of DANGER_KEYWORDS.filter((k) => !CRISIS_KEYWORDS.includes(k))) {
+      assert.equal(readFreeText(`${keyword}ことがありました`).crisis, false, keyword)
+    }
+  })
+
+  test('「怖い」は危険のキーワードにしない（相手の言葉にも反応してしまうため）', () => {
+    assert.ok(!DANGER_KEYWORDS.includes('怖い'))
+    for (const text of ['母がワクチンは怖いと言っています', '将来が怖いです']) {
+      assert.deepEqual(readFreeText(text), { concerns: [], danger: false, crisis: false })
+    }
   })
 
   test('キーワードが無ければ何も読み取らない', () => {
     for (const text of [PLAIN, '', '   ', null, undefined, 123]) {
-      assert.deepEqual(readFreeText(text), { concerns: [], danger: false })
+      assert.deepEqual(readFreeText(text), { concerns: [], danger: false, crisis: false })
     }
   })
 
   test('複数の困りごとを一度に読み取る。順番は表の順で、重複しない', () => {
     const read = readFreeText('彼女が政治の話ばかりして疲れます。毎回同じ話で疲れました。')
-    assert.deepEqual(read, { concerns: ['self_exhausted', 'repeats_same_topic'], danger: false })
+    assert.deepEqual(read, {
+      concerns: ['self_exhausted', 'repeats_same_topic'],
+      danger: false,
+      crisis: false,
+    })
   })
 
   test('全角・半角の表記ゆれをそろえて読む', () => {
@@ -120,6 +149,7 @@ describe('mergeFreeText', () => {
       concerns: [],
       inferredConcerns: [],
       danger: false,
+      crisis: false,
     })
   })
 })
@@ -172,6 +202,41 @@ describe('アドバイスへの反映', () => {
       assert.deepEqual(advice.freeTextNotes, [DANGER_NOTE], keyword)
       for (const note of advice.freeTextNotes) assert.ok(!note.includes(keyword), keyword)
     }
+  })
+
+  test('「怖い」では安全のカードが先頭にならない', () => {
+    const advice = adviceOf({ freeText: '母がワクチンは怖いと言って、話を聞いてくれません' })
+    assert.equal(advice.safetyFirst, false)
+    assert.deepEqual(advice.freeTextNotes, [])
+    assert.deepEqual(advice.supportLines, SUPPORT_LINES)
+  })
+
+  test('危険の言葉がなくても、安全のカードに出す窓口が入っている', () => {
+    for (const intake of [{}, { concerns: ['angry_when_disagreed'] }, { freeText: PLAIN }]) {
+      const advice = adviceOf(intake)
+      assert.equal(advice.safetyFirst, false)
+      assert.deepEqual(advice.supportLines, SUPPORT_LINES)
+      assert.ok(advice.supportLines.length > 0)
+    }
+    assert.deepEqual(buildAdvice(undefined).supportLines, SUPPORT_LINES)
+  })
+
+  test('「死にたい」「消えたい」「いなくなりたい」→ #いのちSOS が窓口の先頭に入る', () => {
+    for (const keyword of CRISIS_KEYWORDS) {
+      const advice = adviceOf({ freeText: `もう${keyword}です` })
+      assert.equal(advice.safetyFirst, true, keyword)
+      assert.equal(advice.supportLines[0], CRISIS_SUPPORT_LINE, keyword)
+      assert.equal(advice.supportLines[0].tel, '0120-061-338')
+      assert.deepEqual(advice.supportLines.slice(1), SUPPORT_LINES, keyword)
+      // どの言葉に反応したかは、一行には出さない
+      assert.deepEqual(advice.freeTextNotes, [DANGER_NOTE], keyword)
+    }
+  })
+
+  test('ほかの危険のキーワードでは、#いのちSOS は足さない（いつもの窓口だけ）', () => {
+    const advice = adviceOf({ freeText: '怒鳴られることがあります' })
+    assert.equal(advice.safetyFirst, true)
+    assert.deepEqual(advice.supportLines, SUPPORT_LINES)
   })
 
   test('危険と困りごとの両方を読み取ったら、安全の一行を先に出す', () => {

@@ -22,6 +22,7 @@ import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.js'
 import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.js'
 import { mergeFreeText } from './freeTextKeywords.js'
 import { selectRelatedStoryIds } from './relatedStories.js'
+import { getSupportLines } from './supportLines.js'
 
 const DISTANCE_VALUES = ['some_distance', 'more_distance']
 
@@ -83,6 +84,9 @@ export function buildAdvice(request) {
     freeTextNotes: freeTextNotesOf(freeText),
     // true のとき、safety の枠を一番上に出す（詳しい内容に危険を示す言葉があった）
     safetyFirst: freeText.danger,
+    // safety の枠の中に出す、電話で相談できる窓口（7つの枠の外）。
+    // 番号を間違えると危ないので、AI を足すときも AI には作らせず、supportLines.js から入れる
+    supportLines: getSupportLines({ crisis: freeText.crisis }),
 
     // angry に専用の文章はないので default を使う
     forYou: FOR_YOU[cardKey] ?? FOR_YOU.default,

@@ -5,6 +5,7 @@ import {
   MessageSquareQuote,
   HelpCircle,
   LifeBuoy,
+  Phone,
   ArrowRight,
 } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -15,10 +16,12 @@ import Header from '../components/Header'
 import DesiredSupportCard from '../components/intake/DesiredSupportCard'
 import IntakeSummary from '../components/intake/IntakeSummary'
 import StoryCard from '../components/StoryCard'
+import SupportLineList from '../components/SupportLineList'
 import Tag from '../components/Tag'
 import { buildAdvice } from '../data/mockAdvice'
 import { getStoriesByIds } from '../data/mockStories'
 import { recommendArticles } from '../data/recommendArticles'
+import { getSupportLines } from '../data/supportLines'
 
 // STEP の番号を振る枠（表示順）。SAFETY と似た体験談には番号を振らない。
 const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'askNext']
@@ -35,6 +38,7 @@ export default function AdviceResult() {
     STEP_SECTIONS.filter((key) => a[key]).map((key, i) => [key, `STEP ${i + 1}`]),
   )
   const related = getStoriesByIds(a.relatedStoryIds)
+  const supportLines = a.supportLines ?? getSupportLines()
   // フォームの回答に合う記事。直接開いた場合は出さない。
   const recommended = request ? recommendArticles(request) : null
 
@@ -96,7 +100,7 @@ export default function AdviceResult() {
             ))}
 
             {/* 詳しい内容に危険を示す言葉があったときは、無理に話さなくていいカードを一番上に */}
-            {a.safetyFirst && <SafetyCard safety={a.safety} />}
+            {a.safetyFirst && <SafetyCard safety={a.safety} lines={supportLines} />}
 
             {/* 1. まず、あなた自身へ */}
             <AdviceCard
@@ -191,7 +195,7 @@ export default function AdviceResult() {
             )}
 
             {/* 6. 無理に話さなくていい（safetyFirst のときは一番上に出している） */}
-            {!a.safetyFirst && <SafetyCard safety={a.safety} />}
+            {!a.safetyFirst && <SafetyCard safety={a.safety} lines={supportLines} />}
 
             {/* 7. 似た体験談（スマホ。PCではサイドバーに表示） */}
             <section className="pt-2 lg:hidden">
@@ -227,7 +231,8 @@ export default function AdviceResult() {
 }
 
 // 無理に話さなくていいサイン。ふだんはアドバイスの最後、safetyFirst のときは一番上に出す
-function SafetyCard({ safety }) {
+// lines は電話で相談できる窓口。危険を示す言葉がないときも、このカードには常に出す
+function SafetyCard({ safety, lines }) {
   return (
     <AdviceCard icon={LifeBuoy} step="SAFETY" title={safety.title} tone="safety">
       <ul className="mb-3 grid grid-cols-1 gap-2">
@@ -242,6 +247,11 @@ function SafetyCard({ safety }) {
         ))}
       </ul>
       <p className="leading-relaxed text-calm-700">{safety.body}</p>
+      <h3 className="mt-4 flex items-center gap-1.5 text-sm font-bold text-calm-700">
+        <Phone size={15} />
+        電話で相談できる窓口
+      </h3>
+      <SupportLineList lines={lines} />
     </AdviceCard>
   )
 }

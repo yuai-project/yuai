@@ -1,8 +1,8 @@
-// マイページの「つらいときの相談窓口」に載せる電話窓口。
+// マイページの「つらいときの相談窓口」と、結果画面の安全のカードに載せる電話窓口。
 // 番号や受付時間は変わることがあるので、載せる前・見直すときは出典で確かめる。
 //
 // 出典（確認日: 2026-10-13）
-// - よりそいホットライン / こころの健康相談統一ダイヤル:
+// - #いのちSOS / よりそいホットライン / こころの健康相談統一ダイヤル:
 //   厚生労働省「まもろうよ こころ」電話相談 https://www.mhlw.go.jp/mamorouyokokoro/soudan/tel
 // - 消費者ホットライン:
 //   政府広報オンライン https://www.gov-online.go.jp/kurashinosodan/list/fu_caa.html
@@ -37,6 +37,16 @@ export const SUPPORT_LINES = [
   },
 ]
 
+// 「死にたい」と感じるほどつらいときの窓口。
+// いつもは出さず、詳しい内容（自由記述）にそうした言葉があったときだけ、一覧の一番上に足す。
+export const CRISIS_SUPPORT_LINE = {
+  id: 'inochi-sos',
+  name: '#いのちSOS',
+  tel: '0120-061-338',
+  note: '無料・24時間',
+  description: '「死にたい」と感じるほどつらいときに相談できます。',
+}
+
 // 窓口の一覧に添える注記
 export const SUPPORT_LINES_NOTICE =
   '番号や受付時間は変わることがあります。最新の情報は各窓口の公式サイトでご確認ください。'
@@ -45,6 +55,7 @@ export const SUPPORT_LINES_NOTICE =
 export const telHref = (tel) => `tel:${tel.replace(/[^\d+]/g, '')}`
 
 // 差し替え時はここだけ書き換える。
-export function getSupportLines() {
-  return SUPPORT_LINES
+// crisis: true のときは、#いのちSOS を一番上に足す。
+export function getSupportLines({ crisis = false } = {}) {
+  return crisis ? [CRISIS_SUPPORT_LINE, ...SUPPORT_LINES] : SUPPORT_LINES
 }
