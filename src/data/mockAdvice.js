@@ -22,6 +22,7 @@ import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.js'
 import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.js'
 import { mergeFreeText } from './freeTextKeywords.js'
 import { selectRelatedStoryIds } from './relatedStories.js'
+import { getSupportLines } from './supportLines.js'
 
 const DISTANCE_VALUES = ['some_distance', 'more_distance']
 
@@ -50,18 +51,15 @@ function matchedLabelOf(cardKey, request) {
   return `「${labelOf(CONCERNS, concern)}」を選んだあなたへ`
 }
 
-// 詳しい内容（自由記述）から読み取ったことを伝える行。読み取ったものが無ければ []。
-// 危険を示す言葉については、どの言葉に反応したかを出さない。
-function freeTextNotesOf({ inferredConcerns, danger }) {
-  const notes = []
-  if (danger) {
-    notes.push('詳しい内容から、あなたの安全が心配な状況かもしれないと考えました')
-  }
-  if (inferredConcerns.length > 0) {
-    const labels = inferredConcerns.map((c) => `「${labelOf(CONCERNS, c)}」`).join('')
-    notes.push(`詳しい内容から${labels}も合わせて考えました`)
-  }
-  return notes
+// 詳しい内容（自由記述）に危険を示す言葉があったときに、安全のカードの上に出す一行。
+// どの言葉に反応したかは出さない。
+export const SAFETY_NOTE = '詳しい内容から、あなたの安全が心配な状況かもしれないと考えました'
+
+// 詳しい内容（自由記述）から読み取った困りごとを伝える行。読み取ったものが無ければ []。
+function freeTextNotesOf({ inferredConcerns }) {
+  if (inferredConcerns.length === 0) return []
+  const labels = inferredConcerns.map((c) => `「${labelOf(CONCERNS, c)}」`).join('')
+  return [`詳しい内容から${labels}も合わせて考えました`]
 }
 
 const withTitle = (key, section) =>
@@ -79,10 +77,15 @@ export function buildAdvice(request) {
   return {
     // どの回答に合わせたか（7つの枠の外。画面ではアドバイスの先頭に出す）
     matchedLabel: matchedLabelOf(cardKey, request),
-    // 詳しい内容から読み取ったこと（7つの枠の外。matchedLabel の下に出す）
+    // 詳しい内容から読み取った困りごと（7つの枠の外。matchedLabel の下に出す）
     freeTextNotes: freeTextNotesOf(freeText),
-    // true のとき、safety の枠を一番上に出す（詳しい内容に危険を示す言葉があった）
+    // true のとき、safety の枠をイントロのすぐ下（記事・相談内容のまとめより上）に出す。
+    // 詳しい内容に危険を示す言葉があったとき。safetyNote はその上に添える一行（無ければ null）
     safetyFirst: freeText.danger,
+    safetyNote: freeText.danger ? SAFETY_NOTE : null,
+    // safety の枠の中に出す、電話で相談できる窓口（7つの枠の外）。
+    // 番号を間違えると危ないので、AI を足すときも AI には作らせず、supportLines.js から入れる
+    supportLines: getSupportLines({ crisis: freeText.crisis }),
 
     // angry に専用の文章はないので default を使う
     forYou: FOR_YOU[cardKey] ?? FOR_YOU.default,

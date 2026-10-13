@@ -3,9 +3,9 @@
 // - 純関数のみ。入力した文章は外に送らず、ブラウザの中だけで処理する。
 // - 読み取った困りごとは、フォームで選んだ困りごとに「足す」だけ。選んだものは消さない。
 // - キーワードが含まれているかを見るだけなので、否定の文（「疲れてはいない」）や、
-//   相手の言葉の引用（「怖いと言っている」）も拾ってしまう。
+//   相手の言葉の引用（「死にたいと言っている」）も拾ってしまう。
 // - 将来 AI に置き換えるときは、readFreeText() の中身だけを差し替える。
-//   戻り値の形（{ concerns, danger }）を変えなければ、使う側は変更不要。
+//   戻り値の形（{ concerns, danger, crisis }）を変えなければ、使う側は変更不要。
 //
 // 注意: キーワードは下書きで、チーム・専門家の確認前。
 
@@ -22,30 +22,48 @@ export const CONCERN_KEYWORDS = {
 
 // 危険を示すキーワード。困りごとではなく、安全の印として扱う。
 // どの言葉に反応したかは、画面に出さない。
-export const DANGER_KEYWORDS = ['殴', '叩かれ', '暴力', '脅', '怒鳴', '怖い', '死にたい']
+// 「怖い」は相手の言葉（「ワクチンが怖いと言っている」など）にも反応してしまうので入れない。
+export const DANGER_KEYWORDS = [
+  '殴',
+  '叩かれ',
+  '暴力',
+  '脅',
+  '怒鳴',
+  '死にたい',
+  '消えたい',
+  'いなくなりたい',
+  '家に帰れない',
+  '帰りたくない',
+]
+
+// 危険のキーワードのうち、「死にたい」と感じるほどつらい気持ちを示すもの。
+// これがあるときは、窓口の一番上に #いのちSOS を足す（supportLines.js）。
+export const CRISIS_KEYWORDS = ['死にたい', '消えたい', 'いなくなりたい']
 
 // 全角・半角などの表記ゆれをそろえる
 const normalize = (text) => (typeof text === 'string' ? text.normalize('NFKC') : '')
 
 const includesAny = (text, keywords) => keywords.some((k) => text.includes(normalize(k)))
 
-// 自由記述 → { concerns: 読み取った困りごと, danger: 危険を示す言葉があるか }。
+// 自由記述 → { concerns: 読み取った困りごと, danger: 危険を示す言葉があるか,
+//               crisis: 「死にたい」と感じるほどつらい気持ちを示す言葉があるか }。
 // concerns は CONCERN_KEYWORDS の並び順で、重複なし。
 export function readFreeText(text) {
   const normalized = normalize(text)
-  if (normalized.trim() === '') return { concerns: [], danger: false }
+  if (normalized.trim() === '') return { concerns: [], danger: false, crisis: false }
   return {
     concerns: Object.entries(CONCERN_KEYWORDS)
       .filter(([, keywords]) => includesAny(normalized, keywords))
       .map(([concern]) => concern),
     danger: includesAny(normalized, DANGER_KEYWORDS),
+    crisis: includesAny(normalized, CRISIS_KEYWORDS),
   }
 }
 
 // フォームの回答（buildAdviceRequest() の戻り値）に、自由記述から読み取った困りごとを足す。
 // - concerns: フォームで選んだもの ＋ 読み取ったもの（選んだものが先。消さない）
 // - inferredConcerns: 読み取って新しく足したものだけ
-// - danger: 危険を示す言葉があるか
+// - danger / crisis: readFreeText() と同じ
 export function mergeFreeText(request) {
   const selected = Array.isArray(request?.concerns) ? request.concerns : []
   const read = readFreeText(request?.freeText)
@@ -54,5 +72,6 @@ export function mergeFreeText(request) {
     concerns: [...selected, ...inferredConcerns],
     inferredConcerns,
     danger: read.danger,
+    crisis: read.crisis,
   }
 }

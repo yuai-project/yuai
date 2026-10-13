@@ -5,6 +5,7 @@ import {
   MessageSquareQuote,
   HelpCircle,
   LifeBuoy,
+  Phone,
   ArrowRight,
 } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -15,10 +16,12 @@ import Header from '../components/Header'
 import DesiredSupportCard from '../components/intake/DesiredSupportCard'
 import IntakeSummary from '../components/intake/IntakeSummary'
 import StoryCard from '../components/StoryCard'
+import SupportLineList from '../components/SupportLineList'
 import Tag from '../components/Tag'
 import { buildAdvice } from '../data/mockAdvice'
 import { getStoriesByIds } from '../data/mockStories'
 import { recommendArticles } from '../data/recommendArticles'
+import { getSupportLines } from '../data/supportLines'
 
 // STEP の番号を振る枠（表示順）。SAFETY と似た体験談には番号を振らない。
 const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'askNext']
@@ -35,6 +38,7 @@ export default function AdviceResult() {
     STEP_SECTIONS.filter((key) => a[key]).map((key, i) => [key, `STEP ${i + 1}`]),
   )
   const related = getStoriesByIds(a.relatedStoryIds)
+  const supportLines = a.supportLines ?? getSupportLines()
   // フォームの回答に合う記事。直接開いた場合は出さない。
   const recommended = request ? recommendArticles(request) : null
 
@@ -44,13 +48,26 @@ export default function AdviceResult() {
 
       <div className="px-5 pb-12 pt-4 lg:mx-auto lg:max-w-page lg:px-8 lg:pb-16 lg:pt-6">
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-4">
-          {/* イントロ */}
-          <div className="rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4 text-center lg:col-start-1 lg:row-start-1 lg:py-6">
-            <p className="text-sm leading-relaxed text-ink-soft">
-              お話を受け止めました。すぐに全部を解決しようとしなくて大丈夫です。
-              <br />
-              できそうなものから、ひとつずつ。
-            </p>
+          <div className="space-y-4 lg:col-start-1 lg:row-start-1">
+            {/* イントロ */}
+            <div className="rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4 text-center lg:py-6">
+              <p className="text-sm leading-relaxed text-ink-soft">
+                お話を受け止めました。すぐに全部を解決しようとしなくて大丈夫です。
+                <br />
+                できそうなものから、ひとつずつ。
+              </p>
+            </div>
+
+            {/* 詳しい内容に危険を示す言葉があったときは、無理に話さなくていいカードを
+                イントロのすぐ下（スマホでも記事・相談内容のまとめより上）に出す */}
+            {a.safetyFirst && (
+              <>
+                {a.safetyNote && (
+                  <p className="px-1 text-sm leading-relaxed text-ink-soft">{a.safetyNote}</p>
+                )}
+                <SafetyCard safety={a.safety} lines={supportLines} />
+              </>
+            )}
           </div>
 
           {/* サイドバー（PCでは右列・追従） */}
@@ -88,15 +105,12 @@ export default function AdviceResult() {
               </p>
             )}
 
-            {/* 詳しい内容（自由記述）から読み取ったこと */}
+            {/* 詳しい内容（自由記述）から読み取った困りごと */}
             {a.freeTextNotes?.map((note) => (
               <p key={note} className="px-1 text-sm leading-relaxed text-ink-soft">
                 {note}
               </p>
             ))}
-
-            {/* 詳しい内容に危険を示す言葉があったときは、無理に話さなくていいカードを一番上に */}
-            {a.safetyFirst && <SafetyCard safety={a.safety} />}
 
             {/* 1. まず、あなた自身へ */}
             <AdviceCard
@@ -190,8 +204,8 @@ export default function AdviceResult() {
               </AdviceCard>
             )}
 
-            {/* 6. 無理に話さなくていい（safetyFirst のときは一番上に出している） */}
-            {!a.safetyFirst && <SafetyCard safety={a.safety} />}
+            {/* 6. 無理に話さなくていい（safetyFirst のときはイントロのすぐ下に出している） */}
+            {!a.safetyFirst && <SafetyCard safety={a.safety} lines={supportLines} />}
 
             {/* 7. 似た体験談（スマホ。PCではサイドバーに表示） */}
             <section className="pt-2 lg:hidden">
@@ -226,8 +240,9 @@ export default function AdviceResult() {
   )
 }
 
-// 無理に話さなくていいサイン。ふだんはアドバイスの最後、safetyFirst のときは一番上に出す
-function SafetyCard({ safety }) {
+// 無理に話さなくていいサイン。ふだんはアドバイスの最後、safetyFirst のときはイントロのすぐ下に出す
+// lines は電話で相談できる窓口。危険を示す言葉がないときも、このカードには常に出す
+function SafetyCard({ safety, lines }) {
   return (
     <AdviceCard icon={LifeBuoy} step="SAFETY" title={safety.title} tone="safety">
       <ul className="mb-3 grid grid-cols-1 gap-2">
@@ -242,6 +257,11 @@ function SafetyCard({ safety }) {
         ))}
       </ul>
       <p className="leading-relaxed text-calm-700">{safety.body}</p>
+      <h3 className="mt-4 flex items-center gap-1.5 text-sm font-bold text-calm-700">
+        <Phone size={15} />
+        電話で相談できる窓口
+      </h3>
+      <SupportLineList lines={lines} />
     </AdviceCard>
   )
 }
