@@ -10,10 +10,11 @@ import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import { APP } from '../config'
 
+// 履歴・保存・共感はまだ保存していないので、件数は出さず「準備中」とする
 const menu = [
-  { icon: MessageCircleHeart, label: '過去の相談履歴', note: 'プロト版では未保存' },
-  { icon: Bookmark, label: '保存した体験談', note: '3件' },
-  { icon: Heart, label: '共感した体験談', note: '5件' },
+  { icon: MessageCircleHeart, label: '過去の相談履歴', note: '準備中' },
+  { icon: Bookmark, label: '保存した体験談', note: '準備中' },
+  { icon: Heart, label: '共感した体験談', note: '準備中' },
   { icon: Settings, label: '設定', note: '' },
 ]
 
