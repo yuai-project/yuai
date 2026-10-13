@@ -1,5 +1,4 @@
 import {
-  Bookmark,
   MessageCircleHeart,
   Phone,
   ChevronRight,
@@ -12,11 +11,9 @@ import SupportLineList from '../components/SupportLineList'
 import { APP } from '../config'
 import { getSupportLines } from '../data/supportLines'
 
-// 履歴・保存・共感はまだ保存していないので、件数は出さず「準備中」とする
+// 履歴はまだ保存していないので、件数は出さず「準備中」とする
 const menu = [
   { icon: MessageCircleHeart, label: '過去の相談履歴', note: '準備中' },
-  { icon: Bookmark, label: '保存した体験談', note: '準備中' },
-  { icon: Heart, label: '共感した体験談', note: '準備中' },
   { icon: Settings, label: '設定', note: '' },
 ]
 

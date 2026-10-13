@@ -1,4 +1,4 @@
-import { Outlet, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
 import DocumentTitle from './components/DocumentTitle'
 import ScrollToTop from './components/ScrollToTop'
@@ -7,9 +7,6 @@ import SiteHeader from './components/SiteHeader'
 import Home from './pages/Home'
 import Consultation from './pages/Consultation'
 import AdviceResult from './pages/AdviceResult'
-import Stories from './pages/Stories'
-import StoryDetail from './pages/StoryDetail'
-import NewStory from './pages/NewStory'
 import MyPage from './pages/MyPage'
 
 // アプリシェル
@@ -39,10 +36,9 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/consult" element={<Consultation />} />
         <Route path="/consult/result" element={<AdviceResult />} />
-        <Route path="/stories" element={<Stories />} />
-        <Route path="/stories/new" element={<NewStory />} />
-        <Route path="/stories/:id" element={<StoryDetail />} />
         <Route path="/mypage" element={<MyPage />} />
+        {/* 体験談のページは外した（#148）。古い URL（/stories、/stories/s1 など）はトップに戻す */}
+        <Route path="/stories/*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   )

@@ -1,6 +1,5 @@
 import {
   MessageCircleHeart,
-  BookOpen,
   Flame,
   HelpCircle,
   BatteryLow,
@@ -65,13 +64,6 @@ export default function Home() {
             >
               <MessageCircleHeart size={20} />
               相談してみる
-            </button>
-            <button
-              onClick={() => navigate('/stories')}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-brand bg-surface py-3.5 font-bold text-brand-700 transition hover:bg-brand-50 active:scale-[0.98]"
-            >
-              <BookOpen size={20} />
-              みんなの体験談を見る
             </button>
           </div>
         </div>
