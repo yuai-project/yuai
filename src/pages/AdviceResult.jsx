@@ -16,17 +16,24 @@ import DesiredSupportCard from '../components/intake/DesiredSupportCard'
 import IntakeSummary from '../components/intake/IntakeSummary'
 import StoryCard from '../components/StoryCard'
 import Tag from '../components/Tag'
-import { mockAdvice } from '../data/mockAdvice'
+import { buildAdvice } from '../data/mockAdvice'
 import { getStoriesByIds } from '../data/mockStories'
 import { recommendArticles } from '../data/recommendArticles'
+
+// STEP の番号を振る枠（表示順）。SAFETY と似た体験談には番号を振らない。
+const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'askNext']
 
 // スマホ: イントロ → サポート/記事/まとめ → アドバイス → 似た体験談 の1カラム。
 // PC: 左2/3にイントロとアドバイス、右1/3に サポート/記事/まとめ/似た体験談 の追従サイドバー。
 export default function AdviceResult() {
   const navigate = useNavigate()
-  // 相談フォームから来た場合は入力内容と回答を受け取る。直接開いた場合はモックのみ表示。
+  // 相談フォームから来た場合は入力内容と回答を受け取る。直接開いた場合は、どの回答にも寄せないアドバイスを表示。
   const { intake, request, advice } = useLocation().state ?? {}
-  const a = advice ?? mockAdvice
+  const a = advice ?? buildAdvice(request)
+  // STEP の番号は、出す枠（null でない枠）に合わせて振る
+  const stepOf = Object.fromEntries(
+    STEP_SECTIONS.filter((key) => a[key]).map((key, i) => [key, `STEP ${i + 1}`]),
+  )
   const related = getStoriesByIds(a.relatedStoryIds)
   // フォームの回答に合う記事。直接開いた場合は出さない。
   const recommended = request ? recommendArticles(request) : null
@@ -74,40 +81,49 @@ export default function AdviceResult() {
           </aside>
 
           <div className="space-y-4 lg:col-start-1 lg:row-start-2">
+            {/* どの回答に合わせたか */}
+            {a.matchedLabel && (
+              <p className="px-1 text-sm font-semibold text-brand-700">
+                {a.matchedLabel}
+              </p>
+            )}
+
             {/* 1. まず、あなた自身へ */}
             <AdviceCard
               icon={Heart}
-              step="STEP 1"
+              step={stepOf.forYou}
               title={a.forYou.title}
               tone="you"
             >
               <p>{a.forYou.body}</p>
             </AdviceCard>
 
-            {/* 2. 今起きていること（仮説） */}
-            <AdviceCard
-              icon={Lightbulb}
-              step="STEP 2"
-              title={a.whatMayBeHappening.title}
-              tone="neutral"
-            >
-              <ul className="space-y-2">
-                {a.whatMayBeHappening.hypotheses.map((h, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand-600/70" />
-                    <span>{h}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 rounded-lg bg-cream px-3 py-2 text-xs text-ink-faint">
-                ※ {a.whatMayBeHappening.note}
-              </p>
-            </AdviceCard>
+            {/* 2. 今起きていること（仮説）。今は常に null で、出さない */}
+            {a.whatMayBeHappening && (
+              <AdviceCard
+                icon={Lightbulb}
+                step={stepOf.whatMayBeHappening}
+                title={a.whatMayBeHappening.title}
+                tone="neutral"
+              >
+                <ul className="space-y-2">
+                  {a.whatMayBeHappening.hypotheses.map((h, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand-600/70" />
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 rounded-lg bg-cream px-3 py-2 text-xs text-ink-faint">
+                  ※ {a.whatMayBeHappening.note}
+                </p>
+              </AdviceCard>
+            )}
 
             {/* 3. 避けたい対応 */}
             <AdviceCard
               icon={Ban}
-              step="STEP 3"
+              step={stepOf.avoid}
               title={a.avoid.title}
               tone="avoid"
             >
@@ -129,7 +145,7 @@ export default function AdviceResult() {
             {/* 4. こんな返し方（コピー可能） */}
             <AdviceCard
               icon={MessageSquareQuote}
-              step="STEP 4"
+              step={stepOf.tryReplies}
               title={a.tryReplies.title}
               tone="try"
             >
@@ -143,24 +159,26 @@ export default function AdviceResult() {
               </div>
             </AdviceCard>
 
-            {/* 5. 次に聞いてみる質問 */}
-            <AdviceCard
-              icon={HelpCircle}
-              step="STEP 5"
-              title={a.askNext.title}
-              tone="neutral"
-            >
-              <ol className="space-y-2">
-                {a.askNext.items.map((q, i) => (
-                  <li key={i} className="flex gap-2.5">
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
-                      {i + 1}
-                    </span>
-                    <span>{q}</span>
-                  </li>
-                ))}
-              </ol>
-            </AdviceCard>
+            {/* 5. 次に聞いてみる質問。持たないカードでは出さない */}
+            {a.askNext && (
+              <AdviceCard
+                icon={HelpCircle}
+                step={stepOf.askNext}
+                title={a.askNext.title}
+                tone="neutral"
+              >
+                <ol className="space-y-2">
+                  {a.askNext.items.map((q, i) => (
+                    <li key={i} className="flex gap-2.5">
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+                        {i + 1}
+                      </span>
+                      <span>{q}</span>
+                    </li>
+                  ))}
+                </ol>
+              </AdviceCard>
+            )}
 
             {/* 6. 無理に話さなくていい */}
             <AdviceCard
