@@ -109,13 +109,12 @@ describe('アドバイスの形', () => {
     'tryReplies',
     'askNext',
     'safety',
-    'relatedStoryIds',
   ]
 
   for (const key of CARD_KEYS) {
     const advice = adviceOf(INTAKE_OF[key])
 
-    test(`${key}: 7つの枠のキーがそろっている`, () => {
+    test(`${key}: 6つの枠のキーがそろっている`, () => {
       for (const k of SHAPE) assert.ok(k in advice, k)
     })
 
@@ -209,8 +208,8 @@ describe('続柄が文章に出ない', () => {
   const KINSHIP =
     /お?[父母](さま|さん|親)?|両親|息子|娘|お子さ|子ども|(?<!丈)夫|妻|旦那|奥さ|[兄弟姉妹]|祖父|祖母|おじい|おばあ|親戚|友人|友達|恋人|パートナー|彼氏/
 
-  // 利用者に見える文字列だけを集める（relatedStoryIds は ID なので除く）
-  const textsOf = ({ relatedStoryIds: _ids, ...advice }) => {
+  // 利用者に見える文字列だけを集める
+  const textsOf = (advice) => {
     const out = []
     const walk = (v) => {
       if (typeof v === 'string') out.push(v)

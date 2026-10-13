@@ -12,8 +12,8 @@ description: 利用者の目に触れる日本語文言が、Yorido のプロダ
 
 利用者の画面に出る日本語すべて。
 
-- `src/data/mockAdvice.js` — AI回答の7セクション（**最重要**）
-- `src/data/mockStories.js` — 体験談
+- `src/data/adviceCards.js` / `src/data/mockAdvice.js` — アドバイスの6セクション（**最重要**）
+- `src/data/articles.json` — 記事の要約（体験談の記事を含む。体験談のモックは #148 で削除済み）
 - `src/config.js` — サービス名・タグライン・コンセプト
 - `src/pages/*.jsx` / `src/components/*.jsx` — 見出し・説明文・ボタン・プレースホルダ・エラー文言
 - LLM に渡すシステムプロンプト（API 接続後）

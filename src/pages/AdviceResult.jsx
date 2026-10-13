@@ -6,28 +6,26 @@ import {
   HelpCircle,
   LifeBuoy,
   Phone,
-  ArrowRight,
 } from 'lucide-react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import AdviceCard from '../components/AdviceCard'
 import ArticleRecommendations from '../components/ArticleRecommendations'
 import CopyableLine from '../components/CopyableLine'
 import Header from '../components/Header'
 import DesiredSupportCard from '../components/intake/DesiredSupportCard'
 import IntakeSummary from '../components/intake/IntakeSummary'
-import StoryCard from '../components/StoryCard'
 import SupportLineList from '../components/SupportLineList'
 import Tag from '../components/Tag'
 import { buildAdvice } from '../data/mockAdvice'
-import { getStoriesByIds } from '../data/mockStories'
 import { recommendArticles } from '../data/recommendArticles'
 import { getSupportLines } from '../data/supportLines'
 
-// STEP の番号を振る枠（表示順）。SAFETY と似た体験談には番号を振らない。
+// STEP の番号を振る枠（表示順）。SAFETY には番号を振らない。
 const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'askNext']
 
-// スマホ: イントロ → サポート/記事/まとめ → アドバイス → 似た体験談 の1カラム。
-// PC: 左2/3にイントロとアドバイス、右1/3に サポート/記事/まとめ/似た体験談 の追従サイドバー。
+// スマホ: イントロ → サポート/記事/まとめ → アドバイス の1カラム。
+// PC: 左2/3にイントロとアドバイス、右1/3に サポート/記事/まとめ の追従サイドバー。
+// 直接開いた場合（フォームの回答が無い）は、サイドバーに出すものが無いので1カラム。
 export default function AdviceResult() {
   const navigate = useNavigate()
   // 相談フォームから来た場合は入力内容と回答を受け取る。直接開いた場合は、どの回答にも寄せないアドバイスを表示。
@@ -37,7 +35,6 @@ export default function AdviceResult() {
   const stepOf = Object.fromEntries(
     STEP_SECTIONS.filter((key) => a[key]).map((key, i) => [key, `STEP ${i + 1}`]),
   )
-  const related = getStoriesByIds(a.relatedStoryIds)
   const supportLines = a.supportLines ?? getSupportLines()
   // フォームの回答に合う記事。直接開いた場合は出さない。
   const recommended = request ? recommendArticles(request) : null
@@ -47,7 +44,13 @@ export default function AdviceResult() {
       <Header title="あなたへのヒント" subtitle="あなたの状況に合わせたヒント" back />
 
       <div className="px-5 pb-12 pt-4 lg:mx-auto lg:max-w-page lg:px-8 lg:pb-16 lg:pt-6">
-        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-4">
+        <div
+          className={`flex flex-col gap-4 ${
+            request
+              ? 'lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-4'
+              : 'lg:mx-auto lg:max-w-3xl'
+          }`}
+        >
           <div className="space-y-4 lg:col-start-1 lg:row-start-1">
             {/* イントロ */}
             <div className="rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4 text-center lg:py-6">
@@ -70,32 +73,21 @@ export default function AdviceResult() {
             )}
           </div>
 
-          {/* サイドバー（PCでは右列・追従） */}
-          <aside
-            className={`space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-mx-1 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:px-1 lg:pb-1 ${
-              request ? '' : 'hidden lg:block'
-            }`}
-          >
-            {request && (
-              <>
-                <DesiredSupportCard values={request.desiredSupport} />
-                <ArticleRecommendations result={recommended} />
-                <IntakeSummary
-                  request={request}
-                  onEdit={
-                    intake
-                      ? () => navigate('/consult', { state: { intake, step: 0 } })
-                      : undefined
-                  }
-                />
-              </>
-            )}
-            {related.length > 0 && (
-              <div className="hidden lg:block">
-                <RelatedStoryLinks stories={related} />
-              </div>
-            )}
-          </aside>
+          {/* サイドバー（PCでは右列・追従）。フォームから来たときだけ出す */}
+          {request && (
+            <aside className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-mx-1 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:px-1 lg:pb-1">
+              <DesiredSupportCard values={request.desiredSupport} />
+              <ArticleRecommendations result={recommended} />
+              <IntakeSummary
+                request={request}
+                onEdit={
+                  intake
+                    ? () => navigate('/consult', { state: { intake, step: 0 } })
+                    : undefined
+                }
+              />
+            </aside>
+          )}
 
           <div className="space-y-4 lg:col-start-1 lg:row-start-2">
             {/* どの回答に合わせたか */}
@@ -207,24 +199,6 @@ export default function AdviceResult() {
             {/* 6. 無理に話さなくていい（safetyFirst のときはイントロのすぐ下に出している） */}
             {!a.safetyFirst && <SafetyCard safety={a.safety} lines={supportLines} />}
 
-            {/* 7. 似た体験談（スマホ。PCではサイドバーに表示） */}
-            <section className="pt-2 lg:hidden">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-bold text-ink">似た体験談</h2>
-                <Link
-                  to="/stories"
-                  className="flex items-center gap-1 text-xs font-semibold text-brand-700"
-                >
-                  もっと見る <ArrowRight size={14} />
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {related.map((s) => (
-                  <StoryCard key={s.id} story={s} />
-                ))}
-              </div>
-            </section>
-
             {/* フッター注記 */}
             <p className="pt-2 text-center text-[11px] leading-relaxed text-ink-faint">
               このヒントは一般的な情報提供であり、医療・法律・緊急支援を提供するものではありません。<br />
@@ -263,42 +237,5 @@ function SafetyCard({ safety, lines }) {
       </h3>
       <SupportLineList lines={lines} />
     </AdviceCard>
-  )
-}
-
-// PCサイドバー用のコンパクトな体験談リンク
-function RelatedStoryLinks({ stories }) {
-  return (
-    <section className="rounded-2xl border border-line bg-surface p-4 shadow-[0_1px_2px_rgba(60,50,40,0.03)]">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-bold text-ink">似た体験談</h2>
-        <Link
-          to="/stories"
-          className="flex items-center gap-1 text-xs font-semibold text-brand-700"
-        >
-          もっと見る <ArrowRight size={14} />
-        </Link>
-      </div>
-      <ul className="divide-y divide-line">
-        {stories.map((s) => (
-          <li key={s.id} className="py-3 first:pt-0 last:pb-0">
-            <Link to={`/stories/${s.id}`} className="group block">
-              <span className="flex flex-wrap gap-1">
-                <Tag tone="brand">{s.relation}</Tag>
-                {s.tags.slice(1, 2).map((t) => (
-                  <Tag key={t}>{t}</Tag>
-                ))}
-              </span>
-              <span className="mt-1.5 block text-sm font-bold leading-snug text-ink transition group-hover:text-brand-700">
-                {s.title}
-              </span>
-              <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-soft">
-                {s.excerpt}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
   )
 }

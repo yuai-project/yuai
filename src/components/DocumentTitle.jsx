@@ -6,9 +6,6 @@ import { APP } from '../config'
 const titles = [
   ['/consult/result', 'あなたへのヒント'],
   ['/consult', '相談する'],
-  ['/stories/new', '体験を投稿する'],
-  ['/stories/:id', '体験談'],
-  ['/stories', 'みんなの体験談'],
   ['/mypage', 'マイページ'],
 ]
 

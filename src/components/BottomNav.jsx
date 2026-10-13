@@ -1,10 +1,9 @@
-import { Home, MessageCircleHeart, BookOpen, User } from 'lucide-react'
+import { Home, MessageCircleHeart, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
 const items = [
   { to: '/', label: 'ホーム', icon: Home, end: true },
   { to: '/consult', label: '相談する', icon: MessageCircleHeart },
-  { to: '/stories', label: '体験談', icon: BookOpen },
   { to: '/mypage', label: 'マイページ', icon: User },
 ]
 
@@ -13,7 +12,7 @@ const items = [
 export default function BottomNav() {
   return (
     <nav className="sticky bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] lg:hidden">
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-3">
         {items.map(({ to, label, icon: Icon, end }) => (
           <li key={to}>
             <NavLink

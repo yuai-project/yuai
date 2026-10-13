@@ -1,4 +1,4 @@
-import { BookOpen, Home, MessageCircleHeart, User } from 'lucide-react'
+import { Home, MessageCircleHeart, User } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 import { APP } from '../config'
 import Logo from './Logo'
@@ -6,7 +6,6 @@ import Logo from './Logo'
 const items = [
   { to: '/', label: 'ホーム', icon: Home, end: true },
   { to: '/consult', label: '相談する', icon: MessageCircleHeart },
-  { to: '/stories', label: '体験談', icon: BookOpen },
   { to: '/mypage', label: 'マイページ', icon: User },
 ]
 
