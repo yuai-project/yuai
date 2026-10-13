@@ -1,0 +1,236 @@
+// 詳しい内容（自由記述）をキーワードで読み取る処理のテスト。
+// キーワードは下書きで、チーム・専門家の確認前。ここでは読み取り方と、結果への反映を確かめる。
+//
+//   npm test
+
+import assert from 'node:assert/strict'
+import { describe, test } from 'node:test'
+import { SAFETY } from '../src/data/adviceCards.js'
+import {
+  CONCERNS,
+  buildAdviceRequest,
+  initialIntake,
+  labelOf,
+} from '../src/data/consultationIntake.js'
+import {
+  CONCERN_KEYWORDS,
+  DANGER_KEYWORDS,
+  mergeFreeText,
+  readFreeText,
+} from '../src/data/freeTextKeywords.js'
+import { buildAdvice, selectCardKey } from '../src/data/mockAdvice.js'
+import {
+  REASONS,
+  recommendArticles,
+  toRecommendationProfile,
+} from '../src/data/recommendArticles.js'
+import { FIXTURE_FALLBACK_IDS, fixtureArticles } from './fixtures/recommendArticles.js'
+
+const requestOf = (intake = {}) => buildAdviceRequest({ ...initialIntake, ...intake })
+const adviceOf = (intake) => buildAdvice(requestOf(intake))
+const recommend = (intake) =>
+  recommendArticles(requestOf(intake), fixtureArticles, { fallbackIds: FIXTURE_FALLBACK_IDS })
+
+// キーワードを含まない、ふつうの文
+const PLAIN = '最近、実家に帰ると話題に困ります。'
+const DANGER_NOTE = '詳しい内容から、あなたの安全が心配な状況かもしれないと考えました'
+
+describe('readFreeText', () => {
+  test('キーワードの表が、フォームの困りごとの value だけでできている', () => {
+    const values = CONCERNS.map((c) => c.value)
+    for (const concern of Object.keys(CONCERN_KEYWORDS)) {
+      assert.ok(values.includes(concern), concern)
+      assert.ok(CONCERN_KEYWORDS[concern].length > 0, concern)
+    }
+  })
+
+  for (const [concern, keywords] of Object.entries(CONCERN_KEYWORDS)) {
+    test(`${concern}: どのキーワードでも困りごとが足される`, () => {
+      for (const keyword of keywords) {
+        const read = readFreeText(`このごろ${keyword}ことが続いています。`)
+        assert.ok(read.concerns.includes(concern), keyword)
+      }
+    })
+  }
+
+  test('危険のキーワードは、困りごとではなく danger として返る', () => {
+    for (const keyword of DANGER_KEYWORDS) {
+      assert.equal(readFreeText(`${keyword}ことがありました`).danger, true, keyword)
+    }
+    assert.deepEqual(readFreeText('脅されています'), { concerns: [], danger: true })
+  })
+
+  test('キーワードが無ければ何も読み取らない', () => {
+    for (const text of [PLAIN, '', '   ', null, undefined, 123]) {
+      assert.deepEqual(readFreeText(text), { concerns: [], danger: false })
+    }
+  })
+
+  test('複数の困りごとを一度に読み取る。順番は表の順で、重複しない', () => {
+    const read = readFreeText('彼女が政治の話ばかりして疲れます。毎回同じ話で疲れました。')
+    assert.deepEqual(read, { concerns: ['self_exhausted', 'repeats_same_topic'], danger: false })
+  })
+
+  test('全角・半角の表記ゆれをそろえて読む', () => {
+    assert.ok(readFreeText('すぐｷﾚるんです').concerns.includes('angry_when_disagreed'))
+    assert.ok(readFreeText('ﾘﾝｸが届く').concerns.includes('sends_lots_of_info'))
+  })
+
+  test('限界: 否定の文も拾ってしまう（キーワードが含まれているかしか見ない）', () => {
+    assert.ok(readFreeText('疲れてはいない').concerns.includes('self_exhausted'))
+  })
+
+  test('同じ文章なら同じ結果を返す', () => {
+    const text = 'お金のことでけんかになり、怒鳴られました'
+    assert.deepEqual(readFreeText(text), readFreeText(text))
+  })
+})
+
+describe('mergeFreeText', () => {
+  test('フォームで選んだ困りごとは消えない。読み取ったものを後ろに足す', () => {
+    const request = requestOf({
+      concerns: ['money_worries', 'unsure_how_to_respond'],
+      freeText: '話を聞くのに疲れました',
+    })
+    const merged = mergeFreeText(request)
+    assert.deepEqual(merged.concerns, ['money_worries', 'unsure_how_to_respond', 'self_exhausted'])
+    assert.deepEqual(merged.inferredConcerns, ['self_exhausted'])
+    assert.equal(merged.danger, false)
+  })
+
+  test('すでに選んでいる困りごとは、二重に足さない', () => {
+    const merged = mergeFreeText(
+      requestOf({ concerns: ['self_exhausted'], freeText: '疲れました' }),
+    )
+    assert.deepEqual(merged.concerns, ['self_exhausted'])
+    assert.deepEqual(merged.inferredConcerns, [])
+  })
+
+  test('入力を書き換えない', () => {
+    const request = requestOf({ concerns: ['money_worries'], freeText: '疲れました' })
+    const before = JSON.stringify(request)
+    mergeFreeText(request)
+    buildAdvice(request)
+    recommendArticles(request, fixtureArticles, { fallbackIds: FIXTURE_FALLBACK_IDS })
+    assert.equal(JSON.stringify(request), before)
+  })
+
+  test('request が無くても落ちない', () => {
+    assert.deepEqual(mergeFreeText(undefined), {
+      concerns: [],
+      inferredConcerns: [],
+      danger: false,
+    })
+  })
+})
+
+describe('アドバイスへの反映', () => {
+  test('「彼女が政治の話ばかりして疲れます」→ 疲れている人向けのカードが出る', () => {
+    const intake = { relationship: 'partner', freeText: '彼女が政治の話ばかりして疲れます' }
+    assert.equal(selectCardKey(requestOf(intake)), 'exhausted')
+    const advice = adviceOf(intake)
+    assert.deepEqual(advice.forYou, adviceOf({ concerns: ['self_exhausted'] }).forYou)
+    assert.deepEqual(advice.avoid, adviceOf({ concerns: ['self_exhausted'] }).avoid)
+    assert.deepEqual(advice.freeTextNotes, [
+      '詳しい内容から「自分自身が疲れている」「同じ話を何度もされる」も合わせて考えました',
+    ])
+  })
+
+  test('読み取っただけの困りごとには「選んだあなたへ」と出さない', () => {
+    assert.equal(adviceOf({ freeText: '疲れました' }).matchedLabel, null)
+    assert.equal(adviceOf({ freeText: 'すぐ怒るんです' }).matchedLabel, null)
+    // フォームで選んでいれば、今までどおり出す
+    assert.equal(
+      adviceOf({ concerns: ['self_exhausted'], freeText: '疲れました' }).matchedLabel,
+      '「自分自身が疲れている」を選んだあなたへ',
+    )
+  })
+
+  test('読み取った困りごとでも、カードの優先順位は同じ（距離 > 疲れ > 怒り）', () => {
+    const freeText = 'すぐ怒るので疲れました'
+    assert.equal(selectCardKey(requestOf({ freeText })), 'exhausted')
+    assert.equal(
+      selectCardKey(requestOf({ freeText, desiredRelationship: 'some_distance' })),
+      'distance',
+    )
+    assert.equal(selectCardKey(requestOf({ freeText: 'すぐ怒るんです' })), 'angry')
+  })
+
+  test('読み取ったことの一行は、フォームの選択肢の文言を使う', () => {
+    for (const concern of Object.keys(CONCERN_KEYWORDS)) {
+      const [keyword] = CONCERN_KEYWORDS[concern]
+      const [note] = adviceOf({ freeText: keyword }).freeTextNotes
+      assert.ok(note.includes(`「${labelOf(CONCERNS, concern)}」`), note)
+    }
+  })
+
+  test('危険のキーワード → SAFETY を一番上に出す印が付き、どの言葉に反応したかは出さない', () => {
+    for (const keyword of DANGER_KEYWORDS) {
+      const advice = adviceOf({ freeText: `${keyword}ことがありました` })
+      assert.equal(advice.safetyFirst, true, keyword)
+      assert.equal(advice.safety, SAFETY)
+      assert.deepEqual(advice.freeTextNotes, [DANGER_NOTE], keyword)
+      for (const note of advice.freeTextNotes) assert.ok(!note.includes(keyword), keyword)
+    }
+  })
+
+  test('危険と困りごとの両方を読み取ったら、安全の一行を先に出す', () => {
+    const advice = adviceOf({ freeText: 'お金のことで怒鳴られました' })
+    assert.equal(advice.safetyFirst, true)
+    assert.deepEqual(advice.freeTextNotes, [
+      DANGER_NOTE,
+      '詳しい内容から「お金の使い方が心配」も合わせて考えました',
+    ])
+  })
+
+  test('キーワードが無ければ今までどおり', () => {
+    for (const intake of [
+      {},
+      { concerns: ['angry_when_disagreed'] },
+      { concerns: ['self_exhausted'], desiredRelationship: 'more_distance' },
+    ]) {
+      const advice = adviceOf({ ...intake, freeText: PLAIN })
+      assert.deepEqual(advice, adviceOf(intake))
+      assert.equal(advice.safetyFirst, false)
+      assert.deepEqual(advice.freeTextNotes, [])
+    }
+  })
+})
+
+describe('記事選びへの反映', () => {
+  test('読み取った困りごとが、記事選びのプロファイルに足される', () => {
+    const profile = toRecommendationProfile(
+      requestOf({ concerns: ['money_worries'], freeText: '話を聞くのに疲れました' }),
+    )
+    assert.deepEqual(profile.concerns, ['money_worries', 'self_exhausted'])
+    assert.equal(profile.exhausted, true)
+  })
+
+  test('読み取った困りごとで選ばれる記事は、フォームで選んだときと同じ', () => {
+    assert.deepEqual(
+      recommend({ freeText: 'すぐ怒るんです' }),
+      recommend({ concerns: ['angry_when_disagreed'] }),
+    )
+  })
+
+  test('危険のキーワード → 相談窓口の記事が先頭に入る（安全枠）', () => {
+    for (const keyword of DANGER_KEYWORDS) {
+      const request = requestOf({ freeText: `${keyword}ことがありました` })
+      assert.equal(toRecommendationProfile(request).needsSafetySlot, true, keyword)
+      const [top] = recommend({ freeText: `${keyword}ことがありました` }).articles
+      assert.ok(top.article.supportTypes.includes('consultation_service'), keyword)
+      assert.ok(top.reasons.includes(REASONS.safetySlot), keyword)
+    }
+  })
+
+  test('キーワードが無ければ今までどおり', () => {
+    for (const intake of [
+      {},
+      { concerns: ['angry_when_disagreed'], desiredSupport: ['coping_tips'] },
+      { relationship: 'mother', topics: ['politics_society'] },
+    ]) {
+      assert.deepEqual(recommend({ ...intake, freeText: PLAIN }), recommend(intake))
+      assert.equal(toRecommendationProfile(requestOf({ ...intake, freeText: PLAIN })).needsSafetySlot, false)
+    }
+  })
+})

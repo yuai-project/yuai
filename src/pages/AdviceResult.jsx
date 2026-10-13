@@ -88,6 +88,16 @@ export default function AdviceResult() {
               </p>
             )}
 
+            {/* 詳しい内容（自由記述）から読み取ったこと */}
+            {a.freeTextNotes?.map((note) => (
+              <p key={note} className="px-1 text-sm leading-relaxed text-ink-soft">
+                {note}
+              </p>
+            ))}
+
+            {/* 詳しい内容に危険を示す言葉があったときは、無理に話さなくていいカードを一番上に */}
+            {a.safetyFirst && <SafetyCard safety={a.safety} />}
+
             {/* 1. まず、あなた自身へ */}
             <AdviceCard
               icon={Heart}
@@ -180,26 +190,8 @@ export default function AdviceResult() {
               </AdviceCard>
             )}
 
-            {/* 6. 無理に話さなくていい */}
-            <AdviceCard
-              icon={LifeBuoy}
-              step="SAFETY"
-              title={a.safety.title}
-              tone="safety"
-            >
-              <ul className="mb-3 grid grid-cols-1 gap-2">
-                {a.safety.signs.map((s, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-2 rounded-lg bg-surface/70 px-3 py-2 text-sm text-ink"
-                  >
-                    <span className="size-1.5 rounded-full bg-calm-700" />
-                    {s}
-                  </li>
-                ))}
-              </ul>
-              <p className="leading-relaxed text-calm-700">{a.safety.body}</p>
-            </AdviceCard>
+            {/* 6. 無理に話さなくていい（safetyFirst のときは一番上に出している） */}
+            {!a.safetyFirst && <SafetyCard safety={a.safety} />}
 
             {/* 7. 似た体験談（スマホ。PCではサイドバーに表示） */}
             <section className="pt-2 lg:hidden">
@@ -231,6 +223,26 @@ export default function AdviceResult() {
         </div>
       </div>
     </div>
+  )
+}
+
+// 無理に話さなくていいサイン。ふだんはアドバイスの最後、safetyFirst のときは一番上に出す
+function SafetyCard({ safety }) {
+  return (
+    <AdviceCard icon={LifeBuoy} step="SAFETY" title={safety.title} tone="safety">
+      <ul className="mb-3 grid grid-cols-1 gap-2">
+        {safety.signs.map((s, i) => (
+          <li
+            key={i}
+            className="flex items-center gap-2 rounded-lg bg-surface/70 px-3 py-2 text-sm text-ink"
+          >
+            <span className="size-1.5 rounded-full bg-calm-700" />
+            {s}
+          </li>
+        ))}
+      </ul>
+      <p className="leading-relaxed text-calm-700">{safety.body}</p>
+    </AdviceCard>
   )
 }
 
