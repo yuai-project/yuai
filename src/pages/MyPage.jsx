@@ -9,6 +9,7 @@ import {
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import { APP } from '../config'
+import { SUPPORT_LINES_NOTICE, getSupportLines, telHref } from '../data/supportLines'
 
 // 履歴・保存・共感はまだ保存していないので、件数は出さず「準備中」とする
 const menu = [
@@ -19,6 +20,8 @@ const menu = [
 ]
 
 export default function MyPage() {
+  const supportLines = getSupportLines()
+
   return (
     <div>
       <Header title="マイページ" />
@@ -78,8 +81,30 @@ export default function MyPage() {
                 ひとりで抱えきれないときは、公的な相談窓口に頼ることもできます。
                 あなたの安全と心の健康が、なによりも大切です。
               </p>
-              <p className="mt-2 text-[11px] text-ink-faint">
-                ※ プロトタイプのため、実際の窓口情報は本番実装時に掲載します。
+              <ul className="mt-3 space-y-2">
+                {supportLines.map((line) => (
+                  <li key={line.id} className="rounded-xl bg-surface/70 px-3 py-2.5">
+                    <p className="text-sm font-bold text-ink">{line.name}</p>
+                    <p className="flex flex-wrap items-baseline gap-x-2">
+                      <a
+                        href={telHref(line.tel)}
+                        aria-label={`${line.name}に電話をかける ${line.tel}`}
+                        className="inline-block py-2 text-base font-bold text-calm-700 underline underline-offset-2"
+                      >
+                        {line.tel}
+                      </a>
+                      {line.note && (
+                        <span className="text-xs text-ink-soft">（{line.note}）</span>
+                      )}
+                    </p>
+                    <p className="text-xs leading-relaxed text-ink-soft">
+                      {line.description}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-[11px] leading-relaxed text-ink-faint">
+                {SUPPORT_LINES_NOTICE}
               </p>
             </div>
 
