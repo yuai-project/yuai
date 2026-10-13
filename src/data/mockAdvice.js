@@ -20,31 +20,48 @@
 
 import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.js'
 import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.js'
+import { mergeFreeText } from './freeTextKeywords.js'
 import { selectRelatedStoryIds } from './relatedStories.js'
 
 const DISTANCE_VALUES = ['some_distance', 'more_distance']
 
 // どのカードを出すか。上から順に判定し、最初に当てはまったものを使う。
+// 困りごとは、フォームで選んだものに、詳しい内容（自由記述）から読み取ったものを足して見る。
 export function selectCardKey(request) {
-  const concerns = request?.concerns ?? []
+  const { concerns } = mergeFreeText(request)
   if (DISTANCE_VALUES.includes(request?.desiredRelationship)) return 'distance'
   if (concerns.includes('self_exhausted')) return 'exhausted'
   if (concerns.includes('angry_when_disagreed')) return 'angry'
   return 'default'
 }
 
+// カードが選ばれるもとになった困りごと
+const CONCERN_OF_CARD = { exhausted: 'self_exhausted', angry: 'angry_when_disagreed' }
+
 // 「どの回答に合わせたか」の一行。default のときは出さない（null）。
+// 困りごとをフォームで選んでいない（自由記述から読み取っただけ）のときも出さない。
+// 「選んだあなたへ」が事実と違ってしまうため。その場合は freeTextNotes の一行で伝える。
 function matchedLabelOf(cardKey, request) {
-  switch (cardKey) {
-    case 'distance':
-      return `${labelOf(DESIRED_RELATIONSHIP, request.desiredRelationship)}あなたへ`
-    case 'exhausted':
-      return `「${labelOf(CONCERNS, 'self_exhausted')}」を選んだあなたへ`
-    case 'angry':
-      return `「${labelOf(CONCERNS, 'angry_when_disagreed')}」を選んだあなたへ`
-    default:
-      return null
+  if (cardKey === 'distance') {
+    return `${labelOf(DESIRED_RELATIONSHIP, request.desiredRelationship)}あなたへ`
   }
+  const concern = CONCERN_OF_CARD[cardKey]
+  if (!concern || !(request?.concerns ?? []).includes(concern)) return null
+  return `「${labelOf(CONCERNS, concern)}」を選んだあなたへ`
+}
+
+// 詳しい内容（自由記述）から読み取ったことを伝える行。読み取ったものが無ければ []。
+// 危険を示す言葉については、どの言葉に反応したかを出さない。
+function freeTextNotesOf({ inferredConcerns, danger }) {
+  const notes = []
+  if (danger) {
+    notes.push('詳しい内容から、あなたの安全が心配な状況かもしれないと考えました')
+  }
+  if (inferredConcerns.length > 0) {
+    const labels = inferredConcerns.map((c) => `「${labelOf(CONCERNS, c)}」`).join('')
+    notes.push(`詳しい内容から${labels}も合わせて考えました`)
+  }
+  return notes
 }
 
 const withTitle = (key, section) =>
@@ -57,10 +74,15 @@ const withTitle = (key, section) =>
 export function buildAdvice(request) {
   const cardKey = selectCardKey(request)
   const card = ADVICE_CARDS[cardKey]
+  const freeText = mergeFreeText(request)
 
   return {
     // どの回答に合わせたか（7つの枠の外。画面ではアドバイスの先頭に出す）
     matchedLabel: matchedLabelOf(cardKey, request),
+    // 詳しい内容から読み取ったこと（7つの枠の外。matchedLabel の下に出す）
+    freeTextNotes: freeTextNotesOf(freeText),
+    // true のとき、safety の枠を一番上に出す（詳しい内容に危険を示す言葉があった）
+    safetyFirst: freeText.danger,
 
     // angry に専用の文章はないので default を使う
     forYou: FOR_YOU[cardKey] ?? FOR_YOU.default,

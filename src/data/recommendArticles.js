@@ -14,6 +14,7 @@ import {
   TAG_ANY,
 } from './articleTags.js'
 import { FALLBACK_ARTICLE_IDS, mockArticles } from './articles.js'
+import { mergeFreeText } from './freeTextKeywords.js'
 
 export const WEIGHTS = {
   supportTypes: 4, // 求めるサポートと重なる
@@ -74,8 +75,10 @@ const specifiedValue = (value) => (value && !UNSPECIFIED.has(value) ? value : nu
 
 // buildAdviceRequest() の戻り値 → 推薦に使うプロファイル。
 // other / unsure / 未入力は「指定なし」（null か []）にそろえる。
+// 困りごとは、フォームで選んだものに、詳しい内容（自由記述）から読み取ったものを足す。
 export function toRecommendationProfile(request = {}) {
-  const concerns = specifiedValues(request.concerns)
+  const freeText = mergeFreeText(request)
+  const concerns = specifiedValues(freeText.concerns)
   const desiredSupport = specifiedValues(request.desiredSupport)
   const topics = specifiedValues(request.topics)
   const desiredRelationship = specifiedValue(request.desiredRelationship)
@@ -97,7 +100,8 @@ export function toRecommendationProfile(request = {}) {
     needsSafetySlot:
       desiredSupport.includes('professional_referral') ||
       concerns.includes('money_worries') ||
-      (exhausted && noSupportPerson),
+      (exhausted && noSupportPerson) ||
+      freeText.danger, // 詳しい内容に危険を示す言葉がある
   }
 }
 
