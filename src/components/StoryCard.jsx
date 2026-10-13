@@ -1,4 +1,4 @@
-import { Heart, MessageCircle } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Tag from './Tag'
@@ -27,25 +27,20 @@ export default function StoryCard({ story }) {
 
       <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
         <span className="text-xs text-ink-faint">{story.author} さん</span>
-        <div className="flex items-center gap-3 text-ink-faint">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setLiked((v) => !v)
-            }}
-            className={`flex items-center gap-1 text-xs transition active:scale-90 ${
-              liked ? 'text-brand-600' : 'hover:text-brand-600'
-            }`}
-            aria-label="共感する"
-          >
-            <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
-            {story.likes + (liked ? 1 : 0)}
-          </button>
-          <span className="flex items-center gap-1 text-xs">
-            <MessageCircle size={15} />
-            {story.comments}
-          </span>
-        </div>
+        {/* 共感数・コメント数は仮データなので出さない（story.likes / story.comments） */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setLiked((v) => !v)
+          }}
+          className={`flex items-center text-ink-faint transition active:scale-90 ${
+            liked ? 'text-brand-600' : 'hover:text-brand-600'
+          }`}
+          aria-label="共感する"
+          aria-pressed={liked}
+        >
+          <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
+        </button>
       </div>
 
       <span className="mt-2 inline-block text-xs font-semibold text-brand-700">
