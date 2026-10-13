@@ -158,7 +158,10 @@ function scoreArticle(article, profile) {
     subtract(WEIGHTS.exhaustedHeavy, PENALTIES.exhaustedHeavy)
   }
 
-  return { article, score, reasons, penalties, eligible: supportMatched || concerns === 'real' }
+  // 採用するのは、求めるサポート・困りごと・話題のどれかが実際に一致した記事。
+  // any での一致と、関係だけの一致では採用しない
+  const eligible = supportMatched || concerns === 'real' || topics === 'real'
+  return { article, score, reasons, penalties, eligible }
 }
 
 const burdenRank = (b) => ARTICLE_SINGLE_AXES.burden.indexOf(b)

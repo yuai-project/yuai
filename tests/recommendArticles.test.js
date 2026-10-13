@@ -296,11 +296,54 @@ describe('recommendArticles', () => {
     }
   })
 
-  test('関係と話題だけが一致 → フォールバック', () => {
+  test('関係と話題だけが一致 → 話題の一致で採用する（フォールバックにしない）', () => {
     const result = recommend({ relationship: 'mother', topics: ['politics_society'] })
+    assert.equal(result.isFallback, false)
+    assert.deepEqual(ids(result), ['f-relation-topic'])
+    assert.deepEqual(result.articles[0].reasons, [REASONS.relationships, REASONS.topics])
+  })
+
+  test('話題だけが一致 → 採用する', () => {
+    const result = recommend({ relationship: 'other', topics: ['politics_society'] })
+    assert.equal(result.isFallback, false)
+    assert.deepEqual(ids(result), ['f-relation-topic'])
+    assert.deepEqual(result.articles[0].reasons, [REASONS.topics])
+  })
+
+  test('関係だけが一致 → 今までどおりフォールバック', () => {
+    const result = recommend({ relationship: 'mother' })
     assert.equal(result.isFallback, true)
     assert.deepEqual(ids(result), FIXTURE_FALLBACK_IDS)
     assert.ok(result.articles.every((r) => r.reasons.includes(REASONS.fallback)))
+  })
+
+  test('話題を選んでも、topics: any の記事しか無ければフォールバック（any は一致に数えない）', () => {
+    const anyOnly = fixtureArticles.filter((a) => a.topics.includes('any'))
+    const result = recommend({ topics: ['politics_society'] }, anyOnly)
+    assert.equal(result.isFallback, true)
+  })
+
+  test('話題だけが一致した記事は、困りごと・サポートも合う記事より下に来る', () => {
+    const result = recommend({
+      relationship: 'mother',
+      topics: ['politics_society'],
+      concerns: ['angry_when_disagreed'],
+      desiredSupport: ['coping_tips'],
+    })
+    assert.equal(result.isFallback, false)
+    const [top] = result.articles
+    assert.notEqual(top.article.id, 'f-relation-topic')
+    assert.ok(top.reasons.includes(REASONS.supportTypes))
+    assert.ok(top.reasons.includes(REASONS.concerns))
+    // 話題だけの記事は採用の対象にはなるが、点数は上位の記事より低い
+    const all = recommendArticles(
+      requestOf({ relationship: 'mother', topics: ['politics_society'] }),
+      fixtureArticles,
+      { fallbackIds: FIXTURE_FALLBACK_IDS },
+    )
+    const topicOnly = all.articles.find((r) => r.article.id === 'f-relation-topic')
+    assert.ok(topicOnly)
+    assert.ok(topicOnly.score < top.score)
   })
 
   test('関係だけ入力、ほかは「わからない」 → フォールバック', () => {
@@ -332,7 +375,7 @@ describe('recommendArticles', () => {
     const intakes = [
       // 通常の採用（topics: any の media 記事が候補にいる）
       { topics: ['health'], concerns: ['angry_when_disagreed'], desiredSupport: ['coping_tips'] },
-      // フォールバック（support_org の f-selfcare が候補にいる）
+      // 話題の一致だけ
       { topics: ['health'] },
       // 安全枠
       { topics: ['health'], concerns: ['self_exhausted'], hasSupportPerson: 'no' },
@@ -347,7 +390,15 @@ describe('recommendArticles', () => {
         )
       }
     }
-    assert.deepEqual(ids(recommend({ topics: ['health'] })), ['f-consult'])
+    // 健康だけを選んだ相談は、話題の一致で、許可された発信元の健康の記事が出る
+    const healthOnly = recommend({ topics: ['health'] })
+    assert.equal(healthOnly.isFallback, false)
+    assert.deepEqual(ids(healthOnly), ['f-health-pro'])
+    // 健康の記事が無ければフォールバック。support_org の f-selfcare は発信元で外れる
+    const withoutHealthArticle = fixtureArticles.filter((a) => a.id !== 'f-health-pro')
+    const fallback = recommend({ topics: ['health'] }, withoutHealthArticle)
+    assert.equal(fallback.isFallback, true)
+    assert.deepEqual(ids(fallback), ['f-consult'])
   })
 
   test('同じ入力なら同じ順序で返る。記事の並び順を入れ替えても結果が同じ', () => {
