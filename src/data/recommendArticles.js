@@ -2,7 +2,8 @@
 //
 // - AI は使わない。変換表とスコア表は #95 のコメントで合意したもの。
 // - 純関数のみ。日時・乱数を使わず、入力を書き換えない。同じ入力なら同じ順序で返る。
-// - 自動で除外するのは「approved でない記事」と「健康を選んだ相談での、許可外の発信元」だけ。
+// - 自動で除外するのは「approved でない記事」「健康を選んだ相談での、許可外の発信元」
+//   「話題を選んだ相談での、話題の合わない記事」だけ。
 //   stance / burden は専門家の確認（#93 / #99）が済むまで減点にとどめる。
 // - 重み・減点・最大件数は WEIGHTS の1か所だけに書く。
 
@@ -177,6 +178,15 @@ function compareScored(x, y) {
 
 function isCandidate(article, profile) {
   if (article.status !== 'approved') return false
+  // 話題を選んだ相談には、話題の合わない記事を出さない（通常の候補・安全枠・フォールバックのすべて）。
+  // 話題を選んでいない相談では絞らない
+  if (
+    profile.topics.length > 0 &&
+    !isAny(article.topics) &&
+    !overlaps(article.topics, profile.topics)
+  ) {
+    return false
+  }
   if (profile.restrictHealthSources) {
     return HEALTH_ALLOWED_SOURCE_TYPES.includes(article.sourceType)
   }
@@ -215,7 +225,8 @@ export function recommendArticles(
   }
 
   if (profile.needsSafetySlot) {
-    // 話題の合わない窓口（政治の相談に宗教の窓口など）は先頭に入れない。該当がなければ入れない
+    // 話題を選んでいない相談では、特定の話題の窓口を先頭に入れない（topics: any の窓口だけ）。
+    // 話題を選んだ相談では、合わない窓口は isCandidate で外れている。該当がなければ入れない
     const safety = scored.find(
       (s) =>
         s.article.supportTypes.includes('consultation_service') &&
