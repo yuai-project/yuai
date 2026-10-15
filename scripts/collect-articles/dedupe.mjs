@@ -3,7 +3,7 @@
 // 「既に知っている URL」は今は articles.json だけ。
 // スプレッドシートの候補・却下済み URL は、追記の段で同じ形（URL の配列）で足す。
 
-import { EXCLUDED_DOMAINS } from '../../src/data/articleTags.js'
+import { EXCLUDED_DOMAINS } from '../../src/data/articleTags.ts'
 
 // 収集で検索 API に渡す除外ドメイン。アプリ側のリストに、収集でだけ除くものを足す場所。
 export const COLLECT_EXCLUDED_DOMAINS = [

@@ -4,16 +4,16 @@
 
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { ADVICE_CARDS } from '../src/data/adviceCards.js'
+import { ADVICE_CARDS } from '../src/data/adviceCards.ts'
 import {
   MAX_SOURCES_PER_CARD,
   invalidSourceIds,
   resolveSources,
-} from '../src/data/adviceSources.js'
-import { mockArticles } from '../src/data/articles.js'
-import { buildAdviceRequest, initialIntake } from '../src/data/consultationIntake.js'
-import { buildAdvice, selectCardKey } from '../src/data/mockAdvice.js'
-import { isCandidateArticle, toRecommendationProfile } from '../src/data/recommendArticles.js'
+} from '../src/data/adviceSources.ts'
+import { mockArticles } from '../src/data/articles.ts'
+import { buildAdviceRequest, initialIntake } from '../src/data/consultationIntake.ts'
+import { buildAdvice, selectCardKey } from '../src/data/mockAdvice.ts'
+import { isCandidateArticle, toRecommendationProfile } from '../src/data/recommendArticles.ts'
 
 const byId = (id) => mockArticles.find((a) => a.id === id)
 const requestOf = (intake = {}) => buildAdviceRequest({ ...initialIntake, ...intake })

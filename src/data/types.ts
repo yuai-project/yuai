@@ -1,0 +1,186 @@
+// src/data の型（#166）。UI と API 差し替えの境界でやりとりする形をここにまとめる。
+//
+// - Advice は結果画面のアドバイスの「形」。LLM に返させる JSON もこの形にそろえる。
+//   6つの枠の説明は mockAdvice.ts の冒頭コメントを参照。
+// - 値は今は string のまま。選択肢の value を literal 型にするのは、使う側を TS に移してから。
+
+// ---- 相談フォーム（consultationIntake.ts） ----
+
+// 選択肢。value は英語キー（API・保存用）、label は画面表示用
+export type Option = { value: string; label: string }
+
+// フォームの入力状態。テキスト入力・select は文字列、未回答は '' / null / []
+export type Intake = {
+  userAge: string
+  userGender: string
+  relationship: string
+  duration: string
+  immersionLevel: number | null
+  topics: string[]
+  concerns: string[]
+  concernsOther: string
+  hasSupportPerson: string | null
+  desiredRelationship: string | null
+  desiredSupport: string[]
+  freeText: string
+}
+
+// API に送るリクエスト（buildAdviceRequest() の戻り値）。未回答は null / []
+export type AdviceRequest = {
+  userAge: number | null
+  userGender: string | null
+  relationship: string | null
+  duration: string | null
+  immersionLevel: number | null
+  topics: string[]
+  concerns: string[]
+  concernsOther: string | null
+  hasSupportPerson: string | null
+  desiredRelationship: string | null
+  desiredSupport: string[]
+  freeText: string
+}
+
+// buildAdvice() などが受け取る相談内容。結果画面を直接開いたときは無い（undefined）こともある
+export type RequestInput = Partial<AdviceRequest> | null | undefined
+
+// 結果画面の「相談内容のまとめ」の1行
+export type SummaryRow = { label: string; value: string }
+
+// ---- 自由記述の読み取り（freeTextKeywords.ts） ----
+
+export type FreeTextReading = {
+  concerns: string[]
+  danger: boolean
+  crisis: boolean
+}
+
+export type MergedFreeText = FreeTextReading & {
+  // 自由記述から読み取って新しく足した困りごとだけ
+  inferredConcerns: string[]
+}
+
+// ---- アドバイス（adviceCards.ts / mockAdvice.ts） ----
+
+// どのカードを出すか（selectCardKey() の戻り値）
+export type CardKey = 'default' | 'angry' | 'exhausted' | 'distance'
+
+// 見出しの決まっている枠（SECTION_TITLES のキー）
+export type SectionKey = 'avoid' | 'tryReplies' | 'askNext'
+
+// 1. まず、あなた自身へ
+export type ForYouSection = { title: string; body: string }
+
+// 2. 今起きていること。AI を足すまでは常に null
+export type WhatMayBeHappeningSection = {
+  title: string
+  hypotheses: string[]
+  note: string
+}
+
+// 3. 避けたい対応（やさしい警告色）
+export type AvoidSection = { title: string; items: string[]; reason: string }
+
+// 4. こんな返し方 / 5. 次に聞いてみる質問
+export type ItemsSection = { title: string; items: string[] }
+
+// 6. 無理に話さなくていいサイン
+export type SafetySection = { title: string; signs: string[]; body: string }
+
+// 人が書いたカード（adviceCards.ts の ADVICE_CARDS）。
+// title を省いた枠は SECTION_TITLES の見出しを使う。askNext を持たないカードは、その枠ごと出さない
+export type AdviceCard = {
+  avoid: Omit<AvoidSection, 'title'> & { title?: string }
+  tryReplies: Omit<ItemsSection, 'title'> & { title?: string }
+  askNext?: Omit<ItemsSection, 'title'> & { title?: string }
+  // カードの内容を裏づけている記事の ID（0〜3件）
+  sources: string[]
+}
+
+// 「このヒントの参考にした情報」の1件
+export type AdviceSource = { id: string; title: string; url: string; domain: string }
+
+// 結果画面のアドバイス（buildAdvice() / getAdvice() の戻り値）。
+// null の枠は画面に出さない
+export type Advice = {
+  // ---- 6つの枠の外 ----
+  matchedLabel: string | null
+  freeTextNotes: string[]
+  safetyFirst: boolean
+  safetyNote: string | null
+  supportLines: SupportLine[]
+
+  // ---- 6つの枠 ----
+  forYou: ForYouSection
+  whatMayBeHappening: WhatMayBeHappeningSection | null
+  avoid: AvoidSection
+  tryReplies: ItemsSection
+  askNext: ItemsSection | null
+  safety: SafetySection
+
+  // ---- 6つの枠の外 ----
+  sources: AdviceSource[]
+}
+
+// ---- 電話の相談窓口（supportLines.ts） ----
+
+export type SupportLine = {
+  id: string
+  name: string
+  tel: string
+  note: string
+  description: string
+}
+
+// ---- 記事（articles.json / articleTags.ts） ----
+
+export type Article = {
+  id: string
+  url: string
+  title: string
+  publisher: string
+  summary: string
+  relationships: string[]
+  topics: string[]
+  concerns: string[]
+  supportTypes: string[]
+  stance: string
+  burden: string
+  sourceType: string
+  status: string
+  reviewedAt: string
+  publishedAt?: string
+  // 書籍（sourceType: book）のときだけ
+  author?: string
+  medicalInfo?: boolean
+}
+
+// 複数の値を持つタグの軸。max: null は上限なし
+export type MultiAxis = { values: string[]; min: number; max: number | null }
+
+// ---- 記事の推薦（recommendArticles.ts） ----
+
+// 推薦に使うプロファイル（toRecommendationProfile() の戻り値）
+export type RecommendationProfile = {
+  relationship: string | null
+  topics: string[]
+  concerns: string[]
+  supportTypes: string[]
+  stance: string | null
+  wantsMoreDistance: boolean
+  exhausted: boolean
+  restrictHealthSources: boolean
+  needsSafetySlot: boolean
+}
+
+export type Recommendation = {
+  article: Article
+  score: number
+  reasons: string[]
+  penalties: string[]
+}
+
+export type Recommendations = {
+  articles: Recommendation[]
+  isFallback: boolean
+}

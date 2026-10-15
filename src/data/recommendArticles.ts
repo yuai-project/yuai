@@ -14,9 +14,19 @@ import {
   HEALTH_TOPIC,
   TAG_ANY,
   isRestrictedMedicalArticle,
-} from './articleTags.js'
-import { FALLBACK_ARTICLE_IDS, mockArticles } from './articles.js'
-import { mergeFreeText } from './freeTextKeywords.js'
+} from './articleTags.ts'
+import { FALLBACK_ARTICLE_IDS, mockArticles } from './articles.ts'
+import { mergeFreeText } from './freeTextKeywords.ts'
+import type {
+  AdviceRequest,
+  Article,
+  Recommendation,
+  RecommendationProfile,
+  Recommendations,
+} from './types.ts'
+
+// 点数を付けた候補。eligible は採用してよいか
+type Scored = Recommendation & { eligible: boolean }
 
 export const WEIGHTS = {
   supportTypes: 4, // 求めるサポートと重なる
@@ -52,7 +62,7 @@ export const PENALTIES = {
 }
 
 // フォームの desiredSupport → 記事の supportTypes。ai_consultation と unsure は対応なし。
-const SUPPORT_TYPE_BY_DESIRED = {
+const SUPPORT_TYPE_BY_DESIRED: Record<string, string> = {
   coping_tips: 'coping_tips',
   read_stories: 'experience',
   talk_with_peers: 'peer_support',
@@ -61,7 +71,7 @@ const SUPPORT_TYPE_BY_DESIRED = {
 }
 
 // フォームの desiredRelationship → 記事の stance。unsure は指定なし。
-const STANCE_BY_DESIRED = {
+const STANCE_BY_DESIRED: Record<string, string> = {
   keep: 'keep_connection',
   improve: 'keep_connection',
   some_distance: 'distance',
@@ -70,15 +80,17 @@ const STANCE_BY_DESIRED = {
 
 const UNSPECIFIED = new Set(['other', 'unsure'])
 
-const specifiedValues = (values) =>
+const specifiedValues = (values: string[] | undefined): string[] =>
   Array.isArray(values) ? [...new Set(values.filter((v) => v && !UNSPECIFIED.has(v)))] : []
 
-const specifiedValue = (value) => (value && !UNSPECIFIED.has(value) ? value : null)
+const specifiedValue = (value: string | null | undefined): string | null => (value && !UNSPECIFIED.has(value) ? value : null)
 
 // buildAdviceRequest() の戻り値 → 推薦に使うプロファイル。
 // other / unsure / 未入力は「指定なし」（null か []）にそろえる。
 // 困りごとは、フォームで選んだものに、詳しい内容（自由記述）から読み取ったものを足す。
-export function toRecommendationProfile(request = {}) {
+export function toRecommendationProfile(
+  request: Partial<AdviceRequest> = {},
+): RecommendationProfile {
   const freeText = mergeFreeText(request)
   const concerns = specifiedValues(freeText.concerns)
   const desiredSupport = specifiedValues(request.desiredSupport)
@@ -95,7 +107,7 @@ export function toRecommendationProfile(request = {}) {
     supportTypes: [
       ...new Set(desiredSupport.map((v) => SUPPORT_TYPE_BY_DESIRED[v]).filter(Boolean)),
     ],
-    stance: STANCE_BY_DESIRED[desiredRelationship] ?? null,
+    stance: (desiredRelationship && STANCE_BY_DESIRED[desiredRelationship]) ?? null,
     wantsMoreDistance: desiredRelationship === 'more_distance',
     exhausted,
     restrictHealthSources: topics.includes(HEALTH_TOPIC),
@@ -107,26 +119,26 @@ export function toRecommendationProfile(request = {}) {
   }
 }
 
-const isAny = (values) => values.length === 1 && values[0] === TAG_ANY
-const overlaps = (a, b) => a.some((v) => b.includes(v))
+const isAny = (values: string[]) => values.length === 1 && values[0] === TAG_ANY
+const overlaps = (a: string[], b: string[]) => a.some((v) => b.includes(v))
 
 // 複数値の軸の一致。'real'（実際の値で一致）/ 'any' / null。
 // 相談側が指定なしの軸は、any の記事も含めて一致とみなさない。
-function matchAxis(articleValues, wanted) {
+function matchAxis(articleValues: string[], wanted: string[]): 'real' | 'any' | null {
   if (wanted.length === 0) return null
   if (isAny(articleValues)) return 'any'
   return overlaps(articleValues, wanted) ? 'real' : null
 }
 
-function scoreArticle(article, profile) {
+function scoreArticle(article: Article, profile: RecommendationProfile): Scored {
   let score = 0
-  const reasons = []
-  const penalties = []
-  const add = (points, reason) => {
+  const reasons: string[] = []
+  const penalties: string[] = []
+  const add = (points: number, reason?: string) => {
     score += points
     if (reason) reasons.push(reason)
   }
-  const subtract = (points, penalty) => {
+  const subtract = (points: number, penalty: string) => {
     score += points
     penalties.push(penalty)
   }
@@ -170,14 +182,14 @@ function scoreArticle(article, profile) {
   return { article, score, reasons, penalties, eligible }
 }
 
-const burdenRank = (b) => ARTICLE_SINGLE_AXES.burden.indexOf(b)
+const burdenRank = (b: string) => ARTICLE_SINGLE_AXES.burden.indexOf(b)
 
 // 書籍は 1、それ以外は 0。同点のときは、すぐ読める Web の記事を先に出す（本は記事が足りないときの補い）
-const bookRank = (article) => (article.sourceType === BOOK_SOURCE_TYPE ? 1 : 0)
+const bookRank = (article: Article) => (article.sourceType === BOOK_SOURCE_TYPE ? 1 : 0)
 
 // 点数の高い順 → 書籍以外が先 → burden が軽い順 → reviewedAt が新しい順 → id 順。
 // 文字列比較はロケールに依らない < / > で行う。
-function compareScored(x, y) {
+function compareScored(x: Scored, y: Scored) {
   if (x.score !== y.score) return y.score - x.score
   const book = bookRank(x.article) - bookRank(y.article)
   if (book !== 0) return book
@@ -191,8 +203,8 @@ function compareScored(x, y) {
 }
 
 // 入口の絞り込み。この記事を、この相談（toRecommendationProfile() の戻り値）に出してよいか。
-// 推薦の候補（通常の候補・安全枠・フォールバック）と、アドバイスの「参考にした情報」（adviceSources.js）の両方で使う。
-export function isCandidateArticle(article, profile) {
+// 推薦の候補（通常の候補・安全枠・フォールバック）と、アドバイスの「参考にした情報」（adviceSources.ts）の両方で使う。
+export function isCandidateArticle(article: Article, profile: RecommendationProfile): boolean {
   if (article.status !== 'approved') return false
   // 話題を選んだ相談には、話題の合わない記事を出さない（通常の候補・安全枠・フォールバックのすべて）。
   // 話題を選んでいない相談では絞らない
@@ -218,7 +230,7 @@ export function isCandidateArticle(article, profile) {
   return true
 }
 
-const toResult = ({ article, score, reasons, penalties }) => ({
+const toResult = ({ article, score, reasons, penalties }: Scored): Recommendation => ({
   article,
   score,
   reasons,
@@ -227,12 +239,12 @@ const toResult = ({ article, score, reasons, penalties }) => ({
 
 // 戻り値: { articles: [{ article, score, reasons, penalties }], isFallback }
 // reasons は一致した軸と選ばれ方、penalties は効いた減点（無ければ []）。
-// options.fallbackIds はテスト用。省略時は articles.js の FALLBACK_ARTICLE_IDS。
+// options.fallbackIds はテスト用。省略時は articles.ts の FALLBACK_ARTICLE_IDS。
 export function recommendArticles(
-  request,
-  articles = mockArticles,
-  { fallbackIds = FALLBACK_ARTICLE_IDS } = {},
-) {
+  request: Partial<AdviceRequest>,
+  articles: Article[] = mockArticles,
+  { fallbackIds = FALLBACK_ARTICLE_IDS }: { fallbackIds?: string[] } = {},
+): Recommendations {
   const profile = toRecommendationProfile(request)
   const scored = articles
     .filter((a) => isCandidateArticle(a, profile))
@@ -245,7 +257,7 @@ export function recommendArticles(
     // 条件は緩めない。人が選んだ固定の記事だけを、決めた順で出す
     picked = fallbackIds
       .map((id) => scored.find((s) => s.article.id === id))
-      .filter(Boolean)
+      .filter((s) => s !== undefined)
       .map((s) => ({ ...s, reasons: [...s.reasons, REASONS.fallback] }))
   }
 

@@ -1,18 +1,20 @@
 // 結果画面のアドバイスに使う、人が書いた文章（カード）。
-// どのカードを出すかは mockAdvice.js の selectCardKey() が、フォームの回答から決まったルールで選ぶ。
+// どのカードを出すかは mockAdvice.ts の selectCardKey() が、フォームの回答から決まったルールで選ぶ。
 //
 // 注意: 文章は下書きで、チーム・専門家の確認前。
 // 相手との関係（父・母など）は誰が選んでも合うように、続柄を文章に入れない。
 
+import type { AdviceCard, CardKey, ForYouSection, SafetySection, SectionKey } from './types.ts'
+
 // 各枠の見出し。カード側に title があればそちらを優先する。
-export const SECTION_TITLES = {
+export const SECTION_TITLES: Record<SectionKey, string> = {
   avoid: 'できれば避けたい対応',
   tryReplies: 'こんな返し方を試してみる',
   askNext: '次に聞いてみる質問',
 }
 
-// 1. まず、あなた自身へ
-export const FOR_YOU = {
+// 1. まず、あなた自身へ。default 以外は、専用の文章があるカードだけ
+export const FOR_YOU: { default: ForYouSection } & Partial<Record<CardKey, ForYouSection>> = {
   default: {
     title: 'まず、あなた自身へ',
     body: '相手の考えを変える責任を、あなた一人で背負う必要はありません。会話を続けることがつらいときは、少し距離を取ることも大切な選択肢です。まずは、ここまで向き合ってきたご自身をねぎらってあげてください。',
@@ -33,7 +35,7 @@ export const FOR_YOU = {
 // sources: カードの内容を裏づけている記事の ID（0〜3件。#156）。画面では「このヒントの参考にした情報」に出す。
 // articles.json で approved の記事だけ。書籍は入れない。本文を読んで、カードのどの部分を
 // 裏づけているかを確かめたものだけを入れる（対応表は #156 の PR）。
-export const ADVICE_CARDS = {
+export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
   default: {
     avoid: {
       items: [
@@ -144,7 +146,7 @@ export const ADVICE_CARDS = {
 }
 
 // 6. 無理に話さなくていいサイン。どのカードでも必ず出す。
-export const SAFETY = {
+export const SAFETY: SafetySection = {
   title: 'こんなときは、無理に話さなくて大丈夫',
   signs: [
     '怒鳴られる・暴言を受ける',

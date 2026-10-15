@@ -5,15 +5,15 @@
 
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { ADVICE_CARDS, FOR_YOU, SAFETY } from '../src/data/adviceCards.js'
+import { ADVICE_CARDS, FOR_YOU, SAFETY } from '../src/data/adviceCards.ts'
 import {
   CONCERNS,
   DESIRED_RELATIONSHIP,
   RELATIONSHIPS,
   buildAdviceRequest,
   initialIntake,
-} from '../src/data/consultationIntake.js'
-import { buildAdvice, selectCardKey } from '../src/data/mockAdvice.js'
+} from '../src/data/consultationIntake.ts'
+import { buildAdvice, selectCardKey } from '../src/data/mockAdvice.ts'
 
 // フォームの入力状態から、実際に送られるリクエストを作る
 const requestOf = (intake = {}) => buildAdviceRequest({ ...initialIntake, ...intake })

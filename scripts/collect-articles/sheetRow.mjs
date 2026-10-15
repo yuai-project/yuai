@@ -15,8 +15,8 @@ import {
   RELATIONSHIPS,
   TOPICS,
   labelOf,
-} from '../../src/data/consultationIntake.js'
-import { TAG_ANY } from '../../src/data/articleTags.js'
+} from '../../src/data/consultationIntake.ts'
+import { TAG_ANY } from '../../src/data/articleTags.ts'
 
 export const CANDIDATE_TAB = '収集候補'
 export const REVIEW_TAB = 'レビュー'

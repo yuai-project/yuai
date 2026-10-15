@@ -5,14 +5,16 @@
 //   プロンプト生成時は labelOf() で日本語ラベルに戻して使う想定。
 // - このフォームは診断ではない。相手をラベリングする選択肢・文言は置かない。
 
-export const GENDERS = [
+import type { AdviceRequest, Intake, Option, SummaryRow } from './types.ts'
+
+export const GENDERS: Option[] = [
   { value: 'male', label: '男性' },
   { value: 'female', label: '女性' },
   { value: 'other', label: 'その他' },
   { value: 'no_answer', label: '回答しない' },
 ]
 
-export const RELATIONSHIPS = [
+export const RELATIONSHIPS: Option[] = [
   { value: 'father', label: '父' },
   { value: 'mother', label: '母' },
   { value: 'sibling', label: 'きょうだい' },
@@ -25,7 +27,7 @@ export const RELATIONSHIPS = [
 ]
 
 // いつ頃から気になっているか（おおまかな期間）
-export const DURATIONS = [
+export const DURATIONS: Option[] = [
   { value: 'under_1_month', label: '最近（1か月未満）' },
   { value: '1_3_months', label: '1〜3か月くらい' },
   { value: 'about_6_months', label: '半年くらい' },
@@ -35,7 +37,7 @@ export const DURATIONS = [
   { value: 'unsure', label: 'わからない' },
 ]
 
-export const TOPICS = [
+export const TOPICS: Option[] = [
   { value: 'politics_society', label: '政治・社会' },
   { value: 'religion_spiritual', label: '宗教・スピリチュアル' },
   { value: 'celebrity', label: '有名人・芸能' },
@@ -44,7 +46,7 @@ export const TOPICS = [
   { value: 'other', label: 'その他' },
 ]
 
-export const CONCERNS = [
+export const CONCERNS: Option[] = [
   { value: 'angry_when_disagreed', label: '否定すると怒ってしまう' },
   { value: 'conversation_breaks_down', label: '会話が成り立たない' },
   { value: 'repeats_same_topic', label: '同じ話を何度もされる' },
@@ -57,13 +59,13 @@ export const CONCERNS = [
 ]
 
 export const SUPPORT_PERSON_UNSURE = 'unsure'
-export const SUPPORT_PERSON = [
+export const SUPPORT_PERSON: Option[] = [
   { value: 'yes', label: 'いる' },
   { value: 'no', label: 'いない' },
   { value: SUPPORT_PERSON_UNSURE, label: 'わからない' },
 ]
 
-export const DESIRED_RELATIONSHIP = [
+export const DESIRED_RELATIONSHIP: Option[] = [
   { value: 'keep', label: '今までと変わらずにいたい' },
   { value: 'improve', label: '関係を改善したい' },
   { value: 'some_distance', label: '少し距離を置きたい' },
@@ -73,7 +75,7 @@ export const DESIRED_RELATIONSHIP = [
 
 // 'unsure' は他の選択肢と同時に選べない（排他）
 export const DESIRED_SUPPORT_UNSURE = 'unsure'
-export const DESIRED_SUPPORT = [
+export const DESIRED_SUPPORT: Option[] = [
   { value: 'coping_tips', label: '具体的な対処法を知りたい' },
   { value: 'read_stories', label: '同じような経験をした人の話を読みたい' },
   { value: 'talk_with_peers', label: '同じ悩みを持つ人と話したい' },
@@ -90,7 +92,7 @@ export const FREE_TEXT_MAX = 1000
 export const CONCERNS_OTHER_MAX = 200
 
 // フォームの入力状態。テキスト入力・selectは文字列、未回答は '' / null / []。
-export const initialIntake = {
+export const initialIntake: Intake = {
   userAge: '',
   userGender: '',
   relationship: '',
@@ -105,14 +107,14 @@ export const initialIntake = {
   freeText: '',
 }
 
-const toIntOrNull = (s, min, max) => {
+const toIntOrNull = (s: string | null | undefined, min: number, max: number) => {
   if (s === '' || s == null) return null
   const n = Number(s)
   return Number.isInteger(n) && n >= min && n <= max ? n : null
 }
 
 // フォーム状態 → API送信用リクエスト。未回答は null / [] にそろえる。
-export function buildAdviceRequest(intake) {
+export function buildAdviceRequest(intake: Intake): AdviceRequest {
   const concernsOther = intake.concerns.includes('other')
     ? intake.concernsOther.trim() || null
     : null
@@ -133,21 +135,21 @@ export function buildAdviceRequest(intake) {
   }
 }
 
-export const labelOf = (options, value) =>
+export const labelOf = (options: Option[], value: string): string =>
   options.find((o) => o.value === value)?.label ?? value
 
-export const labelsOf = (options, values = []) =>
+export const labelsOf = (options: Option[], values: string[] = []): string[] =>
   values.map((v) => labelOf(options, v))
 
 // 結果画面の「相談内容のまとめ」用。回答された項目だけを [{ label, value }] で返す。
 // 求めているサポート（desiredSupport）は結果画面で専用カードに出すため含めない。
-export function summarizeRequest(req) {
+export function summarizeRequest(req: AdviceRequest): SummaryRow[] {
   const concerns = req.concerns?.length
     ? labelsOf(CONCERNS, req.concerns).join('、') +
       (req.concernsOther ? `（${req.concernsOther}）` : '')
     : null
 
-  const rows = [
+  const rows: [string, string | null][] = [
     ['あなたの年齢', req.userAge != null ? `${req.userAge}歳` : null],
     ['あなたの性別', req.userGender && labelOf(GENDERS, req.userGender)],
     ['相手との関係', req.relationship && labelOf(RELATIONSHIPS, req.relationship)],
@@ -174,6 +176,6 @@ export function summarizeRequest(req) {
   ]
 
   return rows
-    .filter(([, value]) => value)
+    .filter((row): row is [string, string] => Boolean(row[1]))
     .map(([label, value]) => ({ label, value }))
 }

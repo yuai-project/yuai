@@ -5,8 +5,8 @@
 // - 'any' と 'other' は検索の軸にしない。
 // - 扱うのは公開記事を探すための固定の文言だけ。利用者の入力は一切混ぜない。
 
-import { ARTICLE_MULTI_AXES, TAG_ANY } from '../../src/data/articleTags.js'
-import { CONCERNS, TOPICS, labelOf } from '../../src/data/consultationIntake.js'
+import { ARTICLE_MULTI_AXES, TAG_ANY } from '../../src/data/articleTags.ts'
+import { CONCERNS, TOPICS, labelOf } from '../../src/data/consultationIntake.ts'
 
 // 検索の主語。人ではなく状況を描写する（「陰謀論者」とは書かない）
 const SUBJECT = '家族や友人が陰謀論や極端な情報を信じるようになった'
@@ -17,7 +17,7 @@ const topicQuery = (label) => `${SUBJECT}とき、${label}の話題について�
 // concerns: 相談フォームの「困っていること」をそのまま状況として使う
 const concernQuery = (label) => `${SUBJECT}とき、${label}場合の向き合い方`
 
-// supportTypes: articleTags.js にラベルが無いので、検索用の言い回しをここで持つ
+// supportTypes: articleTags.ts にラベルが無いので、検索用の言い回しをここで持つ
 const SUPPORT_TYPE_QUERIES = {
   coping_tips: `${SUBJECT}ときの具体的な接し方と対処法`,
   self_care: `${SUBJECT}ことで疲れてしまった家族のセルフケア`,

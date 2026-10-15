@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { mockArticles } from '../src/data/articles.js'
+import { mockArticles } from '../src/data/articles.ts'
 
 const script = fileURLToPath(new URL('../scripts/validate-articles.mjs', import.meta.url))
 const dir = mkdtempSync(join(tmpdir(), 'yorido-validate-'))
