@@ -63,7 +63,7 @@ export default function Home() {
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink shadow-[0_8px_20px_rgba(242,138,69,0.28)] transition hover:bg-brand-400 active:scale-[0.98]"
             >
               <MessageCircleHeart size={20} />
-              相談してみる
+              状況を入れてヒントをみる
             </button>
           </div>
         </div>
