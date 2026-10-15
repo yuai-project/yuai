@@ -74,3 +74,59 @@ describe('週刊誌系の記事を推薦から外す', () => {
     }
   })
 })
+
+describe('書籍（b01・b02）', () => {
+  const BOOK_IDS = ['b01', 'b02']
+
+  test('approved の書籍で、著者と出版社があり、medicalInfo は付けない', () => {
+    for (const id of BOOK_IDS) {
+      const book = byId(id)
+      assert.ok(book, id)
+      assert.equal(book.status, 'approved', id)
+      assert.equal(book.sourceType, 'book', id)
+      assert.ok(book.author && book.publisher, id)
+      assert.deepEqual(book.supportTypes, ['background'], id)
+      assert.ok(book.concerns.includes('unsure_how_to_respond'), id)
+      assert.equal(book.medicalInfo, undefined, id)
+    }
+  })
+
+  test('背景を知ることが手がかりになる相談（どう接すればよいか分からない）で、本が候補に入る', () => {
+    // フォームに supportTypes の background に対応する選択肢は無いので、困りごとの一致で入る
+    for (const intake of [
+      { relationship: 'child', topics: ['politics_society'], concerns: ['unsure_how_to_respond'] },
+      { relationship: 'friend', topics: ['health'], concerns: ['unsure_how_to_respond'] },
+    ]) {
+      const ids = recommendIds(intake)
+      for (const id of BOOK_IDS) assert.ok(ids.includes(id), `${id}: ${ids.join(',')}`)
+    }
+  })
+
+  test('同じ点数なら、書籍より書籍以外の記事を先に出す（母 ＋ 話題なし ＋ どう接すればよいか分からない）', () => {
+    const ids = recommendIds({ relationship: 'mother', concerns: ['unsure_how_to_respond'] })
+    assert.deepEqual(ids, ['r20', 'r11', 'r12'])
+    for (const id of ['r11', 'r12']) {
+      for (const book of BOOK_IDS) {
+        if (ids.includes(book)) assert.ok(ids.indexOf(id) < ids.indexOf(book), `${id} < ${book}`)
+      }
+    }
+  })
+
+  test('記事が足りないときは本で補う（子ども ＋ 政治 ＋ どう接すればよいか分からない → r12・b01・b02）', () => {
+    assert.deepEqual(
+      recommendIds({
+        relationship: 'child',
+        topics: ['politics_society'],
+        concerns: ['unsure_how_to_respond'],
+      }),
+      ['r12', 'b01', 'b02'],
+    )
+  })
+
+  test('supportTypes に background を持つ approved の記事が、書籍を含めて3本ある', () => {
+    const background = mockArticles.filter(
+      (a) => a.status === 'approved' && a.supportTypes.includes('background'),
+    )
+    assert.deepEqual(background.map((a) => a.id).sort(), ['b01', 'b02', 'r12'])
+  })
+})

@@ -461,6 +461,40 @@ describe('recommendArticles', () => {
     })
   })
 
+  describe('同じ点数なら、書籍より書籍以外を先に並べる', () => {
+    // 同じタグの Web 記事と書籍。書籍のほうが burden が軽く、reviewedAt も新しい
+    const web = { ...byId('f-coping-angry'), id: 'f-web', burden: 'moderate', reviewedAt: '2026-09-01' }
+    const book = {
+      ...web,
+      id: 'f-book',
+      sourceType: 'book',
+      author: 'テスト 著',
+      burden: 'light',
+      reviewedAt: '2026-10-15',
+    }
+    const run = (intake, articles) =>
+      recommendArticles(requestOf(intake), articles, { fallbackIds: FIXTURE_FALLBACK_IDS })
+    const intake = { concerns: ['angry_when_disagreed'], desiredSupport: ['coping_tips'] }
+
+    test('同点なら、burden や reviewedAt より先に、書籍以外を上にする', () => {
+      for (const articles of [
+        [web, book],
+        [book, web],
+      ]) {
+        const result = run(intake, articles)
+        assert.equal(result.articles[0].score, result.articles[1].score)
+        assert.deepEqual(ids(result), ['f-web', 'f-book'])
+      }
+    })
+
+    test('点数が高ければ、書籍でも上に来る（点数の付け方は変えていない）', () => {
+      const betterBook = { ...book, concerns: ['angry_when_disagreed'], relationships: ['mother'] }
+      const result = run({ ...intake, relationship: 'mother' }, [web, betterBook])
+      assert.ok(result.articles[0].score > result.articles[1].score)
+      assert.deepEqual(ids(result), ['f-book', 'f-web'])
+    })
+  })
+
   test('同じ入力なら同じ順序で返る。記事の並び順を入れ替えても結果が同じ', () => {
     const intake = {
       relationship: 'mother',

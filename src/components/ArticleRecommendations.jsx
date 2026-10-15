@@ -1,4 +1,5 @@
 import { BookOpen, ExternalLink, LifeBuoy } from 'lucide-react'
+import { BOOK_SOURCE_TYPE } from '../data/articleTags'
 import { REASONS } from '../data/recommendArticles'
 import Tag from './Tag'
 
@@ -40,6 +41,9 @@ export default function ArticleRecommendations({ result }) {
                   相談できる先
                 </Tag>
               )}
+              {article.sourceType === BOOK_SOURCE_TYPE && (
+                <Tag className="mb-1.5">書籍</Tag>
+              )}
               <span className="flex items-start gap-1.5 text-sm font-bold leading-snug text-ink transition group-hover:text-brand-700">
                 <span className="min-w-0 break-words">{article.title}</span>
                 <ExternalLink
@@ -51,7 +55,9 @@ export default function ArticleRecommendations({ result }) {
                 <span className="sr-only">（外部サイトが新しいタブで開きます）</span>
               </span>
               <span className="mt-0.5 block break-words text-xs text-ink-faint">
-                {article.publisher}
+                {article.sourceType === BOOK_SOURCE_TYPE
+                  ? `${article.author}／${article.publisher}`
+                  : article.publisher}
               </span>
               <span className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-ink-soft">
                 {article.summary}

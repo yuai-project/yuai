@@ -10,6 +10,7 @@
 
 import {
   ARTICLE_SINGLE_AXES,
+  BOOK_SOURCE_TYPE,
   HEALTH_TOPIC,
   TAG_ANY,
   isRestrictedMedicalArticle,
@@ -171,10 +172,15 @@ function scoreArticle(article, profile) {
 
 const burdenRank = (b) => ARTICLE_SINGLE_AXES.burden.indexOf(b)
 
-// 点数の高い順 → burden が軽い順 → reviewedAt が新しい順 → id 順。
+// 書籍は 1、それ以外は 0。同点のときは、すぐ読める Web の記事を先に出す（本は記事が足りないときの補い）
+const bookRank = (article) => (article.sourceType === BOOK_SOURCE_TYPE ? 1 : 0)
+
+// 点数の高い順 → 書籍以外が先 → burden が軽い順 → reviewedAt が新しい順 → id 順。
 // 文字列比較はロケールに依らない < / > で行う。
 function compareScored(x, y) {
   if (x.score !== y.score) return y.score - x.score
+  const book = bookRank(x.article) - bookRank(y.article)
+  if (book !== 0) return book
   const burden = burdenRank(x.article.burden) - burdenRank(y.article.burden)
   if (burden !== 0) return burden
   if (x.article.reviewedAt !== y.article.reviewedAt) {
