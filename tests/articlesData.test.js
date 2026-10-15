@@ -95,11 +95,32 @@ describe('書籍（b01・b02）', () => {
     // フォームに supportTypes の background に対応する選択肢は無いので、困りごとの一致で入る
     for (const intake of [
       { relationship: 'child', topics: ['politics_society'], concerns: ['unsure_how_to_respond'] },
-      { relationship: 'mother', concerns: ['unsure_how_to_respond'] },
+      { relationship: 'friend', topics: ['health'], concerns: ['unsure_how_to_respond'] },
     ]) {
       const ids = recommendIds(intake)
       for (const id of BOOK_IDS) assert.ok(ids.includes(id), `${id}: ${ids.join(',')}`)
     }
+  })
+
+  test('同じ点数なら、書籍より書籍以外の記事を先に出す（母 ＋ 話題なし ＋ どう接すればよいか分からない）', () => {
+    const ids = recommendIds({ relationship: 'mother', concerns: ['unsure_how_to_respond'] })
+    assert.deepEqual(ids, ['r20', 'r11', 'r12'])
+    for (const id of ['r11', 'r12']) {
+      for (const book of BOOK_IDS) {
+        if (ids.includes(book)) assert.ok(ids.indexOf(id) < ids.indexOf(book), `${id} < ${book}`)
+      }
+    }
+  })
+
+  test('記事が足りないときは本で補う（子ども ＋ 政治 ＋ どう接すればよいか分からない → r12・b01・b02）', () => {
+    assert.deepEqual(
+      recommendIds({
+        relationship: 'child',
+        topics: ['politics_society'],
+        concerns: ['unsure_how_to_respond'],
+      }),
+      ['r12', 'b01', 'b02'],
+    )
   })
 
   test('supportTypes に background を持つ approved の記事が、書籍を含めて3本ある', () => {
