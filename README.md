@@ -44,6 +44,16 @@ npm run lint     # oxlint
   相談結果・相談フォームなどは2カラム（結果画面の右列は追従サイドバー）ブラウザの開発者ツールでモバイル表示にすると
 より本物のアプリらしく確認できます。
 
+## デプロイ
+
+Cloudflare Workers の静的アセット配信で公開しています（設定は `wrangler.jsonc`）。
+Cloudflare の Workers Builds が GitHub と連携していて、main に merge されると自動で本番に出ます。
+PR ごとにプレビュー URL も発行されます。
+
+```bash
+npm run build && npx wrangler dev   # Cloudflare と同じ配信の仕方で手元確認 → http://localhost:8787/
+```
+
 ---
 
 ## 技術スタック
