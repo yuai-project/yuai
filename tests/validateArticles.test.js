@@ -81,3 +81,46 @@ describe('validate-articles: 健康の記事の発信元', () => {
     }
   })
 })
+
+describe('validate-articles: 書籍（sourceType: book）', () => {
+  const book = {
+    ...base,
+    id: 't-book',
+    url: 'https://example.com/validate-test-book',
+    topics: ['any'],
+    supportTypes: ['background'],
+    sourceType: 'book',
+    author: 'テスト 著',
+    publisher: 'テスト出版',
+  }
+
+  test('author と publisher があれば通る', () => {
+    assert.equal(validateWith(book).ok, true)
+  })
+
+  test('author がないとエラーになる', () => {
+    const { author: _author, ...withoutAuthor } = book
+    for (const article of [withoutAuthor, { ...book, author: '' }, { ...book, author: '  ' }]) {
+      const result = validateWith(article)
+      assert.equal(result.ok, false, JSON.stringify(article.author))
+      assert.match(result.output, /"book" の記事は "author" が必須/)
+    }
+  })
+
+  test('publisher がないとエラーになる', () => {
+    const { publisher: _publisher, ...withoutPublisher } = book
+    for (const article of [withoutPublisher, { ...book, publisher: '' }]) {
+      const result = validateWith(article)
+      assert.equal(result.ok, false)
+      assert.match(result.output, /"book" の記事は "publisher" が必須/)
+    }
+  })
+
+  test('author は文字列だけ', () => {
+    for (const author of [['テスト'], 1, null]) {
+      const result = validateWith({ ...book, author })
+      assert.equal(result.ok, false, JSON.stringify(author))
+      assert.match(result.output, /"book" の記事は "author" が必須（文字列）/)
+    }
+  })
+})

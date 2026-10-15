@@ -51,7 +51,8 @@ export const ARTICLE_SINGLE_AXES = {
   // 読む負担
   burden: ['light', 'moderate', 'heavy'],
   // 発信元の種類
-  sourceType: ['public_agency', 'support_org', 'academic', 'professional', 'media'],
+  // book は書籍。author と publisher が必須（ARTICLE_BOOK_REQUIRED_TEXT_FIELDS）
+  sourceType: ['public_agency', 'support_org', 'academic', 'professional', 'media', 'book'],
   // approved 以外は推薦に出さない。paused は取り下げ
   status: ['approved', 'paused'],
 }
@@ -83,6 +84,10 @@ export const ARTICLE_REQUIRED_TEXT_FIELDS = [
   'reviewedAt',
 ]
 export const ARTICLE_OPTIONAL_DATE_FIELDS = ['publishedAt']
+
+// 書籍（sourceType: book）のときだけ必須になる文字列項目。author はほかの記事では使わない。
+export const BOOK_SOURCE_TYPE = 'book'
+export const ARTICLE_BOOK_REQUIRED_TEXT_FIELDS = ['author', 'publisher']
 
 // 記事として採用しないドメイン。サブドメインも含めて除外する。
 // 最小限のたたき台。中身は収集側（#96）の除外リストと合わせる。

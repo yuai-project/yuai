@@ -270,5 +270,39 @@
     "sourceType": "public_agency",
     "status": "approved",
     "reviewedAt": "2026-10-13"
+  },
+  {
+    "id": "b01",
+    "url": "https://www.keio-up.co.jp/book/b10164862.html",
+    "title": "陰謀論はなぜ生まれるのか",
+    "author": "マイク・ロスチャイルド 著、烏谷昌幸・昇亜美子 訳",
+    "publisher": "慶應義塾大学出版会",
+    "summary": "身近な人が信じている話の背景を知る手がかりになる本です。陰謀論がソーシャルメディアを通じてどのように広がり、なぜ多くの人を引きつけるのかを、アメリカでの出来事をもとにたどります。",
+    "relationships": ["any"],
+    "topics": ["any"],
+    "concerns": ["unsure_how_to_respond"],
+    "supportTypes": ["background"],
+    "stance": "neutral",
+    "burden": "moderate",
+    "sourceType": "book",
+    "status": "approved",
+    "reviewedAt": "2026-10-15"
+  },
+  {
+    "id": "b02",
+    "url": "https://www.msz.co.jp/book/detail/09839/",
+    "title": "フェイクニュースの免疫学",
+    "author": "S・ヴァン・ダー・リンデン 著、笹原和俊 監訳、松井信彦 訳",
+    "publisher": "みすず書房",
+    "summary": "身近な人が信じている話の背景を知る手がかりになる本です。誤った情報を信じたくなる心の働きと、それが広まるしくみを、心理学の研究から解説しています。",
+    "relationships": ["any"],
+    "topics": ["any"],
+    "concerns": ["unsure_how_to_respond"],
+    "supportTypes": ["background"],
+    "stance": "neutral",
+    "burden": "moderate",
+    "sourceType": "book",
+    "status": "approved",
+    "reviewedAt": "2026-10-15"
   }
 ]

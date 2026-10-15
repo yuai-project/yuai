@@ -8,11 +8,13 @@
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import {
+  ARTICLE_BOOK_REQUIRED_TEXT_FIELDS,
   ARTICLE_MULTI_AXES,
   ARTICLE_OPTIONAL_BOOLEAN_FIELDS,
   ARTICLE_OPTIONAL_DATE_FIELDS,
   ARTICLE_REQUIRED_TEXT_FIELDS,
   ARTICLE_SINGLE_AXES,
+  BOOK_SOURCE_TYPE,
   EXCLUDED_DOMAINS,
   HEALTH_ALLOWED_SOURCE_TYPES,
   TAG_ANY,
@@ -28,6 +30,7 @@ const KNOWN_FIELDS = new Set([
   ...ARTICLE_REQUIRED_TEXT_FIELDS,
   ...ARTICLE_OPTIONAL_DATE_FIELDS,
   ...ARTICLE_OPTIONAL_BOOLEAN_FIELDS,
+  ...ARTICLE_BOOK_REQUIRED_TEXT_FIELDS,
   ...Object.keys(ARTICLE_MULTI_AXES),
   ...Object.keys(ARTICLE_SINGLE_AXES),
 ])
@@ -55,6 +58,14 @@ function validateArticle(a, label) {
   }
   if (isNonEmptyString(a.reviewedAt) && !isValidDate(a.reviewedAt)) {
     err(`reviewedAt "${a.reviewedAt}" が YYYY-MM-DD の日付ではない`)
+  }
+  // 書籍は、著者と出版社が必須（文字列）
+  if (a.sourceType === BOOK_SOURCE_TYPE) {
+    for (const field of ARTICLE_BOOK_REQUIRED_TEXT_FIELDS) {
+      if (!isNonEmptyString(a[field])) {
+        err(`sourceType が "${BOOK_SOURCE_TYPE}" の記事は "${field}" が必須（文字列）`)
+      }
+    }
   }
   for (const field of ARTICLE_OPTIONAL_DATE_FIELDS) {
     if (a[field] !== undefined && !isValidDate(a[field])) {
