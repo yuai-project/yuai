@@ -1,7 +1,7 @@
 import { ChevronDown, ClipboardList, PencilLine } from 'lucide-react'
 import { summarizeRequest } from '../../data/consultationIntake'
 
-// AI相談結果の上部に出す「相談内容のまとめ」。初期状態は折りたたみ。
+// AI相談結果の上部に出す「入力した内容のまとめ」。初期状態は折りたたみ。
 export default function IntakeSummary({ request, onEdit }) {
   const rows = summarizeRequest(request)
   if (rows.length === 0) return null
@@ -14,7 +14,7 @@ export default function IntakeSummary({ request, onEdit }) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-bold leading-tight text-ink">
-            相談内容のまとめ
+            入力した内容のまとめ
           </span>
           <span className="block text-xs text-ink-faint">
             タップすると入力した内容を確認できます

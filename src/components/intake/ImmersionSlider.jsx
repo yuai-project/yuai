@@ -1,6 +1,6 @@
 import { IMMERSION_MAX, IMMERSION_MIN } from '../../data/consultationIntake'
 
-// 「あなたから見た、のめり込みの程度」スライダー（1〜10・任意）。
+// 「その話をどのくらい強く信じているように見えるか」スライダー（1〜10・任意）。
 // 相談者本人の感じ方を聞くもので、医学的な評価ではない。
 // 未回答（null）を区別するため、触るまでは値を表示しない。
 export default function ImmersionSlider({ value, onChange, labelledBy }) {

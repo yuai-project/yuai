@@ -75,14 +75,14 @@ export const DESIRED_RELATIONSHIP = [
 export const DESIRED_SUPPORT_UNSURE = 'unsure'
 export const DESIRED_SUPPORT = [
   { value: 'coping_tips', label: '具体的な対処法を知りたい' },
-  { value: 'read_stories', label: '同じような体験談を読みたい' },
+  { value: 'read_stories', label: '同じような経験をした人の話を読みたい' },
   { value: 'talk_with_peers', label: '同じ悩みを持つ人と話したい' },
   { value: 'talk_with_experienced', label: '似た状況を経験し、乗り越えた人と話したい' },
   { value: 'professional_referral', label: '専門家・NPOなどの相談先を知りたい' },
   { value: DESIRED_SUPPORT_UNSURE, label: 'わからない' },
 ]
 
-// のめり込みの程度（相談者本人の主観。医学的評価ではない）
+// その話をどのくらい強く信じているように見えるか（相談者本人の主観。医学的評価ではない）
 export const IMMERSION_MIN = 1
 export const IMMERSION_MAX = 10
 
@@ -153,7 +153,7 @@ export function summarizeRequest(req) {
     ['相手との関係', req.relationship && labelOf(RELATIONSHIPS, req.relationship)],
     ['気になり始めた時期', req.duration && labelOf(DURATIONS, req.duration)],
     [
-      'のめり込みの程度（あなたの感じ方）',
+      '信じている強さ（あなたの感じ方）',
       req.immersionLevel != null ? `${req.immersionLevel} / ${IMMERSION_MAX}` : null,
     ],
     [

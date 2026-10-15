@@ -13,7 +13,7 @@ import { getSupportLines } from '../data/supportLines'
 
 // 履歴はまだ保存していないので、件数は出さず「準備中」とする
 const menu = [
-  { icon: MessageCircleHeart, label: '過去の相談履歴', note: '準備中' },
+  { icon: MessageCircleHeart, label: 'これまでのヒント', note: '準備中' },
   { icon: Settings, label: '設定', note: '' },
 ]
 
