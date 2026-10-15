@@ -9,15 +9,15 @@ import {
   ARTICLE_MULTI_AXES,
   ARTICLE_SINGLE_AXES,
   HEALTH_ALLOWED_SOURCE_TYPES,
-} from '../src/data/articleTags.js'
-import { buildAdviceRequest, initialIntake } from '../src/data/consultationIntake.js'
+} from '../src/data/articleTags.ts'
+import { buildAdviceRequest, initialIntake } from '../src/data/consultationIntake.ts'
 import {
   PENALTIES,
   REASONS,
   WEIGHTS,
   recommendArticles,
   toRecommendationProfile,
-} from '../src/data/recommendArticles.js'
+} from '../src/data/recommendArticles.ts'
 import { FIXTURE_FALLBACK_IDS, fixtureArticles } from './fixtures/recommendArticles.js'
 
 // フォームの入力状態から、実際に送られるリクエストを作る
@@ -30,7 +30,7 @@ const ids = (result) => result.articles.map((r) => r.article.id)
 const byId = (id) => fixtureArticles.find((a) => a.id === id)
 
 describe('フィクスチャ', () => {
-  test('値がすべて articleTags.js のスキーマ内にある', () => {
+  test('値がすべて articleTags.ts のスキーマ内にある', () => {
     for (const a of fixtureArticles) {
       for (const [axis, { values }] of Object.entries(ARTICLE_MULTI_AXES)) {
         for (const v of a[axis]) assert.ok(values.includes(v), `${a.id}.${axis}: ${v}`)
@@ -526,7 +526,7 @@ describe('recommendArticles', () => {
     assert.deepEqual(fixtureArticles, articlesBefore)
   })
 
-  test('articles を省略すると articles.js のデータを使う', () => {
+  test('articles を省略すると articles.ts のデータを使う', () => {
     const result = recommendArticles(requestOf({ concerns: ['self_exhausted'] }))
     assert.ok(result.articles.length > 0)
     assert.ok(result.articles.every((r) => r.article.status === 'approved'))

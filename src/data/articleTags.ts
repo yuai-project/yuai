@@ -1,16 +1,17 @@
 // 記事に付けるタグのスキーマ（#95）。
 //
 // - どの軸も閉じた集合。スキーマ外の値が出ないことが、変な記事を出さない担保になる。
-// - relationships / topics / concerns は相談フォーム（consultationIntake.js）の value をそのまま使う。
+// - relationships / topics / concerns は相談フォーム（consultationIntake.ts）の value をそのまま使う。
 //   値を二重に書かないよう定数から組み立てる。'other' は記事側では使わず、代わりに 'any' を足す。
 // - 'any' は「どれにも当てはまる」の意味で、単独でしか付けられない。
 // - 検証は scripts/validate-articles.mjs。推薦処理（変換・スコア計算）は #104。
 
-import { CONCERNS, RELATIONSHIPS, TOPICS } from './consultationIntake.js'
+import { CONCERNS, RELATIONSHIPS, TOPICS } from './consultationIntake.ts'
+import type { Article, MultiAxis, Option } from './types.ts'
 
 export const TAG_ANY = 'any'
 
-const formValues = (options) =>
+const formValues = (options: Option[]) =>
   options.map((o) => o.value).filter((v) => v !== 'other')
 
 // 複数の値を持つ軸。max: null は上限なし。
@@ -42,7 +43,7 @@ export const ARTICLE_MULTI_AXES = {
     min: 1,
     max: 2,
   },
-}
+} satisfies Record<string, MultiAxis>
 
 // 値を1つだけ持つ軸。
 export const ARTICLE_SINGLE_AXES = {
@@ -55,7 +56,7 @@ export const ARTICLE_SINGLE_AXES = {
   sourceType: ['public_agency', 'support_org', 'academic', 'professional', 'media', 'book'],
   // approved 以外は推薦に出さない。paused は取り下げ
   status: ['approved', 'paused'],
-}
+} satisfies Record<string, string[]>
 
 // 医療・健康の情報そのものを扱う記事（medicalInfo: true）は、この発信元のものに限る（#145）。
 // - medicalInfo は任意の項目（true / false）。省略は false と同じ。
@@ -63,15 +64,15 @@ export const ARTICLE_SINGLE_AXES = {
 // - 健康の話題を含む体験談や接し方の記事（topics に health があるだけ）は、制限しない。
 // - topics の 'any' は、特定の話題の内容を含まない記事にだけ付ける。
 // - 検証（scripts/validate-articles.mjs）は、記事そのものが決まりに沿っているかを見る。
-//   推薦処理（recommendArticles.js）も、健康を選んだ相談で同じ決まりを確かめる。
+//   推薦処理（recommendArticles.ts）も、健康を選んだ相談で同じ決まりを確かめる。
 export const HEALTH_TOPIC = 'health'
-export const HEALTH_ALLOWED_SOURCE_TYPES = ['public_agency', 'academic', 'professional']
+export const HEALTH_ALLOWED_SOURCE_TYPES: string[] = ['public_agency', 'academic', 'professional']
 
 // 任意の真偽値の項目。
 export const ARTICLE_OPTIONAL_BOOLEAN_FIELDS = ['medicalInfo']
 
 // medicalInfo: true なのに、許可外の発信元になっている記事か。
-export const isRestrictedMedicalArticle = (article) =>
+export const isRestrictedMedicalArticle = (article: Article | null | undefined): boolean =>
   article?.medicalInfo === true && !HEALTH_ALLOWED_SOURCE_TYPES.includes(article.sourceType)
 
 // 必須の文字列項目（タグの軸以外）。publishedAt だけ任意。

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 記事データ（src/data/articles.json）を articleTags.js のスキーマで検証する。
+// 記事データ（src/data/articles.json）を articleTags.ts のスキーマで検証する。
 // 1件でも違反があれば一覧を出して exit 1。CI でも実行する。
 //
 //   npm run validate:articles                 # src/data/articles.json を検証
@@ -19,8 +19,8 @@ import {
   HEALTH_ALLOWED_SOURCE_TYPES,
   TAG_ANY,
   isRestrictedMedicalArticle,
-} from '../src/data/articleTags.js'
-import { FALLBACK_ARTICLE_IDS } from '../src/data/articles.js'
+} from '../src/data/articleTags.ts'
+import { FALLBACK_ARTICLE_IDS } from '../src/data/articles.ts'
 
 const defaultPath = fileURLToPath(new URL('../src/data/articles.json', import.meta.url))
 const path = process.argv[2] ?? defaultPath

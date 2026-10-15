@@ -10,7 +10,7 @@ import {
   SUPPORT_LINES,
   getSupportLines,
   telHref,
-} from '../src/data/supportLines.js'
+} from '../src/data/supportLines.ts'
 
 describe('相談窓口', () => {
   test('どの窓口にも、名前・番号・説明がある', () => {

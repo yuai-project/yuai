@@ -1,0 +1,30 @@
+// TypeScript の設定（#166）。JS から TS へ段階的に移すため、JS と TS を混在させる。
+// - 型チェックは `npm run typecheck`。ビルドは Vite が行うので、tsc は出力しない（noEmit）
+// - allowJs: .js / .jsx はそのまま動く。checkJs は付けないので、JS の中身は型チェックしない
+// - src/data/*.ts は tests/ と scripts/ から Node がそのまま読み込む（型を取り除いて実行する）。
+//   そのため import は拡張子 .ts まで書き、enum など型を取り除くだけでは消えない書き方は使わない
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+
+    "allowJs": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "skipLibCheck": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}

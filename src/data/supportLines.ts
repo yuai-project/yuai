@@ -9,9 +9,11 @@
 //
 // tel は表示用の番号。電話をかけるリンクは telHref() で作る。
 
+import type { SupportLine } from './types.ts'
+
 export const SUPPORT_LINES_CHECKED_AT = '2026-10-13'
 
-export const SUPPORT_LINES = [
+export const SUPPORT_LINES: SupportLine[] = [
   {
     id: 'yorisoi',
     name: 'よりそいホットライン',
@@ -32,7 +34,7 @@ export const SUPPORT_LINES = [
 // 物の売買やサービスの契約のトラブルを相談する窓口。
 // いつもは出さず（マイページにも出さない）、「お金の使い方が心配」を選んだか、
 // 詳しい内容（自由記述）から読み取ったときだけ、安全のカードの一覧の最後に足す。
-export const CONSUMER_SUPPORT_LINE = {
+export const CONSUMER_SUPPORT_LINE: SupportLine = {
   id: 'consumer',
   name: '消費者ホットライン',
   tel: '188',
@@ -43,7 +45,7 @@ export const CONSUMER_SUPPORT_LINE = {
 
 // 「死にたい」と感じるほどつらいときの窓口。
 // いつもは出さず、詳しい内容（自由記述）にそうした言葉があったときだけ、一覧の一番上に足す。
-export const CRISIS_SUPPORT_LINE = {
+export const CRISIS_SUPPORT_LINE: SupportLine = {
   id: 'inochi-sos',
   name: '#いのちSOS',
   tel: '0120-061-338',
@@ -56,12 +58,15 @@ export const SUPPORT_LINES_NOTICE =
   '番号や受付時間は変わることがあります。最新の情報は各窓口の公式サイトでご確認ください。'
 
 // 表示用の番号 → tel: リンク（ハイフンを除く）
-export const telHref = (tel) => `tel:${tel.replace(/[^\d+]/g, '')}`
+export const telHref = (tel: string): string => `tel:${tel.replace(/[^\d+]/g, '')}`
 
 // 差し替え時はここだけ書き換える。
 // crisis: true のときは #いのちSOS を一番上に、money: true のときは消費者ホットラインを最後に足す。
 // どちらも無ければ、いつもの一覧（マイページと同じ）。
-export function getSupportLines({ crisis = false, money = false } = {}) {
+export function getSupportLines({
+  crisis = false,
+  money = false,
+}: { crisis?: boolean; money?: boolean } = {}): SupportLine[] {
   if (!crisis && !money) return SUPPORT_LINES
   return [
     ...(crisis ? [CRISIS_SUPPORT_LINE] : []),

@@ -12,7 +12,7 @@ description: 利用者の目に触れる日本語文言が、Yorido のプロダ
 
 利用者の画面に出る日本語すべて。
 
-- `src/data/adviceCards.js` / `src/data/mockAdvice.js` — アドバイスの6セクション（**最重要**）
+- `src/data/adviceCards.ts` / `src/data/mockAdvice.ts` — アドバイスの6セクション（**最重要**）
 - `src/data/articles.json` — 記事の要約（体験談の記事を含む。体験談のモックは #148 で削除済み）
 - `src/config.js` — サービス名・タグライン・コンセプト
 - `src/pages/*.jsx` / `src/components/*.jsx` — 見出し・説明文・ボタン・プレースホルダ・エラー文言
@@ -92,7 +92,7 @@ git diff origin/main... -- src/
 見つかった問題を、**該当箇所と書き換え案をセットで**挙げる。
 
 ```
-src/data/mockAdvice.js:42  項目1（断定）
+src/data/mockAdvice.ts:42  項目1（断定）
   現状: 「お母さまは孤独を感じている状態です」
   提案: 「お母さまは孤独を感じているのかもしれません」
   理由: 断定形で相手の心理状態を決めつけている

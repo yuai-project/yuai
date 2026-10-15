@@ -6,7 +6,7 @@
 // ここで決めるのは「人が判定する前の下読み」まで。AI の判定で候補を捨てることはせず、
 // 除外と判定したものもシートに入れて人が見る。
 
-import { ARTICLE_MULTI_AXES, ARTICLE_SINGLE_AXES } from '../../src/data/articleTags.js'
+import { ARTICLE_MULTI_AXES, ARTICLE_SINGLE_AXES } from '../../src/data/articleTags.ts'
 
 // #99 の採否ラベル（下書き）。シートにはこの文字列のまま書く
 export const REVIEW_LABELS = ['使える', '本人向け', '論破系', '危険・陰謀論側', '無関係', '除外候補']

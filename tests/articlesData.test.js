@@ -5,7 +5,7 @@
 
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { FALLBACK_ARTICLE_IDS, mockArticles } from '../src/data/articles.js'
+import { FALLBACK_ARTICLE_IDS, mockArticles } from '../src/data/articles.ts'
 import {
   CONCERNS,
   DESIRED_SUPPORT,
@@ -13,8 +13,8 @@ import {
   TOPICS,
   buildAdviceRequest,
   initialIntake,
-} from '../src/data/consultationIntake.js'
-import { recommendArticles } from '../src/data/recommendArticles.js'
+} from '../src/data/consultationIntake.ts'
+import { recommendArticles } from '../src/data/recommendArticles.ts'
 
 const PAUSED_IDS = ['r27', 'r29', 'r10']
 const byId = (id) => mockArticles.find((a) => a.id === id)

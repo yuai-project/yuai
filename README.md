@@ -34,6 +34,7 @@ npm run dev      # 開発サーバー起動 → http://localhost:5173/
 npm run build    # 本番ビルド（dist/ に出力）
 npm run preview  # ビルド結果のプレビュー
 npm run lint     # oxlint
+npm run typecheck # tsc（型チェック）
 ```
 
 スマホ幅（最大 430px）を基本に設計しています。
@@ -79,7 +80,7 @@ npm run build && npx wrangler dev   # Cloudflare と同じ配信の仕方で手�
 
 ### あなたへのヒントの6セクション
 
-**AI は使っていません。** 人が書いた文章（`src/data/adviceCards.js`）を、フォームの回答から決まったルールで選んで出します（`src/data/mockAdvice.js` の `buildAdvice()`）。
+**AI は使っていません。** 人が書いた文章（`src/data/adviceCards.ts`）を、フォームの回答から決まったルールで選んで出します（`src/data/mockAdvice.ts` の `buildAdvice()`）。
 
 1. まず、あなた自身へ（利用者本人のケア）
 2. 今、起きているかもしれないこと（**断定せず仮説**として提示。人が書いた文章では回答に合わせられないため、今は出していない）
@@ -89,7 +90,7 @@ npm run build && npx wrangler dev   # Cloudflare と同じ配信の仕方で手�
 6. こんなときは無理に話さなくて大丈夫（**安全優先**の案内。電話で相談できる窓口つき）
 
 汎用チャットUIにせず、価値が視覚的に伝わる構造化回答にしています。
-あわせて、フォームの回答に合った記事・書籍・相談窓口を、決まったルールで選んで出します（`src/data/recommendArticles.js`）。
+あわせて、フォームの回答に合った記事・書籍・相談窓口を、決まったルールで選んで出します（`src/data/recommendArticles.ts`）。
 
 ---
 
@@ -113,9 +114,10 @@ src/
     intake/              # 相談フォーム部品（StepProgress / ChoiceGroup / SelectField / FormField / ImmersionSlider / IntakeSummary / DesiredSupportCard）
   pages/                 # 上記4画面
   data/
-    adviceCards.js       # ヒントの文章（人が書いたカード）
-    mockAdvice.js        # 回答からカードを選んでヒントを組み立てる buildAdvice()＋getAdvice()
-    consultationIntake.js # 相談フォームの選択肢・初期値・buildAdviceRequest()
+    adviceCards.ts       # ヒントの文章（人が書いたカード）
+    mockAdvice.ts        # 回答からカードを選んでヒントを組み立てる buildAdvice()＋getAdvice()
+    consultationIntake.ts # 相談フォームの選択肢・初期値・buildAdviceRequest()
+    types.ts             # src/data の型（アドバイスの形 Advice・相談内容 AdviceRequest など）
 ```
 
 ---
@@ -147,17 +149,17 @@ src/
 
 ## 現在モックになっている部分
 
-- **ヒント**：AI は使わず、人が書いた文章（`src/data/adviceCards.js`）を決まったルールで選ぶ。`getAdvice()` のローディングは演出のみ。
+- **ヒント**：AI は使わず、人が書いた文章（`src/data/adviceCards.ts`）を決まったルールで選ぶ。`getAdvice()` のローディングは演出のみ。
 - **マイページ**：「これまでのヒント」「設定」はダミー。認証・履歴なし。
-- **相談窓口情報**：マイページと結果画面に、実際の電話窓口を載せている（`src/data/supportLines.js`）。
+- **相談窓口情報**：マイページと結果画面に、実際の電話窓口を載せている（`src/data/supportLines.ts`）。
 
 ---
 
 ## 本番化するときの次の3ステップ
 
-1. **LLM API 接続（将来の案。今は AI を使っていない）**：`src/data/mockAdvice.js` の `getAdvice(request)` を
+1. **LLM API 接続（将来の案。今は AI を使っていない）**：`src/data/mockAdvice.ts` の `getAdvice(request)` を
    OpenAI / Anthropic 等の呼び出しに置き換える。`request` は相談フォームの
-   `buildAdviceRequest()`（`src/data/consultationIntake.js`）の戻り値。返却JSONを `buildAdvice()` の戻り値と同じ構造に
+   `buildAdviceRequest()`（`src/data/consultationIntake.ts`）の戻り値。返却JSONを `buildAdvice()` の戻り値と同じ構造に
    させるようプロンプト設計すれば UI は無改修。安全・非断定・ラベリング禁止を
    システムプロンプトに明記する。
 2. **体験談の投稿**：このハッカソンでは作らない方針で、体験談のページとモックは外した（#148）。

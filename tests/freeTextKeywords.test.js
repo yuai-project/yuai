@@ -5,31 +5,31 @@
 
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { SAFETY } from '../src/data/adviceCards.js'
+import { SAFETY } from '../src/data/adviceCards.ts'
 import {
   CONCERNS,
   buildAdviceRequest,
   initialIntake,
   labelOf,
-} from '../src/data/consultationIntake.js'
+} from '../src/data/consultationIntake.ts'
 import {
   CONCERN_KEYWORDS,
   CRISIS_KEYWORDS,
   DANGER_KEYWORDS,
   mergeFreeText,
   readFreeText,
-} from '../src/data/freeTextKeywords.js'
-import { buildAdvice, selectCardKey } from '../src/data/mockAdvice.js'
+} from '../src/data/freeTextKeywords.ts'
+import { buildAdvice, selectCardKey } from '../src/data/mockAdvice.ts'
 import {
   REASONS,
   recommendArticles,
   toRecommendationProfile,
-} from '../src/data/recommendArticles.js'
+} from '../src/data/recommendArticles.ts'
 import {
   CONSUMER_SUPPORT_LINE,
   CRISIS_SUPPORT_LINE,
   SUPPORT_LINES,
-} from '../src/data/supportLines.js'
+} from '../src/data/supportLines.ts'
 import { FIXTURE_FALLBACK_IDS, fixtureArticles } from './fixtures/recommendArticles.js'
 
 const requestOf = (intake = {}) => buildAdviceRequest({ ...initialIntake, ...intake })

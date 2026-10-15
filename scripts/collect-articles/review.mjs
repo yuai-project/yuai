@@ -2,12 +2,12 @@
 //
 // - 判定基準は reviewPrompt.mjs（仮置き。#108 で詰める）。
 // - 利用者の入力は一切使わない。渡すのは公開記事の情報だけ。
-// - タグ候補はスキーマ外の値を落とし、articleTags.js の制約（any の排他・個数の上限）に合わせて整える。
+// - タグ候補はスキーマ外の値を落とし、articleTags.ts の制約（any の排他・個数の上限）に合わせて整える。
 // - 週1回の実行で急がないので、Message Batches API で投げる（料金が半額）。
 //   ふつうは数分〜1時間で終わるが、最長24時間かかりうる。待ちきれなければ取り消して止める。
 
 import Anthropic from '@anthropic-ai/sdk'
-import { ARTICLE_MULTI_AXES, HEALTH_ALLOWED_SOURCE_TYPES, HEALTH_TOPIC, TAG_ANY } from '../../src/data/articleTags.js'
+import { ARTICLE_MULTI_AXES, HEALTH_ALLOWED_SOURCE_TYPES, HEALTH_TOPIC, TAG_ANY } from '../../src/data/articleTags.ts'
 import { fetchPage } from './fetchPage.mjs'
 import { EXCLUSION_FLAGS, LABEL_UNCHECKED, REVIEW_SCHEMA, SYSTEM_PROMPT, buildUserMessage } from './reviewPrompt.mjs'
 
@@ -21,7 +21,7 @@ const FETCH_CONCURRENCY = 5
 const POLL_INTERVAL_MS = 30_000
 const MAX_WAIT_MS = 3 * 60 * 60 * 1000
 
-// AI のタグ候補を articleTags.js の制約に合わせる。直したことは warnings に残す
+// AI のタグ候補を articleTags.ts の制約に合わせる。直したことは warnings に残す
 export function normalizeTags(tags) {
   const out = { ...tags }
   const warnings = []

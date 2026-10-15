@@ -9,8 +9,10 @@
 //
 // 注意: キーワードは下書きで、チーム・専門家の確認前。
 
-// 困りごと（consultationIntake.js の CONCERNS の value）ごとのキーワード。
-export const CONCERN_KEYWORDS = {
+import type { FreeTextReading, MergedFreeText, RequestInput } from './types.ts'
+
+// 困りごと（consultationIntake.ts の CONCERNS の value）ごとのキーワード。
+export const CONCERN_KEYWORDS: Record<string, string[]> = {
   self_exhausted: ['疲れ', 'しんどい', 'つらい', '辛い', '限界', '眠れない', '消耗'],
   angry_when_disagreed: ['怒る', '怒って', '怒られ', 'キレる', 'キレて', '不機嫌'],
   repeats_same_topic: ['同じ話', '何度も', '毎回', 'ばかり', 'ばっかり'],
@@ -37,18 +39,18 @@ export const DANGER_KEYWORDS = [
 ]
 
 // 危険のキーワードのうち、「死にたい」と感じるほどつらい気持ちを示すもの。
-// これがあるときは、窓口の一番上に #いのちSOS を足す（supportLines.js）。
+// これがあるときは、窓口の一番上に #いのちSOS を足す（supportLines.ts）。
 export const CRISIS_KEYWORDS = ['死にたい', '消えたい', 'いなくなりたい']
 
 // 全角・半角などの表記ゆれをそろえる
-const normalize = (text) => (typeof text === 'string' ? text.normalize('NFKC') : '')
+const normalize = (text: unknown): string => (typeof text === 'string' ? text.normalize('NFKC') : '')
 
-const includesAny = (text, keywords) => keywords.some((k) => text.includes(normalize(k)))
+const includesAny = (text: string, keywords: string[]) => keywords.some((k) => text.includes(normalize(k)))
 
 // 自由記述 → { concerns: 読み取った困りごと, danger: 危険を示す言葉があるか,
 //               crisis: 「死にたい」と感じるほどつらい気持ちを示す言葉があるか }。
 // concerns は CONCERN_KEYWORDS の並び順で、重複なし。
-export function readFreeText(text) {
+export function readFreeText(text: unknown): FreeTextReading {
   const normalized = normalize(text)
   if (normalized.trim() === '') return { concerns: [], danger: false, crisis: false }
   return {
@@ -64,7 +66,7 @@ export function readFreeText(text) {
 // - concerns: フォームで選んだもの ＋ 読み取ったもの（選んだものが先。消さない）
 // - inferredConcerns: 読み取って新しく足したものだけ
 // - danger / crisis: readFreeText() と同じ
-export function mergeFreeText(request) {
+export function mergeFreeText(request: RequestInput): MergedFreeText {
   const selected = Array.isArray(request?.concerns) ? request.concerns : []
   const read = readFreeText(request?.freeText)
   const inferredConcerns = read.concerns.filter((c) => !selected.includes(c))

@@ -1,5 +1,5 @@
 // recommendArticles のテスト専用の記事。articles.json のモックには依存させない
-// （実記事に差し替えてもテストが壊れないように）。値はすべて articleTags.js のスキーマ内。
+// （実記事に差し替えてもテストが壊れないように）。値はすべて articleTags.ts のスキーマ内。
 
 const base = {
   url: 'https://example.com/fixture',

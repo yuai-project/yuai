@@ -1,5 +1,5 @@
 // 結果画面のアドバイスを、フォームの回答から組み立てる。
-// AI は使わない。人が書いた文章（adviceCards.js）を、決まったルールで選ぶ。
+// AI は使わない。人が書いた文章（adviceCards.ts）を、決まったルールで選ぶ。
 //
 // 後で LLM API (OpenAI / Anthropic 等) を足す際は、
 // getAdvice() の中身をfetch呼び出しに置き換えるだけでUIは変更不要。
@@ -18,33 +18,41 @@
 // null の枠は画面に出さない。whatMayBeHappening は相手の状況の見立てで、
 // 人が書いた固定の文章では回答に合わせられないため、今は常に null（AI を足すときに使う）。
 
-import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.js'
-import { resolveSources } from './adviceSources.js'
-import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.js'
-import { mergeFreeText } from './freeTextKeywords.js'
-import { getSupportLines } from './supportLines.js'
+import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.ts'
+import { resolveSources } from './adviceSources.ts'
+import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.ts'
+import { mergeFreeText } from './freeTextKeywords.ts'
+import { getSupportLines } from './supportLines.ts'
+import type {
+  Advice,
+  AdviceRequest,
+  CardKey,
+  MergedFreeText,
+  RequestInput,
+  SectionKey,
+} from './types.ts'
 
 const DISTANCE_VALUES = ['some_distance', 'more_distance']
 
 // どのカードを出すか。上から順に判定し、最初に当てはまったものを使う。
 // 困りごとは、フォームで選んだものに、詳しい内容（自由記述）から読み取ったものを足して見る。
-export function selectCardKey(request) {
+export function selectCardKey(request: RequestInput): CardKey {
   const { concerns } = mergeFreeText(request)
-  if (DISTANCE_VALUES.includes(request?.desiredRelationship)) return 'distance'
+  if (DISTANCE_VALUES.includes(request?.desiredRelationship ?? '')) return 'distance'
   if (concerns.includes('self_exhausted')) return 'exhausted'
   if (concerns.includes('angry_when_disagreed')) return 'angry'
   return 'default'
 }
 
 // カードが選ばれるもとになった困りごと
-const CONCERN_OF_CARD = { exhausted: 'self_exhausted', angry: 'angry_when_disagreed' }
+const CONCERN_OF_CARD: Partial<Record<CardKey, string>> = { exhausted: 'self_exhausted', angry: 'angry_when_disagreed' }
 
 // 「どの回答に合わせたか」の一行。default のときは出さない（null）。
 // 困りごとをフォームで選んでいない（自由記述から読み取っただけ）のときも出さない。
 // 「選んだあなたへ」が事実と違ってしまうため。その場合は freeTextNotes の一行で伝える。
-function matchedLabelOf(cardKey, request) {
+function matchedLabelOf(cardKey: CardKey, request: RequestInput): string | null {
   if (cardKey === 'distance') {
-    return `${labelOf(DESIRED_RELATIONSHIP, request.desiredRelationship)}あなたへ`
+    return `${labelOf(DESIRED_RELATIONSHIP, request?.desiredRelationship ?? '')}あなたへ`
   }
   const concern = CONCERN_OF_CARD[cardKey]
   if (!concern || !(request?.concerns ?? []).includes(concern)) return null
@@ -56,20 +64,23 @@ function matchedLabelOf(cardKey, request) {
 export const SAFETY_NOTE = '詳しい内容から、あなたの安全が心配な状況かもしれないと考えました'
 
 // 詳しい内容（自由記述）から読み取った困りごとを伝える行。読み取ったものが無ければ []。
-function freeTextNotesOf({ inferredConcerns }) {
+function freeTextNotesOf({ inferredConcerns }: MergedFreeText): string[] {
   if (inferredConcerns.length === 0) return []
   const labels = inferredConcerns.map((c) => `「${labelOf(CONCERNS, c)}」`).join('')
   return [`詳しい内容から${labels}も合わせて考えました`]
 }
 
-const withTitle = (key, section) =>
-  section ? { title: SECTION_TITLES[key], ...section } : null
+// カード側に title があればそちらを優先する
+const withTitle = <S extends { title?: string }>(key: SectionKey, section: S) => ({
+  title: SECTION_TITLES[key],
+  ...section,
+})
 
 // フォームの回答 → アドバイス。同じ回答なら必ず同じ結果を返す純関数。
-// request は相談フォームの buildAdviceRequest()（src/data/consultationIntake.js）の戻り値:
+// request は相談フォームの buildAdviceRequest()（src/data/consultationIntake.ts）の戻り値:
 //   { userAge, userGender, relationship, duration, immersionLevel, topics,
 //     concerns, concernsOther, hasSupportPerson, desiredRelationship, desiredSupport, freeText }
-export function buildAdvice(request) {
+export function buildAdvice(request: RequestInput): Advice {
   const cardKey = selectCardKey(request)
   const card = ADVICE_CARDS[cardKey]
   const freeText = mergeFreeText(request)
@@ -84,7 +95,7 @@ export function buildAdvice(request) {
     safetyFirst: freeText.danger,
     safetyNote: freeText.danger ? SAFETY_NOTE : null,
     // safety の枠の中に出す、電話で相談できる窓口（6つの枠の外）。
-    // 番号を間違えると危ないので、AI を足すときも AI には作らせず、supportLines.js から入れる
+    // 番号を間違えると危ないので、AI を足すときも AI には作らせず、supportLines.ts から入れる
     // 消費者ホットラインは、「お金の使い方が心配」を選んだか、詳しい内容から読み取ったときだけ
     supportLines: getSupportLines({
       crisis: freeText.crisis,
@@ -96,7 +107,7 @@ export function buildAdvice(request) {
     whatMayBeHappening: null,
     avoid: withTitle('avoid', card.avoid),
     tryReplies: withTitle('tryReplies', card.tryReplies),
-    askNext: withTitle('askNext', card.askNext),
+    askNext: card.askNext ? withTitle('askNext', card.askNext) : null,
     safety: SAFETY,
 
     // このヒント（選ばれたカード）の参考にした記事（6つの枠の外）。[{ id, title, url, domain }]。
@@ -108,8 +119,8 @@ export function buildAdvice(request) {
 
 // APIに差し替えるときはこの関数だけを書き換える。
 // 例: const res = await fetch('/api/advice', { method:'POST', body: JSON.stringify(request) })
-export async function getAdvice(request) {
+export async function getAdvice(request: AdviceRequest): Promise<Advice> {
   // モックのローディング演出
-  await new Promise((r) => setTimeout(r, 1600))
+  await new Promise<void>((r) => setTimeout(r, 1600))
   return buildAdvice(request)
 }

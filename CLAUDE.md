@@ -45,6 +45,7 @@ npm run dev      # http://localhost:5173/
 npm run build
 npm run preview
 npm run lint     # oxlint
+npm run typecheck # tsc（型チェック）
 ```
 
 ## ディレクトリの約束
@@ -65,7 +66,8 @@ src/
 - 色・余白・角丸は直接の値ではなく `src/index.css` の `@theme` トークンを使う
 - 新しい画面を足したら `App.jsx` のルートと、必要なら `BottomNav.jsx` を更新する
 - API 差し替えの境界は `src/data/*`。**UI から直接 fetch を書かない**
-- AI 回答の構造（6セクション）は `mockAdvice.js` の形を崩さない。LLM 接続時も同じ JSON 形にする
+- AI 回答の構造（6セクション）は `src/data/types.ts` の `Advice` 型の形を崩さない。LLM 接続時も同じ JSON 形にする
+- `src/data/*` は TypeScript、それ以外は今は JavaScript（#166 で段階移行中）。型チェックは `npm run typecheck`
 - 秘密鍵・API キーを**絶対にコミットしない**。`.env.local` を使い `.env.example` に名前だけ書く
 - 依存パッケージの追加は最小限に。追加する場合は PR の説明に理由を書く
 
