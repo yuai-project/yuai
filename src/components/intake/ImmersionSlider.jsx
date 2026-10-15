@@ -48,14 +48,17 @@ export default function ImmersionSlider({ value, onChange, labelledBy }) {
         className="yorido-range mt-1"
       />
 
+      {/* 両端の説明。句ごとに inline-block にして、句の途中で改行しない */}
       <div className="flex justify-between gap-4 text-[11px] leading-snug text-ink-faint">
-        <span>
-          <span className="font-bold text-ink-soft">1</span>：少し気になる
+        <span className="basis-1/2">
+          <span className="font-bold text-ink-soft">1</span>：
+          <span className="inline-block">少しだけ信じている</span>
+          <span className="inline-block">ように見える</span>
         </span>
-        <span className="text-right">
-          <span className="font-bold text-ink-soft">10</span>：生活への影響が
-          <br />
-          とても大きい
+        <span className="basis-1/2 text-right">
+          <span className="font-bold text-ink-soft">10</span>：
+          <span className="inline-block">とても強く信じている</span>
+          <span className="inline-block">ように見える</span>
         </span>
       </div>
     </div>
