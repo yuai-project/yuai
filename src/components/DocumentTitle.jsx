@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { matchPath, useLocation } from 'react-router-dom'
 import { APP } from '../config'
 
-// 画面ごとのブラウザタブのタイトル（例: 「AIに相談する | Yorido」）
+// 画面ごとのブラウザタブのタイトル（例: 「ヒントをみる | Yorido」）
 const titles = [
   ['/consult/result', 'あなたへのヒント'],
-  ['/consult', '相談する'],
+  ['/consult', 'ヒントをみる'],
   ['/mypage', 'マイページ'],
 ]
 

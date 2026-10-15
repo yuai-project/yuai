@@ -87,7 +87,7 @@ export default function MyPage() {
               to="/consult"
               className="mt-6 flex items-center justify-between rounded-2xl bg-brand px-5 py-4 text-brand-ink transition hover:bg-brand-400 active:scale-[0.98] lg:mt-0 lg:self-start"
             >
-              <span className="font-bold">いまの気持ちを相談する</span>
+              <span className="font-bold">状況を入れてヒントをみる</span>
               <ChevronRight size={20} />
             </Link>
           </div>

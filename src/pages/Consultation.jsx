@@ -95,7 +95,7 @@ export default function Consultation() {
 
   return (
     <div>
-      <Header title="相談する" back onBack={goBack} />
+      <Header title="あなたの状況を教えてください" back onBack={goBack} />
 
       <div className="px-5 pb-10 pt-4 lg:mx-auto lg:grid lg:max-w-page lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:px-8 lg:pb-16 lg:pt-6">
         {/* 進捗（PCでは左列に固定） */}
@@ -190,7 +190,7 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
     <div className="space-y-7">
       <div className="rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4">
         <p className="text-sm leading-relaxed text-ink-soft">
-          相談の前に、いまの状況を少しだけ教えてください。あなたに合ったヒントや、体験談・相談先をご案内しやすくなります。
+          いくつかの質問に答えていただくと、あなたに合ったヒントや、体験談・相談先をご案内しやすくなります。
         </p>
         <p className="mt-2 text-xs leading-relaxed text-ink-faint lg:hidden">
           これは診断ではありません。分かる範囲で大丈夫です。
