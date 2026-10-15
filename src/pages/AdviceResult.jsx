@@ -6,6 +6,7 @@ import {
   HelpCircle,
   LifeBuoy,
   Phone,
+  ExternalLink,
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AdviceCard from '../components/AdviceCard'
@@ -196,6 +197,9 @@ export default function AdviceResult() {
               </AdviceCard>
             )}
 
+            {/* このヒントの参考にした情報。最後のカードのすぐ後ろ、安全のカードの前。空のときは何も出さない */}
+            <AdviceSources sources={a.sources ?? []} />
+
             {/* 6. 無理に話さなくていい（safetyFirst のときはイントロのすぐ下に出している） */}
             {!a.safetyFirst && <SafetyCard safety={a.safety} lines={supportLines} />}
 
@@ -237,5 +241,39 @@ function SafetyCard({ safety, lines }) {
       </h3>
       <SupportLineList lines={lines} />
     </AdviceCard>
+  )
+}
+
+// 最後のカードのすぐ後ろに小さく出す「このヒントの参考にした情報」。記事タイトル（外部リンク）とドメイン。
+function AdviceSources({ sources }) {
+  if (sources.length === 0) return null
+  return (
+    <section className="px-1 pt-1" aria-labelledby="advice-sources-title">
+      <h2 id="advice-sources-title" className="text-xs font-bold text-ink-soft">
+        このヒントの参考にした情報
+      </h2>
+      <ul className="mt-1.5 space-y-1.5">
+        {sources.map((s) => (
+          <li key={s.id} className="text-xs leading-relaxed">
+            <a
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline text-ink-soft underline decoration-line underline-offset-2 transition hover:text-brand-700"
+            >
+              {s.title}
+              <ExternalLink
+                size={12}
+                strokeWidth={2.2}
+                aria-hidden="true"
+                className="ml-1 inline-block align-[-1px] text-ink-faint"
+              />
+              <span className="sr-only">（外部サイトが新しいタブで開きます）</span>
+            </a>
+            <span className="ml-1.5 inline-block whitespace-nowrap text-ink-faint">{s.domain}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

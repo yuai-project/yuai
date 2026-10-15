@@ -190,7 +190,9 @@ function compareScored(x, y) {
   return x.article.id < y.article.id ? -1 : 1
 }
 
-function isCandidate(article, profile) {
+// 入口の絞り込み。この記事を、この相談（toRecommendationProfile() の戻り値）に出してよいか。
+// 推薦の候補（通常の候補・安全枠・フォールバック）と、アドバイスの「参考にした情報」（adviceSources.js）の両方で使う。
+export function isCandidateArticle(article, profile) {
   if (article.status !== 'approved') return false
   // 話題を選んだ相談には、話題の合わない記事を出さない（通常の候補・安全枠・フォールバックのすべて）。
   // 話題を選んでいない相談では絞らない
@@ -233,7 +235,7 @@ export function recommendArticles(
 ) {
   const profile = toRecommendationProfile(request)
   const scored = articles
-    .filter((a) => isCandidate(a, profile))
+    .filter((a) => isCandidateArticle(a, profile))
     .map((a) => scoreArticle(a, profile))
     .sort(compareScored)
 
@@ -249,7 +251,7 @@ export function recommendArticles(
 
   if (profile.needsSafetySlot) {
     // 話題を選んでいない相談では、特定の話題の窓口を先頭に入れない（topics: any の窓口だけ）。
-    // 話題を選んだ相談では、合わない窓口は isCandidate で外れている。該当がなければ入れない
+    // 話題を選んだ相談では、合わない窓口は isCandidateArticle で外れている。該当がなければ入れない
     const safety = scored.find(
       (s) =>
         s.article.supportTypes.includes('consultation_service') &&

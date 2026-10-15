@@ -19,6 +19,7 @@
 // 人が書いた固定の文章では回答に合わせられないため、今は常に null（AI を足すときに使う）。
 
 import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.js'
+import { resolveSources } from './adviceSources.js'
 import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.js'
 import { mergeFreeText } from './freeTextKeywords.js'
 import { getSupportLines } from './supportLines.js'
@@ -97,6 +98,11 @@ export function buildAdvice(request) {
     tryReplies: withTitle('tryReplies', card.tryReplies),
     askNext: withTitle('askNext', card.askNext),
     safety: SAFETY,
+
+    // このヒント（選ばれたカード）の参考にした記事（6つの枠の外）。[{ id, title, url, domain }]。
+    // 推薦と同じ入口の絞り込みで、その人に合わない記事（関係・話題が合わないなど）は外す。
+    // 画面では最後のカードのすぐ後ろに小さく出す。空なら何も出さない
+    sources: resolveSources(card.sources, { request }),
   }
 }
 
