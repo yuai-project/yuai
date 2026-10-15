@@ -3,9 +3,12 @@
 // - sources に入れてよいのは、articles.json で status が approved の記事だけ。
 // - 書籍（sourceType: book）は本文を読んで照らし合わせられないので入れない。
 // - 1枚のカードにつき 0〜3件。カードの内容を本文で裏づけている記事だけを入れる（テーマが近いだけの記事は入れない）。
+// - 画面に出すときは、推薦と同じ入口の絞り込み（関係・話題が合わない記事、健康の情報の発信元のルール）をかけ、
+//   その人に合わない記事は外す。全部外れたら空（画面には欄ごと出さない）。
 
 import { BOOK_SOURCE_TYPE } from './articleTags.js'
 import { mockArticles } from './articles.js'
+import { isCandidateArticle, toRecommendationProfile } from './recommendArticles.js'
 
 export const MAX_SOURCES_PER_CARD = 3
 
@@ -24,11 +27,15 @@ export function invalidSourceIds(ids = [], articles = mockArticles) {
 const domainOf = (url) => new URL(url).hostname.replace(/^www\./, '')
 
 // sources の ID → 画面に出す [{ id, title, url, domain }]。
-// 引用してはいけない記事は、データの誤りがあっても画面に出さないよう、ここでも外す。
-export function resolveSources(ids = [], articles = mockArticles) {
+// - request（buildAdviceRequest() の戻り値）を渡すと、推薦と同じ入口の絞り込み（isCandidateArticle）で、
+//   その人に合わない記事を外す。request が無い（結果画面を直接開いた）ときは絞らない
+// - 引用してはいけない記事は、データの誤りがあっても画面に出さないよう、ここでも外す
+export function resolveSources(ids = [], { request, articles = mockArticles } = {}) {
   const invalid = new Set(invalidSourceIds(ids, articles).map((x) => x.id))
+  const profile = toRecommendationProfile(request ?? {})
   return ids
     .filter((id) => !invalid.has(id))
     .map((id) => articles.find((a) => a.id === id))
+    .filter((article) => isCandidateArticle(article, profile))
     .map(({ id, title, url }) => ({ id, title, url, domain: domainOf(url) }))
 }

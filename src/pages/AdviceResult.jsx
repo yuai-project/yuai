@@ -197,11 +197,11 @@ export default function AdviceResult() {
               </AdviceCard>
             )}
 
+            {/* このヒントの参考にした情報。最後のカードのすぐ後ろ、安全のカードの前。空のときは何も出さない */}
+            <AdviceSources sources={a.sources ?? []} />
+
             {/* 6. 無理に話さなくていい（safetyFirst のときはイントロのすぐ下に出している） */}
             {!a.safetyFirst && <SafetyCard safety={a.safety} lines={supportLines} />}
-
-            {/* このヒントの参考にした情報。空のときは何も出さない */}
-            <AdviceSources sources={a.sources ?? []} />
 
             {/* フッター注記 */}
             <p className="pt-2 text-center text-[11px] leading-relaxed text-ink-faint">
@@ -244,7 +244,7 @@ function SafetyCard({ safety, lines }) {
   )
 }
 
-// アドバイスの最後に小さく出す「このヒントの参考にした情報」。記事タイトル（外部リンク）とドメイン。
+// 最後のカードのすぐ後ろに小さく出す「このヒントの参考にした情報」。記事タイトル（外部リンク）とドメイン。
 function AdviceSources({ sources }) {
   if (sources.length === 0) return null
   return (
