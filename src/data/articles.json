@@ -156,7 +156,7 @@
     "stance": "keep_connection",
     "burden": "moderate",
     "sourceType": "media",
-    "status": "approved",
+    "status": "paused",
     "reviewedAt": "2026-10-13"
   },
   {
@@ -220,7 +220,7 @@
     "stance": "keep_connection",
     "burden": "light",
     "sourceType": "media",
-    "status": "approved",
+    "status": "paused",
     "reviewedAt": "2026-10-13"
   },
   {
@@ -236,7 +236,7 @@
     "stance": "neutral",
     "burden": "moderate",
     "sourceType": "media",
-    "status": "approved",
+    "status": "paused",
     "reviewedAt": "2026-10-13"
   },
   {
