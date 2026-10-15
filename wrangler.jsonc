@@ -1,0 +1,12 @@
+// Cloudflare Workers の設定。Vite のビルド結果（dist/）を静的アセットとして配信する。
+// デプロイは Cloudflare の Workers Builds（GitHub 連携）が main への merge ごとに行う。
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "yorido",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // React Router のパスへ直接アクセス・リロードしても index.html を返す（旧 vercel.json の rewrites 相当）
+    "not_found_handling": "single-page-application"
+  }
+}

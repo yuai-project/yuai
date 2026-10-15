@@ -26,3 +26,7 @@ dist-ssr
 # Claude Code の個人設定（許可したツールなどが入る。共有しない）
 # 共有する設定は .claude/settings.json / .claude/skills/ に置く
 .claude/settings.local.json
+
+# Cloudflare Workers（wrangler）のローカル状態とローカル用の秘密情報
+.wrangler
+.dev.vars*
