@@ -1,12 +1,12 @@
 import { SUPPORT_LINES_NOTICE, telHref } from '../data/supportLines'
 
 // 電話で相談できる窓口の一覧。番号はタップで電話をかけられる。
-// マイページの「つらいときの相談窓口」と、結果画面の安全の案内で共用。
+// 電話で相談できる窓口のページ（/support）と、結果画面の安全の案内で共用。
 // 番号は途中で改行しない（whitespace-nowrap）。
 export default function SupportLineList({ lines }) {
   return (
     <>
-      <ul className="mt-2">
+      <ul className="mt-2 [word-break:auto-phrase]">
         {lines.map((line) => (
           <li key={line.id} className="border-t border-brand-200 py-3">
             <p className="text-sm font-bold text-ink [word-break:auto-phrase]">{line.name}</p>
