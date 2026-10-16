@@ -1,4 +1,4 @@
-import { Check, HandHeart } from 'lucide-react'
+import { Check } from 'lucide-react'
 import {
   DESIRED_SUPPORT,
   DESIRED_SUPPORT_UNSURE,
@@ -12,21 +12,16 @@ export default function DesiredSupportCard({ values = [] }) {
   const onlyUnsure = values.length === 1 && values[0] === DESIRED_SUPPORT_UNSURE
 
   return (
-    <section className="rounded-2xl border border-brand-100 bg-surface p-4 shadow-[0_1px_2px_rgba(60,50,40,0.03)]">
-      <div className="mb-3 flex items-center gap-2.5">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
-          <HandHeart size={17} strokeWidth={2.1} />
-        </span>
-        <h2 className="font-bold leading-tight text-ink">
-          あなたが求めているサポート
-        </h2>
-      </div>
+    <section className="rounded-xl border border-line bg-surface p-4 lg:p-5">
+      <h2 className="mb-2 text-base font-bold leading-snug text-ink [word-break:auto-phrase]">
+        あなたが求めているサポート
+      </h2>
 
-      <ul className="space-y-2">
+      <ul className="space-y-1.5">
         {labelsOf(DESIRED_SUPPORT, values).map((label) => (
           <li
             key={label}
-            className="flex items-start gap-2.5 rounded-xl bg-brand-50/70 px-3 py-2.5 text-sm leading-relaxed text-ink"
+            className="flex items-start gap-2 text-sm leading-relaxed text-ink"
           >
             <Check
               size={16}
