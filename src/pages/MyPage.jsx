@@ -41,7 +41,7 @@ export default function MyPage() {
           </div>
 
           {/* セルフケアの一言 */}
-          <div className="mt-4 rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4 lg:p-5">
+          <div className="mt-4 rounded-2xl bg-brand-50 p-4 lg:p-5">
             <p className="text-sm leading-relaxed text-brand-700">
               今日も、大切な人のことを考えているあなたへ。<br />
               <span className="font-semibold">

@@ -44,7 +44,7 @@ const placeholder = `最近、父が健康に関する情報を強く信じる�
 
 // iOSでフォーカス時にズームしないよう、入力欄の文字は16px（text-base）
 const inputClass =
-  'rounded-xl border border-line bg-surface text-base text-ink outline-none transition placeholder:text-ink-faint/70 focus:border-brand-600 focus:ring-2 focus:ring-brand-100'
+  'rounded-xl border border-control bg-surface text-base text-ink outline-none transition placeholder:text-ink-faint focus:border-brand-600 focus:ring-2 focus:ring-brand-100'
 
 // PC幅で2項目を横に並べる行。スマホでは縦に並び、読む順序は同じ。
 const pairRow = 'space-y-7 lg:grid lg:grid-cols-2 lg:gap-x-6 lg:space-y-0'
@@ -142,7 +142,7 @@ export default function Consultation() {
                 type="button"
                 onClick={submit}
                 disabled={loading}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink shadow-[0_8px_20px_rgba(242,138,69,0.28)] transition hover:bg-brand-400 active:scale-[0.98] disabled:opacity-90 lg:ml-auto lg:max-w-sm"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink transition hover:bg-brand-400 active:scale-[0.98] disabled:opacity-90 lg:ml-auto lg:max-w-sm"
               >
                 {loading ? (
                   <>
@@ -160,7 +160,7 @@ export default function Consultation() {
               <button
                 type="button"
                 onClick={goNext}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink shadow-[0_8px_20px_rgba(242,138,69,0.28)] transition hover:bg-brand-400 active:scale-[0.98] lg:ml-auto lg:max-w-sm"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink transition hover:bg-brand-400 active:scale-[0.98] lg:ml-auto lg:max-w-sm"
               >
                 次へ
                 <ArrowRight size={18} />
@@ -188,7 +188,7 @@ export default function Consultation() {
 function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
   return (
     <div className="space-y-7">
-      <div className="rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4">
+      <div className="rounded-2xl bg-brand-50 p-4">
         <p className="text-sm leading-relaxed text-ink-soft">
           いくつかの質問に答えていただくと、あなたに合ったヒントや、参考になる情報・相談先をご案内しやすくなります。
         </p>
