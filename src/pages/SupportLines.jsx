@@ -3,17 +3,17 @@ import Phrases from '../components/Phrases'
 import SupportLineList from '../components/SupportLineList'
 import { getSupportLines } from '../data/supportLines'
 
-// 電話で相談できる窓口。マイページをなくしたので、結果画面の外ではここから開く。
-// 説明の文章などは #175 で足す
+// 電話で相談できる窓口（#175）。フッターから、どの画面からでも開ける。
+// 結果画面では状況に合わせて窓口を足すが、ここでは「死にたいほどつらいとき」と「お金のトラブル」も含めて全部出す
 export default function SupportLines() {
-  const lines = getSupportLines()
+  const lines = getSupportLines({ crisis: true, money: true })
 
   return (
     <div>
       <Header title="電話で相談できる窓口" back />
       <div className="px-5 pb-12 pt-4 lg:mx-auto lg:max-w-page lg:px-8 lg:pb-16">
-        <div className="rounded-2xl border border-calm-200 bg-calm-50 p-4 lg:max-w-2xl lg:p-5">
-          <p className="text-sm leading-relaxed text-calm-700">
+        <div className="max-w-2xl">
+          <p className="text-sm leading-relaxed text-ink-soft">
             <Phrases
               phrases={[
                 'ひとりで', '抱えきれない', 'ときは、', '公的な', '相談窓口に', '頼ることも', 'できます。',
@@ -21,7 +21,21 @@ export default function SupportLines() {
               ]}
             />
           </p>
-          <SupportLineList lines={lines} />
+
+          <div className="mt-4 rounded-xl bg-brand-50 px-4 py-3">
+            <p className="text-sm font-bold text-brand-700 [word-break:auto-phrase]">今すぐ身の危険を感じるとき</p>
+            <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+              ためらわずに警察（
+              <a href="tel:110" className="whitespace-nowrap font-bold text-ink underline decoration-control underline-offset-4">
+                110
+              </a>
+              ）に連絡してください。
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <SupportLineList lines={lines} />
+          </div>
         </div>
       </div>
     </div>

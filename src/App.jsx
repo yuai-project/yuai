@@ -6,9 +6,11 @@ import SiteHeader from './components/SiteHeader'
 import Home from './pages/Home'
 import Consultation from './pages/Consultation'
 import AdviceResult from './pages/AdviceResult'
-import InfoPage from './pages/InfoPage'
+import Faq from './pages/Faq'
+import Terms from './pages/Terms'
 import SupportLines from './pages/SupportLines'
-import { INFO_PAGES } from './pages/infoPages'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import About from './pages/About'
 
 // アプリシェル。使い方は「ホーム → フォーム → 結果」の一本道なので、ナビは置かない（#172）
 // - スマホ（〜767px）: 幅430pxのモバイルUI
@@ -37,10 +39,12 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/consult" element={<Consultation />} />
         <Route path="/consult/result" element={<AdviceResult />} />
+        {/* フッターから開くページ（#175）。パスとタイトルは pages/infoPages.js と揃える */}
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/support" element={<SupportLines />} />
-        {INFO_PAGES.filter(({ path }) => path !== '/support').map(({ path, label }) => (
-          <Route key={path} path={path} element={<InfoPage title={label} />} />
-        ))}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/about" element={<About />} />
         {/* マイページはなくした（#172）。古い URL はトップに戻す */}
         <Route path="/mypage" element={<Navigate to="/" replace />} />
         {/* 体験談のページは外した（#148）。古い URL（/stories、/stories/s1 など）はトップに戻す */}
