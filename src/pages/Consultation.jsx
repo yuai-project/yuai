@@ -12,7 +12,7 @@ import ChoiceGroup from '../components/intake/ChoiceGroup'
 import FormField from '../components/intake/FormField'
 import ImmersionSlider from '../components/intake/ImmersionSlider'
 import SelectField from '../components/intake/SelectField'
-import StepProgress from '../components/intake/StepProgress'
+import StepProgress, { StepList } from '../components/intake/StepProgress'
 import {
   CONCERNS,
   CONCERNS_OTHER_MAX,
@@ -45,6 +45,12 @@ const placeholder = `最近、父が健康に関する情報を強く信じる�
 // iOSでフォーカス時にズームしないよう、入力欄の文字は16px（text-base）
 const inputClass =
   'rounded-xl border border-control bg-surface text-base text-ink outline-none transition placeholder:text-ink-faint focus:border-brand-600 focus:ring-2 focus:ring-brand-100'
+
+// 戻る・次へ。高さは中身に合わせ、長い文言は折り返す。色付きの影は付けない
+const buttonBase =
+  'flex min-h-12 min-w-0 items-center justify-center gap-1.5 rounded-xl px-4 py-3 text-center font-bold leading-snug transition active:scale-[0.98]'
+const primaryButton =
+  'flex-[3_1_12rem] bg-brand text-brand-ink hover:bg-brand-400 lg:flex-[0_1_24rem]'
 
 // PC幅で2項目を横に並べる行。スマホでは縦に並び、読む順序は同じ。
 const pairRow = 'space-y-7 lg:grid lg:grid-cols-2 lg:gap-x-6 lg:space-y-0'
@@ -95,20 +101,32 @@ export default function Consultation() {
 
   return (
     <div>
-      <Header title="あなたの状況を教えてください" back onBack={goBack} />
+      <Header title="あなたの状況を教えてください" back onBack={goBack} tone="brand" />
 
-      <div className="px-5 pb-10 pt-4 lg:mx-auto lg:grid lg:max-w-page lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:px-8 lg:pb-16 lg:pt-6">
-        {/* 進捗（PCでは左列に固定） */}
-        <aside className="lg:sticky lg:top-24">
-          <StepProgress current={step + 1} steps={STEP_TITLES} />
-          <p className="mt-6 hidden rounded-xl bg-brand-50 p-3 text-xs leading-relaxed text-brand-700 lg:block">
+      {/* ブランド色の帯。スマホはステップ名と進捗、PCは注意書き（進捗は左列とパネルに出す） */}
+      <div className="bg-brand px-5 pb-6 pt-1 text-brand-ink lg:pb-9 lg:pt-0">
+        <div className="lg:mx-auto lg:max-w-page lg:px-8 lg:pl-[5.25rem]">
+          <div className="lg:hidden">
+            <StepProgress current={step + 1} steps={STEP_TITLES} onBrand />
+          </div>
+          <p className="hidden text-base leading-relaxed lg:block">
             これは診断ではありません。答えたくない項目は、とばして大丈夫です。
           </p>
+        </div>
+      </div>
+
+      <div className="px-5 pb-10 pt-6 lg:mx-auto lg:grid lg:max-w-page lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:px-8 lg:pb-16 lg:pt-10">
+        {/* 全ステップの一覧（PCだけ。左列に固定） */}
+        <aside className="hidden lg:sticky lg:top-24 lg:block">
+          <StepList current={step + 1} steps={STEP_TITLES} />
         </aside>
 
         {/* フォーム本体（PCでは白いパネル） */}
-        <div className="lg:rounded-3xl lg:border lg:border-line lg:bg-surface lg:p-10 lg:shadow-[0_1px_3px_rgba(60,50,40,0.04)]">
-          <div key={step} className="mt-5 animate-fade-up lg:mt-0">
+        <div className="lg:rounded-xl lg:border lg:border-line lg:bg-surface lg:p-10">
+          <div className="hidden lg:block">
+            <StepProgress current={step + 1} steps={STEP_TITLES} />
+          </div>
+          <div key={step} className="animate-fade-up lg:mt-6">
             {step === 0 && (
               <StepAboutYou
                 intake={intake}
@@ -126,15 +144,16 @@ export default function Consultation() {
           </div>
 
           {/* 戻る / 次へ */}
-          <div className="mt-9 flex gap-3 lg:mt-10">
+          {/* 幅が足りないときは「次へ」が上の段、「戻る」が下の段に分かれる（wrap-reverse） */}
+          <div className="mt-9 flex flex-wrap-reverse gap-3 lg:mt-10 lg:justify-end">
             {step > 0 && !loading && (
               <button
                 type="button"
                 onClick={goBack}
-                className="flex w-28 shrink-0 items-center justify-center gap-1 rounded-2xl border border-brand-200 bg-surface py-3.5 font-bold text-brand-700 transition hover:bg-brand-50 active:scale-[0.98] lg:w-36"
+                className={`${buttonBase} flex-[1_1_6rem] border border-brand bg-surface text-brand-700 hover:bg-brand-50 lg:flex-[0_1_9rem]`}
               >
-                <ArrowLeft size={18} />
-                戻る
+                <ArrowLeft size={18} className="shrink-0" />
+                <span className="min-w-0">戻る</span>
               </button>
             )}
             {isLast ? (
@@ -142,17 +161,17 @@ export default function Consultation() {
                 type="button"
                 onClick={submit}
                 disabled={loading}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink transition hover:bg-brand-400 active:scale-[0.98] disabled:opacity-90 lg:ml-auto lg:max-w-sm"
+                className={`${buttonBase} ${primaryButton} disabled:opacity-90`}
               >
                 {loading ? (
                   <>
-                    <Loader2 size={20} className="animate-spin" />
-                    あなたの気持ちを整理しています…
+                    <Loader2 size={20} className="shrink-0 animate-spin" />
+                    <span className="min-w-0">あなたの気持ちを整理しています…</span>
                   </>
                 ) : (
                   <>
-                    <MessageCircleHeart size={20} />
-                    ヒントをみる
+                    <MessageCircleHeart size={20} className="shrink-0" />
+                    <span className="min-w-0">ヒントをみる</span>
                   </>
                 )}
               </button>
@@ -160,15 +179,15 @@ export default function Consultation() {
               <button
                 type="button"
                 onClick={goNext}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink transition hover:bg-brand-400 active:scale-[0.98] lg:ml-auto lg:max-w-sm"
+                className={`${buttonBase} ${primaryButton}`}
               >
-                次へ
-                <ArrowRight size={18} />
+                <span className="min-w-0">次へ</span>
+                <ArrowRight size={18} className="shrink-0" />
               </button>
             )}
           </div>
 
-          <p className="mt-4 text-center text-xs leading-relaxed text-ink-faint lg:text-right">
+          <p className="mt-4 text-center text-xs leading-relaxed text-ink-faint [word-break:auto-phrase] lg:text-right">
             {isLast ? (
               <>
                 {APP.name}は相手を論破するためのものではありません。<br />
@@ -188,7 +207,7 @@ export default function Consultation() {
 function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
   return (
     <div className="space-y-7">
-      <div className="rounded-2xl bg-brand-50 p-4">
+      <div className="rounded-xl bg-brand-50 p-4">
         <p className="text-sm leading-relaxed text-ink-soft">
           いくつかの質問に答えていただくと、あなたに合ったヒントや、参考になる情報・相談先をご案内しやすくなります。
         </p>
@@ -310,7 +329,7 @@ function StepConcerns({ intake, update }) {
               maxLength={CONCERNS_OTHER_MAX}
               rows={2}
               placeholder="例）夜遅くに長い電話がかかってくる"
-              className={`${inputClass} w-full resize-none rounded-2xl p-3.5 leading-relaxed`}
+              className={`${inputClass} w-full resize-none p-3.5 leading-relaxed`}
             />
           </div>
         )}
@@ -367,9 +386,9 @@ function StepHopes({ intake, update }) {
 
       <FormField htmlFor="freeText" label="もう少し詳しく教えてください">
         {/* プライバシー注意 */}
-        <div className="mb-3 flex items-start gap-2 rounded-xl border border-calm-200 bg-calm-50 p-3">
-          <ShieldCheck size={17} className="mt-0.5 shrink-0 text-calm-700" />
-          <p className="text-xs leading-relaxed text-calm-700">
+        <div className="mb-3 flex items-start gap-2 rounded-xl bg-cream p-3">
+          <ShieldCheck size={17} aria-hidden="true" className="mt-0.5 shrink-0 text-brand-700" />
+          <p className="text-xs leading-relaxed text-ink-soft">
             個人が特定できる情報（実名・住所・勤務先・SNSアカウントなど）は入力しないでください。
           </p>
         </div>
@@ -380,7 +399,7 @@ function StepHopes({ intake, update }) {
           maxLength={FREE_TEXT_MAX}
           placeholder={placeholder}
           rows={7}
-          className={`${inputClass} w-full resize-none rounded-2xl p-4 leading-relaxed shadow-inner`}
+          className={`${inputClass} w-full resize-none p-4 leading-relaxed`}
         />
         <p className="mt-1 text-right text-[11px] text-ink-faint">
           {intake.freeText.length} / {FREE_TEXT_MAX}

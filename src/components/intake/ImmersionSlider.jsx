@@ -12,7 +12,7 @@ export default function ImmersionSlider({ value, onChange, labelledBy }) {
   const set = (e) => onChange(Number(e.target.value))
 
   return (
-    <div className="rounded-2xl border border-line bg-surface px-4 pb-3 pt-3.5">
+    <div className="rounded-xl border border-line bg-surface px-4 pb-3 pt-3.5">
       <div className="flex min-h-8 items-center justify-between gap-3">
         <p className="text-2xl font-bold leading-none" aria-hidden="true">
           <span className={answered ? 'text-brand-700' : 'text-ink-faint'}>

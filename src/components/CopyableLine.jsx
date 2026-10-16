@@ -18,18 +18,18 @@ export default function CopyableLine({ text }) {
   return (
     <button
       onClick={copy}
-      className="group flex w-full items-start gap-2.5 rounded-xl border border-brand-100 bg-surface/70 p-3 text-left transition hover:border-brand active:scale-[0.99]"
+      className="group flex w-full items-start gap-2.5 rounded-xl border border-control bg-surface px-3.5 py-3 text-left transition hover:bg-brand-50 active:scale-[0.99]"
     >
-      <span className="mt-0.5 flex-1 text-sm leading-relaxed text-ink">
+      <span className="min-w-0 flex-1 text-sm leading-relaxed text-ink lg:text-base">
         「{text}」
       </span>
       <span
-        className={`flex shrink-0 items-center gap-1 text-xs font-semibold transition ${
-          copied ? 'text-success-700' : 'text-brand-600'
+        className={`mt-0.5 flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-bold transition ${
+          copied ? 'text-success-700' : 'text-brand-700'
         }`}
       >
-        {copied ? <Check size={15} /> : <Copy size={15} />}
-        {copied ? 'コピー' : ''}
+        {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+        {copied ? 'コピーしました' : 'コピー'}
       </span>
     </button>
   )
