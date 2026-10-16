@@ -2,11 +2,14 @@
 // デプロイは Cloudflare の Workers Builds（GitHub 連携）が main への merge ごとに行う。
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "yorido",
+  // ダッシュボードで GitHub 連携している Worker の名前と一致させる（違うと Workers Builds が失敗する）
+  "name": "yuai",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./dist",
     // React Router のパスへ直接アクセス・リロードしても index.html を返す（旧 vercel.json の rewrites 相当）
     "not_found_handling": "single-page-application"
-  }
+  },
+  // PR ごとのプレビュー（wrangler preview）に必要。プレビュー専用の設定がないので空でよい
+  "previews": {}
 }
