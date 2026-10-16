@@ -16,7 +16,7 @@ export default function DocumentTitle() {
     const hit = titles.find(([pattern]) => matchPath(pattern, pathname))
     document.title = hit
       ? `${hit[1]} | ${APP.name}`
-      : `${APP.name} | ${APP.tagline.replace(/。$/, '')}`
+      : APP.title
   }, [pathname])
 
   return null
