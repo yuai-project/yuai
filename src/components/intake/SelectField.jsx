@@ -19,7 +19,7 @@ export default function SelectField({
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={invalid || undefined}
         className={`min-h-12 w-full appearance-none rounded-xl border bg-surface py-2.5 pl-3.5 pr-10 text-base outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-100 ${
-          invalid ? 'border-notice-700/50' : 'border-line'
+          invalid ? 'border-notice-700' : 'border-control'
         } ${current === '' ? 'text-ink-faint' : 'text-ink'}`}
         {...rest}
       >

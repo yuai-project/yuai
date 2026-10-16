@@ -54,7 +54,7 @@ export default function AdviceResult() {
         >
           <div className="space-y-4 lg:col-start-1 lg:row-start-1">
             {/* イントロ */}
-            <div className="rounded-2xl bg-gradient-to-b from-brand-50 to-cream p-4 text-center lg:py-6">
+            <div className="rounded-2xl bg-brand-50 p-4 text-center lg:py-6">
               <p className="text-sm leading-relaxed text-ink-soft">
                 お話を受け止めました。すぐに全部を解決しようとしなくて大丈夫です。
                 <br />

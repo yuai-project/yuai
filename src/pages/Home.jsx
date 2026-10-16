@@ -30,7 +30,7 @@ export default function Home() {
   return (
     <div className="pb-8 lg:pb-16">
       {/* ヒーロー：ブランド名とメインコピーを主役に（PCは左にコピー・右にCTAカード） */}
-      <section className="rounded-b-[2rem] bg-gradient-to-b from-brand-50 to-surface px-5 pb-9 pt-9 lg:rounded-none lg:px-8 lg:pb-20 lg:pt-20">
+      <section className="bg-brand-50 px-5 pb-9 pt-9 lg:px-8 lg:pb-20 lg:pt-20">
         <div className="lg:mx-auto lg:grid lg:max-w-page lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
           <div>
             <Logo size="hero" />
@@ -60,7 +60,7 @@ export default function Home() {
             </p>
             <button
               onClick={() => navigate('/consult')}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink shadow-[0_8px_20px_rgba(242,138,69,0.28)] transition hover:bg-brand-400 active:scale-[0.98]"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 font-bold text-brand-ink transition hover:bg-brand-400 active:scale-[0.98]"
             >
               <MessageCircleHeart size={20} />
               状況を入れてヒントをみる

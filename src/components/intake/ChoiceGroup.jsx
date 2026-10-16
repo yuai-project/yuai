@@ -12,16 +12,16 @@ const shapes = {
   card: 'min-h-12 w-full gap-3 rounded-2xl px-4 py-3 text-left leading-relaxed active:scale-[0.99]',
 }
 
-// 選択中はブランド色 #ffb37c の塗り＋濃いブラウン文字（白文字は使わない）＋チェック。
+// 選択中はブランド色の塗り＋白文字（brand-ink）＋チェック。選んでいない枠は部品用の control 色（3:1以上）。
 const filled = (on) =>
   on
     ? 'border-brand bg-brand font-semibold text-brand-ink'
-    : 'border-line bg-surface font-medium text-ink-soft hover:border-brand hover:bg-brand-50'
+    : 'border-control bg-surface font-medium text-ink-soft hover:border-brand hover:bg-brand-50'
 
 const soft = (on) =>
   on
     ? 'border-brand bg-brand-50 font-medium text-ink'
-    : 'border-line bg-surface font-medium text-ink hover:border-brand-200 hover:bg-brand-50/60'
+    : 'border-control bg-surface font-medium text-ink hover:border-brand hover:bg-brand-50/60'
 
 // タップしやすい選択肢グループ。
 // - multiple=false は単一選択（role=radio・もう一度タップで解除）、true は複数選択（role=checkbox）。
@@ -97,7 +97,7 @@ export default function ChoiceGroup({
                 className={`flex min-h-11 min-w-32 items-center justify-center rounded-full border px-6 py-2 text-sm transition active:scale-95 ${
                   on
                     ? 'border-brand bg-brand font-semibold text-brand-ink'
-                    : 'border-line bg-cream font-medium text-ink-soft hover:border-brand hover:bg-brand-50'
+                    : 'border-control bg-cream font-medium text-ink-soft hover:border-brand hover:bg-brand-50'
                 }`}
               >
                 {on && <Check size={15} strokeWidth={2.6} aria-hidden="true" className="-ml-1 mr-1 shrink-0" />}
@@ -117,7 +117,7 @@ function Indicator({ on, multiple }) {
       aria-hidden="true"
       className={`flex size-5 shrink-0 items-center justify-center border-2 transition ${
         multiple ? 'rounded-md' : 'rounded-full'
-      } ${on ? 'border-brand-600 bg-brand text-brand-ink' : 'border-ink-faint/60 bg-surface'}`}
+      } ${on ? 'border-brand-600 bg-brand text-brand-ink' : 'border-control bg-surface'}`}
     >
       {on &&
         (multiple ? (

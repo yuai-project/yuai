@@ -1,45 +1,52 @@
 @import 'tailwindcss';
 
 /* ===== Yorido — design tokens =====
-   「よりどころ」をイメージした、白を主役にしたやさしいトーン。
-   アクセントは淡いオレンジ #ffb37c（= brand）。医療・診断サービスのように見せすぎない。 */
+   「よりどころ」をイメージした、白を主役にした落ち着いたトーン（配色 A：深緑、#171）。
+   強い色はアクセント（= brand）だけ。医療・診断サービスのように見せすぎない。
+   コントラストの数値は WCAG 2.1 の比（文字は 4.5:1、部品の境界は 3:1 が基準）。 */
 @theme {
-  /* base — 白が基本。cream はごく薄いアイボリーの補助背景 */
+  /* base — 白が基本。cream はごく薄いグレーの補助背景 */
   --color-surface: #ffffff;
-  --color-cream: #faf8f5;
+  --color-cream: #f3f5f3;
 
-  /* brand — 基準色は #ffb37c。派生色はコントラストを確保するために使い分ける */
-  --color-brand-50: #fff7f0; /* ごく薄い背景（選択中カード・アイコン背景） */
-  --color-brand-100: #ffeddf; /* 薄い背景（activeナビ・タグ） */
-  --color-brand-200: #ffd9bb; /* 罫線・hover */
-  --color-brand: #ffb37c; /* 基準色：CTA・選択中・ステップ表示 */
-  --color-brand-400: #ffa05f; /* CTAのhover / active */
-  --color-brand-600: #c8661f; /* アイコン・フォーカス枠（白背景で3:1以上） */
-  --color-brand-700: #a3500f; /* オレンジ系の文字（白・brand-50/100背景で4.5:1以上） */
-  --color-brand-ink: #4a2a12; /* brand塗りの上に載せる文字（7.3:1） */
+  /* brand — 基準色は深緑 #2f5d50。派生色はコントラストを確保するために使い分ける */
+  --color-brand-50: #eef4f1; /* ごく薄い背景（選択中カード・アイコン背景） */
+  --color-brand-100: #e3ece7; /* 薄い背景（activeナビ・タグ） */
+  --color-brand-200: #c5d8ce; /* 飾りの罫線・hover */
+  --color-brand: #2f5d50; /* 基準色：CTA・選択中・ステップ表示（白文字で7.5:1） */
+  --color-brand-400: #264c41; /* CTAのhover / active（brand より一段濃い） */
+  --color-brand-600: #3b6d5f; /* アイコン・フォーカス枠（白・brand-50 背景で5.3:1以上） */
+  --color-brand-700: #2a5347; /* 緑系の文字（白・brand-50/100 背景で7.1:1以上） */
+  --color-brand-ink: #ffffff; /* brand 塗りの上に載せる文字・印 */
 
   /* semantic — 状態を表す色はブランド色と分ける */
-  /* 注意（避けたい対応・入力エラー）：落ち着いたローズ */
-  --color-notice-50: #fcf1f1;
-  --color-notice-200: #f1d3d3;
-  --color-notice-700: #a14b4b;
+  /* 注意（避けたい対応・入力エラー）：落ち着いたテラコッタ寄りのローズ */
+  --color-notice-50: #f8ebe6;
+  --color-notice-200: #ecd2c9;
+  --color-notice-700: #9c4a3a; /* notice-50 背景で5.2:1 */
 
   /* 安全・プライバシー・相談窓口の案内：おだやかなブルー */
-  --color-calm-50: #eef3f7;
-  --color-calm-200: #cfe0ec;
-  --color-calm-700: #4a6c86;
+  --color-calm-50: #e9eff5;
+  --color-calm-200: #cddae6;
+  --color-calm-700: #3d5a78; /* calm-50 背景で6.2:1 */
 
   /* 完了・成功（コピー済み・投稿完了）：やわらかいグリーン */
   --color-success-50: #edf7f1;
   --color-success-700: #2f7a57;
 
-  /* ink */
-  --color-ink: #3a3a42;
-  --color-ink-soft: #5a5a65; /* 本文の補助。どの背景でも5.9:1以上 */
-  --color-ink-faint: #6b6b75; /* 注記・補足。淡い色付き背景の上でも4.6:1以上 */
-  --color-line: #ece8e2;
+  /* ink — どれも少しだけ緑に寄せたグレー */
+  --color-ink: #24302b; /* 白で13.7:1 */
+  --color-ink-soft: #55605a; /* 本文の補助。cream 背景でも6.0:1 */
+  --color-ink-faint: #626b66; /* 注記・補足。淡い色付き背景の上でも4.7:1以上 */
+  --color-line: #dfe4e1; /* 飾りの罫線・区切り。部品の境界には使わない */
+  --color-control: #828c86; /* 入力欄・選択肢など部品の枠線（白で3.5:1） */
 
-  --radius-xl2: 1.25rem;
+  /* 角丸は 6px と 12px の2段階にそろえる（rounded-full は丸い印とピル型だけ） */
+  --radius-md: 0.375rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 0.75rem;
 
   /* PC（Webサイト型レイアウト）のコンテンツ最大幅 → max-w-page */
   --container-page: 72.5rem;
@@ -55,7 +62,7 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--color-ink);
-  background: #f1efec;
+  background: var(--color-surface);
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -66,7 +73,7 @@ body {
   min-height: 100dvh;
 }
 
-/* キーボード操作時のフォーカス表示（白背景で3:1以上の濃いオレンジ） */
+/* キーボード操作時のフォーカス表示（白背景で3:1以上の緑） */
 :where(a, button, summary, [role='radio'], [role='checkbox']):focus-visible {
   outline: 2px solid var(--color-brand-600);
   outline-offset: 2px;
@@ -93,7 +100,7 @@ body {
 }
 
 /* 相談フォームのスライダー：指で操作しやすい大きめのつまみ。
-   --fill（0〜100%）で選択済みの範囲をセージ色に。data-unset 時は未回答のグレー。 */
+   --fill（0〜100%）で選択済みの範囲をブランド色に。data-unset 時は未回答のグレー。 */
 .yorido-range {
   appearance: none;
   width: 100%;
