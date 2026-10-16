@@ -1,12 +1,13 @@
 import { useEffect } from 'react'
 import { matchPath, useLocation } from 'react-router-dom'
 import { APP } from '../config'
+import { INFO_PAGES } from '../pages/infoPages'
 
 // 画面ごとのブラウザタブのタイトル（例: 「ヒントをみる | Yorido」）
 const titles = [
   ['/consult/result', 'あなたへのヒント'],
   ['/consult', 'ヒントをみる'],
-  ['/mypage', 'マイページ'],
+  ...INFO_PAGES.map(({ path, label }) => [path, label]),
 ]
 
 export default function DocumentTitle() {

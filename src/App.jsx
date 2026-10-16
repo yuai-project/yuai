@@ -1,5 +1,4 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
-import BottomNav from './components/BottomNav'
 import DocumentTitle from './components/DocumentTitle'
 import ScrollToTop from './components/ScrollToTop'
 import SiteFooter from './components/SiteFooter'
@@ -7,12 +6,15 @@ import SiteHeader from './components/SiteHeader'
 import Home from './pages/Home'
 import Consultation from './pages/Consultation'
 import AdviceResult from './pages/AdviceResult'
-import MyPage from './pages/MyPage'
+import InfoPage from './pages/InfoPage'
+import SupportLines from './pages/SupportLines'
+import { INFO_PAGES } from './pages/infoPages'
 
-// アプリシェル
-// - スマホ（〜767px）: 幅430pxのモバイルUI＋下部ナビ
-// - タブレット（768〜1023px）: 1カラムのまま少し広げる＋下部ナビ
-// - PC（1024px〜）: 上部ヘッダーナビ＋最大1160pxのWebサイト型レイアウト（下部ナビは非表示）
+// アプリシェル。使い方は「ホーム → フォーム → 結果」の一本道なので、ナビは置かない（#172）
+// - スマホ（〜767px）: 幅430pxのモバイルUI
+// - タブレット（768〜1023px）: 1カラムのまま少し広げる
+// - PC（1024px〜）: ロゴだけの上部ヘッダー＋最大1160pxのWebサイト型レイアウト
+// どの幅でも、下にフッター（よくある質問・相談窓口など）を置く
 function Shell() {
   const { pathname } = useLocation()
   return (
@@ -24,7 +26,6 @@ function Shell() {
         <Outlet />
       </main>
       <SiteFooter />
-      <BottomNav />
     </div>
   )
 }
@@ -36,7 +37,12 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/consult" element={<Consultation />} />
         <Route path="/consult/result" element={<AdviceResult />} />
-        <Route path="/mypage" element={<MyPage />} />
+        <Route path="/support" element={<SupportLines />} />
+        {INFO_PAGES.filter(({ path }) => path !== '/support').map(({ path, label }) => (
+          <Route key={path} path={path} element={<InfoPage title={label} />} />
+        ))}
+        {/* マイページはなくした（#172）。古い URL はトップに戻す */}
+        <Route path="/mypage" element={<Navigate to="/" replace />} />
         {/* 体験談のページは外した（#148）。古い URL（/stories、/stories/s1 など）はトップに戻す */}
         <Route path="/stories/*" element={<Navigate to="/" replace />} />
       </Route>
