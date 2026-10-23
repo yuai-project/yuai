@@ -1,3 +1,4 @@
+import { Check, ChevronRight } from 'lucide-react'
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import ShareSiteButton from '../components/ShareSiteButton'
@@ -50,13 +51,13 @@ export default function Home() {
               <Phrases phrases={APP.taglinePhrases} />
             </p>
 
-            <div className="mt-6 rounded-xl bg-surface p-4 text-ink lg:mt-8 lg:max-w-md lg:p-5">
-              <p className="text-xs font-bold text-brand-700">
-                あなたの状況に合わせて見つかるもの
-              </p>
-              <ul className="mt-2 divide-y divide-line">
+            {/* 白い面はボタンだけにする。ここも白いカードにすると、どこが押す場所か迷う（#204） */}
+            <div className="mt-6 border-t border-brand-ink/30 pt-4 lg:mt-8 lg:max-w-md">
+              <p className="text-sm">あなたの状況に合わせて見つかるもの</p>
+              <ul className="mt-2 space-y-1.5">
                 {finds.map((text) => (
-                  <li key={text} className="py-2 text-[0.9375rem] font-bold last:pb-0">
+                  <li key={text} className="flex items-center gap-2 text-[0.9375rem] font-bold">
+                    <Check size={18} strokeWidth={2.5} aria-hidden="true" className="shrink-0" />
                     {text}
                   </li>
                 ))}
@@ -65,11 +66,12 @@ export default function Home() {
 
             <Link
               to="/consult"
-              className="mt-6 block w-full rounded-xl bg-surface px-4 py-3.5 text-center font-bold text-brand-700 transition hover:bg-brand-50 active:scale-[0.98] lg:inline-block lg:w-auto lg:px-10"
+              className="mt-7 flex w-full items-center justify-center gap-1.5 rounded-xl bg-surface px-4 py-4 text-lg font-bold text-brand-700 shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition hover:bg-brand-50 active:scale-[0.98] lg:inline-flex lg:w-auto lg:px-10"
             >
               状況を入れてヒントをみる
+              <ChevronRight size={22} strokeWidth={2.5} aria-hidden="true" />
             </Link>
-            <p className="mt-3 text-xs leading-relaxed">
+            <p className="mt-3 text-xs leading-relaxed opacity-90">
               これは診断ではありません。答えたくない項目は、とばして大丈夫です。
             </p>
           </div>
@@ -84,7 +86,7 @@ export default function Home() {
 
         {/* こんな悩みは */}
         <section className="pt-7 lg:pt-12">
-          <h2 className="mb-2 text-base font-bold text-ink lg:mb-3 lg:text-xl">
+          <h2 className="mb-2 text-lg font-bold text-ink lg:mb-3 lg:text-xl">
             こんな悩みはありませんか？
           </h2>
           <ul className="border-t border-line lg:grid lg:grid-cols-3 lg:gap-8 lg:border-t-0">
