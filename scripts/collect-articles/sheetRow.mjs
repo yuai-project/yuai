@@ -106,7 +106,7 @@ export const REVIEW_REQUIRED_HEADERS = [
 ]
 
 // 記事の種類（supportTypes）。相談フォームの「求めているサポート」に対応があればそのラベルで書く
-const SUPPORT_TYPE_LABELS = {
+export const SUPPORT_TYPE_LABELS = {
   coping_tips: labelOf(DESIRED_SUPPORT, 'coping_tips'),
   experience: labelOf(DESIRED_SUPPORT, 'read_stories'),
   peer_support: labelOf(DESIRED_SUPPORT, 'talk_with_peers'),
