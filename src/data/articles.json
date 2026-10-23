@@ -96,6 +96,23 @@
     "reviewedAt": "2026-10-13"
   },
   {
+    "id": "r16",
+    "url": "https://www.bengo4.com/c_3/n_13566/",
+    "title": "「世界が大変だ！」コロナ陰謀論にハマり仕事を辞めた夫、離婚はできるのか？",
+    "publisher": "弁護士ドットコムニュース",
+    "summary": "コロナをめぐる情報にのめり込んだ夫と別居した女性の相談に、弁護士が答えた記事です。離婚調停で事情をどう伝えるかや、生活費・養育費などの条件の考え方を説明しています。関係を終わらせることも考えているときの、法律面の参考になります。",
+    "relationships": ["partner"],
+    "topics": ["health"],
+    "concerns": ["relationships_worsening", "money_worries"],
+    "supportTypes": ["coping_tips"],
+    "stance": "distance",
+    "burden": "moderate",
+    "sourceType": "professional",
+    "status": "approved",
+    "reviewedAt": "2026-10-23",
+    "publishedAt": "2021-09-19"
+  },
+  {
     "id": "r25",
     "url": "https://manopape-soudan.com/archives/4094",
     "title": "【公認心理師が考える】大切な人が「陰謀論」にハマった時。関係を壊さず自分を守る4つの対応策",
