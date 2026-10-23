@@ -1,4 +1,4 @@
-import { Check, ChevronRight } from 'lucide-react'
+import { Check, ChevronRight, Phone } from 'lucide-react'
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import ShareSiteButton from '../components/ShareSiteButton'
@@ -79,6 +79,19 @@ export default function Home() {
       </section>
 
       <div className="px-5 lg:mx-auto lg:max-w-page lg:px-8">
+        {/* 相談窓口はフォームに答えなくても開けるようにする（#205） */}
+        <Link
+          to="/support"
+          className="mt-6 flex items-center gap-3 rounded-xl border border-control px-4 py-3.5 transition hover:bg-brand-50 active:scale-[0.98] lg:mt-10 lg:max-w-md"
+        >
+          <Phone size={20} aria-hidden="true" className="shrink-0 text-brand-600" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-xs text-ink-soft">ひとりで抱えきれないときは</span>
+            <span className="block text-[0.9375rem] font-bold text-ink">電話で相談できる窓口を見る</span>
+          </span>
+          <ChevronRight size={20} aria-hidden="true" className="shrink-0 text-ink-faint" />
+        </Link>
+
         {/* コンセプト */}
         <p className="mt-8 border-y border-line py-5 text-base font-bold leading-relaxed text-brand-700 lg:mt-14 lg:py-8 lg:text-[1.375rem]">
           「{APP.concept}」
