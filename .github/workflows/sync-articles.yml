@@ -1,0 +1,108 @@
+name: Sync approved articles
+
+# 判定用スプレッドシートで「承認」にした記事を articles.json に足す PR を作る（#168）。
+# 中身は scripts/sync-articles/index.mjs。要約などは AI の下書きなので、PR で人が確かめてからマージする。
+#
+# - main は直 push できないので、bot/articles-sync ブランチに積んで PR にする
+# - その PR が開いている間は何もしない（PR で手直しした内容を上書きしないため）。マージかクローズで次が動く
+# - 載せないと決めた記事は、PR で status: paused にしてマージする。URL で重複を見るので、次から取り込まれない
+#
+# 必要な Secrets:
+#   GOOGLE_SHEET_ID             判定用スプレッドシート（collect-articles と同じ）
+#   GOOGLE_SERVICE_ACCOUNT_KEY  シートを読むサービスアカウントの鍵（collect-articles と同じ）
+#   ANTHROPIC_API_KEY           要約などの下書き
+#   ARTICLES_SYNC_TOKEN         push と PR 作成に使う fine-grained PAT（このリポジトリだけ、Contents と Pull requests が Read and write）。
+#                               GITHUB_TOKEN で作った PR では CI が動かず、必須チェックが通らないので PAT を使う
+
+on:
+  schedule:
+    # cron は UTC。0:47 UTC = 9:47 JST。毎時0分は混むのでずらす（#87）
+    - cron: '47 0 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: sync-articles
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write # 失敗したとき Issue を立てるため
+  pull-requests: read
+
+env:
+  BRANCH: bot/articles-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 開いている PR があれば止める
+        id: open-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HAS_SYNC_TOKEN: ${{ secrets.ARTICLES_SYNC_TOKEN != '' }}
+        run: |
+          if [ "$HAS_SYNC_TOKEN" != "true" ]; then
+            echo '::error::Secrets に ARTICLES_SYNC_TOKEN がありません（このファイルの先頭のコメントを参照）'
+            exit 1
+          fi
+          n=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number --jq 'length')
+          echo "exists=$([ "$n" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          [ "$n" -gt 0 ] && echo "::notice::$BRANCH の PR が開いているので、今回は何もしません"
+          true
+
+      - uses: actions/checkout@v4
+        if: steps.open-pr.outputs.exists == 'false'
+        with:
+          token: ${{ secrets.ARTICLES_SYNC_TOKEN }}
+      - uses: actions/setup-node@v4
+        if: steps.open-pr.outputs.exists == 'false'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+        if: steps.open-pr.outputs.exists == 'false'
+
+      - name: 承認済みの記事を articles.json に足す
+        if: steps.open-pr.outputs.exists == 'false'
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm run -s sync:articles -- --report "$RUNNER_TEMP/pr-body.md" 2>&1 | tee "$RUNNER_TEMP/summary.txt"
+          {
+            echo '## 承認済みの記事の取り込み'
+            echo '```'
+            cat "$RUNNER_TEMP/summary.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 記事データの検証
+        if: steps.open-pr.outputs.exists == 'false'
+        run: npm run validate:articles
+
+      - name: PR を作る
+        if: steps.open-pr.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.ARTICLES_SYNC_TOKEN }}
+        run: |
+          if git diff --quiet -- src/data/articles.json; then
+            echo '取り込む記事がないので、PR は作りません'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$BRANCH"
+          git add src/data/articles.json
+          git commit -m 'feat: 判定シートで承認済みの記事を追加する'
+          # 前回の PR がクローズされて残ったブランチは、main からやり直したもので上書きする
+          git push --force origin "$BRANCH"
+          gh pr create -R "$GITHUB_REPOSITORY" --base main --head "$BRANCH" \
+            --title 'feat: 判定シートで承認済みの記事を追加する' \
+            --body-file "$RUNNER_TEMP/pr-body.md"
+
+      - name: 失敗したら Issue を作成
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/report-failure
