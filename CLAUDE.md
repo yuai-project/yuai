@@ -72,7 +72,8 @@ src/
 - AI 回答の構造（6セクション）は `src/data/types.ts` の `Advice` 型の形を崩さない。LLM 接続時も同じ JSON 形にする
 - `src/data/*` は TypeScript、それ以外は今は JavaScript（#166 で段階移行中）。型チェックは `npm run typecheck`
 - 画面の文言はコンポーネントに直接書かず、`src/i18n/ja.ts` と `en.ts` の両方に足して `useI18n()` の `t()` で出す。
-  en にキーが足りないと typecheck で落ちる。選択肢・アドバイスなど `src/data/` の文言は、まだ日本語だけ
+  en にキーが足りないと typecheck で落ちる。`src/data/` の文言（選択肢・アドバイス・窓口・記事の要約）は、
+  データの中に英語版を持つ（`labelEn`・`adviceCards.en.ts`・窓口の `en`・`summaryEn`。#217）。value は言語で変えない
 - 秘密鍵・API キーを**絶対にコミットしない**。`.env.local` を使い `.env.example` に名前だけ書く
 - 依存パッケージの追加は最小限に。追加する場合は PR の説明に理由を書く
 
