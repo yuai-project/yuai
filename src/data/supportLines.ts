@@ -135,6 +135,16 @@ export const supportLineText = (line: SupportLine, lang: DataLang = 'ja') =>
 export const isOtherLanguageOnly = (line: SupportLine, lang: DataLang = 'ja'): boolean =>
   !line.languages.includes(lang)
 
+// 日本の緊急通報の番号（結果画面の注記で、タップで発信できるようにする）
+export const EMERGENCY_NUMBERS = { ambulance: '119', police: '110' } as const
+
+// 英語の画面で crisis のとき（#いのちSOS を足していて、英語で相談できる窓口を先に並べているとき）に、
+// 窓口の一覧の上に「英語の窓口は夜遅くは閉まっていることがある。#いのちSOS は24時間（日本語）。
+// 命に関わるときは 119・110」の注記を出すか（#220）。
+// 日本語の画面では #いのちSOS が一番上なので出さない
+export const needsLateNightNote = (lines: SupportLine[] = [], lang: DataLang = 'ja'): boolean =>
+  lang === 'en' && lines.includes(CRISIS_SUPPORT_LINE)
+
 // 表示用の番号 → tel: リンク（ハイフンを除く）
 export const telHref = (tel: string): string => `tel:${tel.replace(/[^\d+]/g, '')}`
 

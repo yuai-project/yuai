@@ -10,7 +10,7 @@ import ItemSources, { SourceLangNote } from '../components/ItemSources'
 import SupportLineList from '../components/SupportLineList'
 import { buildAdvice } from '../data/mockAdvice'
 import { recommendArticles } from '../data/recommendArticles'
-import { getSupportLines } from '../data/supportLines'
+import { EMERGENCY_NUMBERS, getSupportLines, needsLateNightNote, telHref } from '../data/supportLines'
 import { useI18n } from '../i18n/useI18n'
 
 // 番号を振る枠（表示順）。安全の案内には番号を振らない。
@@ -191,7 +191,7 @@ export default function AdviceResult() {
 // lines は電話で相談できる窓口。危険を示す言葉がないときも、ここには常に出す。
 // safety.sources は、その番号を確かめたページ（buildAdvice() が lines に合わせて入れる）
 function SafetyCard({ safety, lines }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   return (
     <section aria-labelledby="safety-title" className="rounded-xl bg-brand-50 p-4 lg:p-6">
       <h2
@@ -207,10 +207,41 @@ function SafetyCard({ safety, lines }) {
       </ul>
       <p className="mt-3 text-sm leading-relaxed text-ink-soft">{safety.body}</p>
       <h3 className="mt-5 text-sm font-bold text-brand-700">{t('result.phoneLines')}</h3>
+      {needsLateNightNote(lines, lang) && <LateNightNote />}
       <SupportLineList lines={lines} />
       {/* 番号を確かめたページ */}
       <ItemSources sources={safety.sources ?? []} />
     </section>
+  )
+}
+
+// 英語の画面で crisis のときだけ、窓口の一覧の上に出す注記（#220）。
+// 英語の窓口は夜遅くはつながらないことがあるので、24時間の #いのちSOS と、命に関わるときの 119・110 を伝える。
+// 番号はタップで発信できる（押しやすいよう高さ 32px 以上）
+function LateNightNote() {
+  const { t } = useI18n()
+  const call = (number) => (
+    <a
+      href={telHref(number)}
+      aria-label={t('lateNight.callLabel', { number })}
+      className="inline-flex min-h-8 min-w-8 items-center justify-center px-0.5 font-bold tabular-nums text-ink underline decoration-control underline-offset-4"
+    >
+      {number}
+    </a>
+  )
+  return (
+    <div className="mt-2 rounded-lg bg-surface px-3 py-2 text-xs leading-relaxed text-ink-soft">
+      <p>{t('lateNight.note')}</p>
+      <p className="mt-1">
+        {t('lateNight.emergencyLead')}
+        {call(EMERGENCY_NUMBERS.ambulance)}
+        {t('lateNight.ambulance')}
+        {t('lateNight.or')}
+        {call(EMERGENCY_NUMBERS.police)}
+        {t('lateNight.police')}
+        {t('lateNight.emergencyEnd')}
+      </p>
+    </div>
   )
 }
 

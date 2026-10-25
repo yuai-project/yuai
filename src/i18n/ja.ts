@@ -139,6 +139,15 @@ export const ja = {
   'result.avoidLabel': '避けたい',
   'result.copyHint': 'タップするとコピーできます。使えそうな言葉を選んでみてください。',
   'result.phoneLines': '電話で相談できる窓口',
+  // 英語の画面で crisis のときだけ、窓口の一覧の上に出す（#220）。日本語の画面では出さない
+  'lateNight.note':
+    '英語で相談できる窓口は、夜遅くはつながらないことがあります。#いのちSOS は24時間つながります（日本語）。',
+  'lateNight.emergencyLead': '命に関わる危険があるときは、',
+  'lateNight.ambulance': '（救急）',
+  'lateNight.or': 'か',
+  'lateNight.police': '（警察）',
+  'lateNight.emergencyEnd': 'に電話してください。',
+  'lateNight.callLabel': '{number}に電話をかける',
   'result.sourcesTitle': 'このヒントの参考にした情報',
   'result.disclaimer':
     'このヒントは一般的な情報提供であり、医療・法律・緊急支援を提供するものではありません。',

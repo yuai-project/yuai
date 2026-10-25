@@ -31,7 +31,10 @@ import {
 import {
   CONSUMER_SUPPORT_LINE,
   CRISIS_SUPPORT_LINE,
+  EMERGENCY_NUMBERS,
   SUPPORT_LINES,
+  getSupportLines,
+  needsLateNightNote,
 } from '../src/data/supportLines.ts'
 import { FIXTURE_FALLBACK_IDS, fixtureArticles } from './fixtures/recommendArticles.js'
 
@@ -513,5 +516,38 @@ describe('英語の困りごとのキーワード', () => {
       `詳しい内容から「${labelOf(CONCERNS, 'self_exhausted')}」「${labelOf(CONCERNS, 'sends_lots_of_info')}」も合わせて考えました`,
     ])
     assert.match(buildAdvice(request, 'en').freeTextNotes[0], /worn out myself.*send me a lot of information/)
+  })
+})
+
+describe('英語の画面の crisis でだけ出す注記（夜遅く・119・110。#220）', () => {
+  const noteOf = (freeText, lang) => {
+    const advice = buildAdvice(requestOf({ freeText }), lang)
+    return needsLateNightNote(advice.supportLines, lang)
+  }
+
+  test('英語の画面の crisis で出る（英語で書いても日本語で書いても）', () => {
+    assert.equal(noteOf('I want to die.', 'en'), true)
+    assert.equal(noteOf('死にたい', 'en'), true)
+  })
+
+  test('日本語の画面では出さない（#いのちSOS が一番上なので）', () => {
+    assert.equal(noteOf('I want to die.', 'ja'), false)
+    assert.equal(noteOf('死にたい', 'ja'), false)
+  })
+
+  test('crisis でないときは、英語の画面でも出さない（危険の言葉だけ・何も無いとき）', () => {
+    assert.equal(noteOf('He hit me.', 'en'), false)
+    assert.equal(noteOf('疲れました', 'en'), false)
+    assert.equal(noteOf('', 'en'), false)
+    assert.equal(needsLateNightNote(getSupportLines({ money: true, lang: 'en' }), 'en'), false)
+  })
+
+  test('注記を出すときも、並びは TELL → よりそい → #いのちSOS のまま', () => {
+    const advice = buildAdvice(requestOf({ freeText: 'I want to die.' }), 'en')
+    assert.deepEqual(advice.supportLines.map((l) => l.id).slice(0, 3), ['tell', 'yorisoi', 'inochi-sos'])
+  })
+
+  test('緊急通報の番号は 119（救急）と 110（警察）', () => {
+    assert.deepEqual(EMERGENCY_NUMBERS, { ambulance: '119', police: '110' })
   })
 })
