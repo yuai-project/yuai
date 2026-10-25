@@ -197,3 +197,28 @@ describe('画面のコードで使っているキーが、辞書にある', () =
     }
   })
 })
+
+describe('プライバシーポリシーと実装が一致している（#222）', () => {
+  const files = (dir) =>
+    readdirSync(dir).flatMap((name) => {
+      const path = join(dir, name)
+      return statSync(path).isDirectory() ? files(path) : /\.(jsx?|tsx?)$/.test(name) ? [path] : []
+    })
+
+  test('端末に保存するのは言語の設定だけ（localStorage などを使うのは src/i18n の2つのファイルだけ）', () => {
+    const STORAGE = /localStorage|sessionStorage|indexedDB|document\.cookie|\.setItem\(/
+    // コメント（説明として名前を書いている）は除く
+    const code = (f) => readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+    const users = files('src').filter((f) => STORAGE.test(code(f)))
+    assert.deepEqual(users.sort(), [join('src', 'i18n', 'I18nProvider.tsx'), join('src', 'i18n', 'language.ts')])
+    assert.equal(STORAGE_KEY, 'yorido.lang')
+  })
+
+  test('ポリシーに、言語の設定だけを保存し送信しないことが日英で書いてある', () => {
+    assert.match(ja['privacy.inputBody3'], /言語の設定.*だけ.*保存.*送信しません/)
+    assert.match(en['privacy.inputBody3'], /only thing we save.*language setting.*not sent/)
+    // 入力内容を保存しないという約束はそのまま
+    assert.match(ja['privacy.inputBody1'], /保存も、外部への送信もしません/)
+    assert.match(en['privacy.inputBody1'], /neither saved nor sent/)
+  })
+})

@@ -4,6 +4,7 @@ import InfoPage, { InfoList, InfoSection } from './InfoPage'
 
 // プライバシーポリシー（#175）。書いてあることと実装を必ず一致させる。
 // - 相談の入力内容は保存も送信もしない（ブラウザの履歴の state に、タブを開いている間だけ残る）
+// - 端末に保存するのは、表示する言語の設定だけ（localStorage の yorido.lang。src/i18n/language.ts）。送信しない
 // - アクセス解析は #176 で Google Analytics を入れる予定。入れるまでは USES_ANALYTICS を false のままにし、
 //   「使っていない」と書く。入れたら true にして、外部送信の表も出す
 // 文言は src/i18n/ja.ts・en.ts の privacy.*（#221）。英語は日本語と同じことを約束する（足さない・強めない）
@@ -17,6 +18,7 @@ export default function PrivacyPolicy() {
       <InfoSection title={t('privacy.inputTitle')}>
         <p>{t('privacy.inputBody1')}</p>
         <p>{t('privacy.inputBody2')}</p>
+        <p>{t('privacy.inputBody3')}</p>
       </InfoSection>
 
       <InfoSection title={t('privacy.analyticsTitle')}>

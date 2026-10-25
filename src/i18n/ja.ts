@@ -210,10 +210,12 @@ export const ja = {
   'terms.changesBody': '{name} の内容や、このページは、予告なく変わることがあります。',
   'privacy.title': 'プライバシーポリシー',
   'privacy.lead': '{name} は、身近な人のことで悩む方のためのサービスです。センシティブな内容を扱うため、必要のない情報は集めないことを基本にしています。',
-  'privacy.updated': '制定日：2026年10月16日',
+  'privacy.updated': '制定日：2026年10月16日／最終更新日：2026年10月25日',
   'privacy.inputTitle': '相談の入力内容',
   'privacy.inputBody1': 'フォームに入力・選択した内容は、保存も、外部への送信もしません。あなたの端末のブラウザの中だけで処理します。',
   'privacy.inputBody2': '「戻る」で入力し直せるように、入力内容はそのタブを開いている間だけブラウザに残り、タブを閉じると消えます。会員登録やログインの機能はありません。',
+  // 言語の設定（src/i18n/language.ts の STORAGE_KEY）。実装と一致させる（#222）
+  'privacy.inputBody3': '表示する言語の設定（日本語・英語）だけを、あなたの端末のブラウザに保存します。外部には送信しません。',
   'privacy.analyticsTitle': 'アクセス解析',
   'privacy.analyticsBody1': 'サービスの改善のため、Google LLC の Google Analytics を使っています。Google Analytics は Cookie を使って、次のような情報を集めます。個人を特定する情報は含みません。',
   'privacy.analyticsItems': ['見たページと、見た時間', '端末・ブラウザの種類', 'おおまかな地域', 'どこから {name} に来たか'],
