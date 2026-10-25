@@ -11,6 +11,14 @@
 //   TELL「TELL Hours: Lifeline Phone and Chat」https://telljp.com/tell-hours/（確認日: 2026-10-25）
 //   フリーダイヤル 0800-300-8355（03-5774-0992 も載っている）。電話の受付時間は曜日によって違い、
 //   途中で空く時間帯もあるので、時間は書かずに公式サイトでの確認をすすめる
+// - よりそいホットラインの外国語の相談（#218）:
+//   社会的包摂サポートセンター「Yorisoi Hotline English」https://www.since2011.net/yorisoi/en/（確認日: 2026-10-25）
+//   最初の音声ガイダンスのあとに 2 を押すと外国語の相談につながる。毎日 10:00〜22:00。
+//   英語・タガログ語・韓国語・中国語・スペイン語・ポルトガル語・タイ語・ベトナム語・ネパール語・インドネシア語など。
+//   言語は時間帯によって変わる。日本語のトップページ https://www.since2011.net/yorisoi/ にも「外国語による相談」がある
+// - こころの健康相談統一ダイヤル・#いのちSOS・消費者ホットライン（188）は、外国語で相談できるという記載を
+//   公式ページ（厚生労働省「まもろうよ こころ」電話相談、ライフリンク https://www.lifelink.or.jp/inochisos/、
+//   政府広報オンライン・消費者庁の 188 のページ）で確かめられなかったので、日本語だけのままにしている（確認日: 2026-10-25）
 //
 // tel は表示用の番号。電話をかけるリンクは telHref() で作る。
 // sourceId は出典のページの articles.json の ID。結果画面の安全の案内に、出典として出す（#213）。
@@ -32,11 +40,14 @@ export const SUPPORT_LINES: SupportLine[] = [
     description: 'どんな悩みでも相談できます。',
     en: {
       name: 'Yorisoi Hotline',
-      note: 'Free, 24 hours',
-      description: 'You can talk about any kind of worry.',
+      note: 'Free; foreign languages 10 am–10 pm daily',
+      description:
+        'You can talk about any kind of worry. For English and other languages, press 2 after the first recorded message. Available languages vary by time of day.',
     },
-    languages: ['ja'],
+    // 外国語の相談がある（ガイダンスで 2。英語を含む）
+    languages: ['ja', 'en'],
     sourceId: 'c01',
+    languageSource: { title: 'Yorisoi Hotline English', url: 'https://www.since2011.net/yorisoi/en/' },
   },
   {
     id: 'kokoro',

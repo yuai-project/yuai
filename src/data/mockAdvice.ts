@@ -63,12 +63,12 @@ const CONCERN_OF_CARD: Partial<Record<CardKey, string>> = { exhausted: 'self_exh
 function matchedLabelOf(cardKey: CardKey, request: RequestInput, lang: DataLang): string | null {
   if (cardKey === 'distance') {
     const label = labelOf(DESIRED_RELATIONSHIP, request?.desiredRelationship ?? '', lang)
-    return lang === 'en' ? `For you, who chose “${label}”` : `${label}あなたへ`
+    return lang === 'en' ? `Since you chose “${label}”` : `${label}あなたへ`
   }
   const concern = CONCERN_OF_CARD[cardKey]
   if (!concern || !(request?.concerns ?? []).includes(concern)) return null
   const label = labelOf(CONCERNS, concern, lang)
-  return lang === 'en' ? `For you, who chose “${label}”` : `「${label}」を選んだあなたへ`
+  return lang === 'en' ? `Since you chose “${label}”` : `「${label}」を選んだあなたへ`
 }
 
 // 詳しい内容（自由記述）に危険を示す言葉があったときに、安全のカードの上に出す一行。
@@ -150,7 +150,7 @@ export function buildAdvice(request: RequestInput, lang: DataLang = 'ja'): Advic
     tryReplies,
     askNext,
     // safety の sources は、一緒に出す電話窓口の番号を確かめたページ
-    safety: { ...(lang === 'en' ? SAFETY_EN : SAFETY), sources: supportLineSources(supportLines) },
+    safety: { ...(lang === 'en' ? SAFETY_EN : SAFETY), sources: supportLineSources(supportLines, lang) },
 
     // このヒント（選ばれたカード）の参考にした記事（6つの枠の外）。項目ごとの sources を重複なしでまとめたもの。
     // 画面では最後の枠のすぐ後ろに小さく出す。空なら何も出さない

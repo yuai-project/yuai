@@ -160,6 +160,8 @@ export type SupportLine = SupportLineText & {
   // 番号や受付時間を確かめたページ。articles.json の ID（sourceId）か、記事として載せていないページ（source）
   sourceId?: string
   source?: { title: string; url: string }
+  // 英語の画面でだけ出典に足すページ（外国語で相談できることを確かめたページ。よりそいホットライン）
+  languageSource?: { title: string; url: string }
 }
 
 // ---- 記事（articles.json / articleTags.ts） ----

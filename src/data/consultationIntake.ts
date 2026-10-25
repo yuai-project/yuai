@@ -69,8 +69,8 @@ export const SUPPORT_PERSON: Option[] = [
 export const DESIRED_RELATIONSHIP: Option[] = [
   { value: 'keep', label: '今までと変わらずにいたい', labelEn: 'Keep things as they have been' },
   { value: 'improve', label: '関係を改善したい', labelEn: 'Improve our relationship' },
-  { value: 'some_distance', label: '少し距離を置きたい', labelEn: 'Keep a little distance' },
-  { value: 'more_distance', label: 'かなり距離を置きたい', labelEn: 'Keep a lot of distance' },
+  { value: 'some_distance', label: '少し距離を置きたい', labelEn: 'Step back a little' },
+  { value: 'more_distance', label: 'かなり距離を置きたい', labelEn: 'Step back a lot' },
   { value: 'unsure', label: 'わからない', labelEn: 'Not sure' },
 ]
 

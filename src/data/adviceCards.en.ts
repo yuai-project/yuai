@@ -126,7 +126,7 @@ export const SAFETY_EN: SafetyContent = {
   signs: [
     'Being yelled at or verbally abused',
     'Feeling threatened',
-    'Feeling emotionally cornered',
+    'Feeling emotionally overwhelmed',
     'Serious effects on your daily life or work',
   ],
   body: 'Your own safety and mental health come first. Rather than carrying this alone, please also consider turning to someone you trust, or to public support services and professional organizations.',

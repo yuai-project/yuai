@@ -237,11 +237,11 @@ describe('buildAdvice(request, lang)', () => {
   test('どの回答に合わせたかの一行（英語）', () => {
     assert.equal(
       buildAdvice(requestOf({ concerns: ['angry_when_disagreed'] }), 'en').matchedLabel,
-      'For you, who chose “They get upset when I disagree”',
+      'Since you chose “They get upset when I disagree”',
     )
     assert.equal(
       buildAdvice(requestOf({ desiredRelationship: 'some_distance' }), 'en').matchedLabel,
-      'For you, who chose “Keep a little distance”',
+      'Since you chose “Step back a little”',
     )
   })
 
@@ -268,8 +268,20 @@ describe('相談窓口', () => {
     }
   })
 
-  test('日本の窓口は日本語だけ。英語の画面で「Japanese-language service」を添える対象になる', () => {
-    for (const line of [...SUPPORT_LINES, CRISIS_SUPPORT_LINE, CONSUMER_SUPPORT_LINE]) {
+  test('よりそいホットラインは英語でも相談できる（ガイダンスで 2）。英語の画面で「Japanese-language service」を添えない', () => {
+    const yorisoi = SUPPORT_LINES.find((l) => l.id === 'yorisoi')
+    assert.deepEqual(yorisoi.languages, ['ja', 'en'])
+    assert.equal(isOtherLanguageOnly(yorisoi, 'en'), false)
+    assert.match(yorisoi.en.description, /press 2/)
+    assert.match(yorisoi.en.note, /10 am–10 pm/)
+    assert.deepEqual(yorisoi.languageSource, {
+      title: 'Yorisoi Hotline English',
+      url: 'https://www.since2011.net/yorisoi/en/',
+    })
+  })
+
+  test('ほかの日本の窓口は日本語だけ（外国語の記載を公式ページで確かめられなかった）。英語の画面で「Japanese-language service」を添える', () => {
+    for (const line of [...SUPPORT_LINES.filter((l) => l.id !== 'yorisoi'), CRISIS_SUPPORT_LINE, CONSUMER_SUPPORT_LINE]) {
       assert.deepEqual(line.languages, ['ja'], line.id)
       assert.equal(isOtherLanguageOnly(line, 'en'), true, line.id)
       assert.equal(isOtherLanguageOnly(line, 'ja'), false, line.id)
@@ -306,10 +318,11 @@ describe('相談窓口', () => {
       title: 'TELL Hours: Lifeline Phone and Chat',
       url: 'https://telljp.com/tell-hours/',
     })
-    const sources = supportLineSources(getSupportLines({ crisis: true, lang: 'en' }))
+    const sources = supportLineSources(getSupportLines({ crisis: true, lang: 'en' }), 'en')
     assert.deepEqual(sources.map((s) => [s.domain, s.lang]), [
       ['mhlw.go.jp', 'ja'],
       ['telljp.com', 'en'],
+      ['since2011.net', 'en'],
     ])
   })
 
@@ -317,6 +330,8 @@ describe('相談窓口', () => {
     const advice = buildAdvice(requestOf({ freeText: '死にたい' }), 'en')
     assert.deepEqual(advice.supportLines.map((l) => l.id), ['inochi-sos', 'tell', 'yorisoi', 'kokoro'])
     assert.ok(advice.safety.sources.some((s) => s.domain === 'telljp.com'))
+    // よりそいホットラインの外国語の相談を確かめたページも、英語の画面でだけ出典に入る
+    assert.ok(advice.safety.sources.some((s) => s.domain === 'since2011.net'))
     // 日本語の結果画面は今までどおり
     const ja = buildAdvice(requestOf({ freeText: '死にたい' }))
     assert.deepEqual(ja.supportLines.map((l) => l.id), ['inochi-sos', 'yorisoi', 'kokoro'])
