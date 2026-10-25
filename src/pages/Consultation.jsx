@@ -31,16 +31,7 @@ import {
 } from '../data/consultationIntake'
 import { APP } from '../config'
 import { getAdvice } from '../data/mockAdvice'
-
-const STEP_TITLES = [
-  'あなたと相手について',
-  'いま困っていること',
-  'これからどうしたいか',
-]
-
-const placeholder = `最近、父が健康に関する情報を強く信じるようになりました。
-否定すると怒ってしまうので、どう話せばいいか分かりません。
-自分自身も少し疲れています。`
+import { useI18n } from '../i18n/useI18n'
 
 // iOSでフォーカス時にズームしないよう、入力欄の文字は16px（text-base）
 const inputClass =
@@ -59,6 +50,8 @@ const pairRow = 'space-y-7 lg:grid lg:grid-cols-2 lg:gap-x-6 lg:space-y-0'
 export default function Consultation() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useI18n()
+  const STEP_TITLES = t('consult.steps')
   // 結果画面の「内容を修正する」やブラウザの戻るで来た場合は、入力内容を復元する
   const [intake, setIntake] = useState(() => ({
     ...initialIntake,
@@ -101,7 +94,7 @@ export default function Consultation() {
 
   return (
     <div>
-      <Header title="あなたの状況を教えてください" back onBack={goBack} tone="brand" />
+      <Header title={t('consult.title')} back onBack={goBack} tone="brand" />
 
       {/* ブランド色の帯。スマホはステップ名と進捗、PCは注意書き（進捗は左列とパネルに出す） */}
       <div className="bg-brand px-5 pb-6 pt-1 text-brand-ink lg:pb-9 lg:pt-0">
@@ -110,7 +103,7 @@ export default function Consultation() {
             <StepProgress current={step + 1} steps={STEP_TITLES} onBrand />
           </div>
           <p className="hidden text-base leading-relaxed lg:block">
-            これは診断ではありません。答えたくない項目は、とばして大丈夫です。
+            {t('common.notDiagnosisSkip')}
           </p>
         </div>
       </div>
@@ -134,7 +127,7 @@ export default function Consultation() {
                 relationshipRef={relationshipRef}
                 relationshipError={
                   showErrors && !intake.relationship
-                    ? '相手との関係を選んでください'
+                    ? t('consult.relationshipError')
                     : null
                 }
               />
@@ -153,7 +146,7 @@ export default function Consultation() {
                 className={`${buttonBase} flex-[1_1_6rem] border border-brand bg-surface text-brand-700 hover:bg-brand-50 lg:flex-[0_1_9rem]`}
               >
                 <ArrowLeft size={18} className="shrink-0" />
-                <span className="min-w-0">戻る</span>
+                <span className="min-w-0">{t('common.back')}</span>
               </button>
             )}
             {isLast ? (
@@ -166,12 +159,12 @@ export default function Consultation() {
                 {loading ? (
                   <>
                     <Loader2 size={20} className="shrink-0 animate-spin" />
-                    <span className="min-w-0">あなたの気持ちを整理しています…</span>
+                    <span className="min-w-0">{t('consult.loading')}</span>
                   </>
                 ) : (
                   <>
                     <MessageCircleHeart size={20} className="shrink-0" />
-                    <span className="min-w-0">ヒントをみる</span>
+                    <span className="min-w-0">{t('consult.submit')}</span>
                   </>
                 )}
               </button>
@@ -181,7 +174,7 @@ export default function Consultation() {
                 onClick={goNext}
                 className={`${buttonBase} ${primaryButton}`}
               >
-                <span className="min-w-0">次へ</span>
+                <span className="min-w-0">{t('consult.next')}</span>
                 <ArrowRight size={18} className="shrink-0" />
               </button>
             )}
@@ -190,11 +183,11 @@ export default function Consultation() {
           <p className="mt-4 text-center text-xs leading-relaxed text-ink-faint [word-break:auto-phrase] lg:text-right">
             {isLast ? (
               <>
-                {APP.name}は相手を論破するためのものではありません。<br />
-                あなたと大切な人の関係を、そっと支えます。
+                {APP.name}{t('consult.notDebateAfterName')}<br />
+                {t('consult.gentleSupport')}
               </>
             ) : (
-              '答えたくない項目は、とばして大丈夫です。'
+              t('common.skipOk')
             )}
           </p>
         </div>
@@ -205,19 +198,20 @@ export default function Consultation() {
 
 /* ---------- Step 1：あなたと相手について ---------- */
 function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
+  const { t } = useI18n()
   return (
     <div className="space-y-7">
       <div className="rounded-xl bg-brand-50 p-4">
         <p className="text-sm leading-relaxed text-ink-soft">
-          いくつかの質問に答えていただくと、あなたに合ったヒントや、参考になる情報・相談先をご案内しやすくなります。
+          {t('consult.intro')}
         </p>
         <p className="mt-2 text-xs leading-relaxed text-ink-faint lg:hidden">
-          これは診断ではありません。分かる範囲で大丈夫です。
+          {t('consult.introNote')}
         </p>
       </div>
 
       <div className={pairRow}>
-        <FormField htmlFor="userAge" label="あなたの年齢">
+        <FormField htmlFor="userAge" label={t('consult.age')}>
           <div className="flex items-center gap-2">
             <input
               id="userAge"
@@ -227,14 +221,14 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
               maxLength={3}
               value={intake.userAge}
               onChange={(e) => update({ userAge: e.target.value.replace(/\D/g, '') })}
-              placeholder="例）35"
+              placeholder={t('consult.agePlaceholder')}
               className={`${inputClass} min-h-12 w-24 px-3.5 py-2.5`}
             />
-            <span className="text-sm text-ink-soft">歳</span>
+            <span className="text-sm text-ink-soft">{t('consult.ageUnit')}</span>
           </div>
         </FormField>
 
-        <FormField htmlFor="userGender" label="あなたの性別">
+        <FormField htmlFor="userGender" label={t('consult.gender')}>
           <SelectField
             id="userGender"
             options={GENDERS}
@@ -248,7 +242,7 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
         <div ref={relationshipRef} className="scroll-mt-24">
           <FormField
             htmlFor="relationship"
-            label="相手との関係"
+            label={t('consult.relationship')}
             required
             error={relationshipError}
           >
@@ -263,7 +257,7 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
           </FormField>
         </div>
 
-        <FormField htmlFor="duration" label="いつ頃から気になっていますか？">
+        <FormField htmlFor="duration" label={t('consult.duration')}>
           <SelectField
             id="duration"
             options={DURATIONS}
@@ -275,8 +269,8 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
 
       <FormField
         id="immersion-label"
-        label="その話を、どのくらい強く信じているように感じますか？"
-        hint="医学的な評価ではありません。あなたが感じているままで大丈夫です。"
+        label={t('consult.immersion')}
+        hint={t('consult.immersionHint')}
       >
         <ImmersionSlider
           labelledBy="immersion-label"
@@ -290,13 +284,14 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
 
 /* ---------- Step 2：いま困っていること ---------- */
 function StepConcerns({ intake, update }) {
+  const { t } = useI18n()
   const otherSelected = intake.concerns.includes('other')
   return (
     <div className="space-y-7">
       <FormField
         id="topics-label"
-        label="どんな内容についてですか？"
-        hint="いくつでも選べます。内容が正しいかどうかを判断するものではありません。"
+        label={t('consult.topics')}
+        hint={t('consult.topicsHint')}
       >
         <ChoiceGroup
           labelledBy="topics-label"
@@ -309,8 +304,8 @@ function StepConcerns({ intake, update }) {
 
       <FormField
         id="concerns-label"
-        label="どんなことで困っていますか？"
-        hint="いくつでも選べます。"
+        label={t('consult.concerns')}
+        hint={t('common.chooseAny')}
       >
         <ChoiceGroup
           labelledBy="concerns-label"
@@ -323,19 +318,19 @@ function StepConcerns({ intake, update }) {
         {otherSelected && (
           <div className="mt-3 animate-fade-up">
             <textarea
-              aria-label="その他の困っていること"
+              aria-label={t('consult.concernsOtherLabel')}
               value={intake.concernsOther}
               onChange={(e) => update({ concernsOther: e.target.value })}
               maxLength={CONCERNS_OTHER_MAX}
               rows={2}
-              placeholder="例）夜遅くに長い電話がかかってくる"
+              placeholder={t('consult.concernsOtherPlaceholder')}
               className={`${inputClass} w-full resize-none p-3.5 leading-relaxed`}
             />
           </div>
         )}
       </FormField>
 
-      <FormField id="support-person-label" label="周囲に相談できる人はいますか？">
+      <FormField id="support-person-label" label={t('consult.supportPerson')}>
         <div className="lg:max-w-md">
           <ChoiceGroup
             labelledBy="support-person-label"
@@ -353,12 +348,13 @@ function StepConcerns({ intake, update }) {
 
 /* ---------- Step 3：これからどうしたいか ---------- */
 function StepHopes({ intake, update }) {
+  const { t } = useI18n()
   return (
     <div className="space-y-7">
       <FormField
         id="desired-relationship-label"
-        label="その人と今後どんな関係でいたいですか？"
-        hint="どれを選んでも大丈夫です。距離を置くことも、あなたを守る大切な選択肢です。"
+        label={t('consult.desiredRelationship')}
+        hint={t('consult.desiredRelationshipHint')}
       >
         <ChoiceGroup
           labelledBy="desired-relationship-label"
@@ -370,8 +366,8 @@ function StepHopes({ intake, update }) {
 
       <FormField
         id="desired-support-label"
-        label="どんなサポートを求めていますか？"
-        hint="いくつでも選べます。"
+        label={t('consult.desiredSupport')}
+        hint={t('common.chooseAny')}
       >
         <ChoiceGroup
           labelledBy="desired-support-label"
@@ -384,12 +380,12 @@ function StepHopes({ intake, update }) {
         />
       </FormField>
 
-      <FormField htmlFor="freeText" label="もう少し詳しく教えてください">
+      <FormField htmlFor="freeText" label={t('consult.freeText')}>
         {/* プライバシー注意 */}
         <div className="mb-3 flex items-start gap-2 rounded-xl bg-cream p-3">
           <ShieldCheck size={17} aria-hidden="true" className="mt-0.5 shrink-0 text-brand-700" />
           <p className="text-xs leading-relaxed text-ink-soft">
-            個人が特定できる情報（実名・住所・勤務先・SNSアカウントなど）は入力しないでください。
+            {t('consult.privacyNote')}
           </p>
         </div>
         <textarea
@@ -397,7 +393,7 @@ function StepHopes({ intake, update }) {
           value={intake.freeText}
           onChange={(e) => update({ freeText: e.target.value })}
           maxLength={FREE_TEXT_MAX}
-          placeholder={placeholder}
+          placeholder={t('consult.freeTextPlaceholder')}
           rows={7}
           className={`${inputClass} w-full resize-none p-4 leading-relaxed`}
         />

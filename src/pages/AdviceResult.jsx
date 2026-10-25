@@ -11,6 +11,7 @@ import SupportLineList from '../components/SupportLineList'
 import { buildAdvice } from '../data/mockAdvice'
 import { recommendArticles } from '../data/recommendArticles'
 import { getSupportLines } from '../data/supportLines'
+import { useI18n } from '../i18n/useI18n'
 
 // 番号を振る枠（表示順）。安全の案内には番号を振らない。
 const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'askNext']
@@ -23,6 +24,7 @@ const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'a
 // 各項目の本文のすぐ下に、その項目の出典を小さなリンクで出す（ItemSources。出典が無い項目には出さない）。
 export default function AdviceResult() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   // 相談フォームから来た場合は入力内容と回答を受け取る。直接開いた場合は、どの回答にも寄せないアドバイスを表示。
   const { intake, request, advice } = useLocation().state ?? {}
   const a = advice ?? buildAdvice(request)
@@ -36,12 +38,12 @@ export default function AdviceResult() {
 
   return (
     <div>
-      <Header title="あなたへのヒント" back tone="brand" />
+      <Header title={t('result.title')} back tone="brand" />
 
       {/* イントロ（ブランド色の帯） */}
       <div className="bg-brand px-5 pb-6 pt-1 text-brand-ink lg:pb-9 lg:pt-0">
         <p className="max-w-[40em] text-sm leading-relaxed [word-break:auto-phrase] lg:mx-auto lg:max-w-page lg:px-8 lg:pl-[5.25rem] lg:text-base">
-          お話を受け止めました。すぐに全部を解決しようとしなくて大丈夫です。できそうなものから、ひとつずつ。
+          {t('result.intro')}
         </p>
       </div>
 
@@ -124,12 +126,12 @@ export default function AdviceResult() {
             {/* 3. 避けたい対応。面はグレー、注意の色は「避けたい」のラベルにだけ使う（取り消し線は使わない） */}
             <AdviceCard number={stepOf.avoid} title={a.avoid.title}>
               <ul className="space-y-2 rounded-xl bg-cream px-3.5 py-3">
-                {a.avoid.items.map((t, i) => (
+                {a.avoid.items.map((item, i) => (
                   <li key={i} className="flex items-start gap-2 text-ink">
                     <span className="mt-0.5 shrink-0 whitespace-nowrap rounded-md border border-notice-700 px-1.5 text-[11px] font-bold leading-relaxed text-notice-700">
-                      避けたい
+                      {t('result.avoidLabel')}
                     </span>
-                    <span className="min-w-0">「{t}」</span>
+                    <span className="min-w-0">{t('common.quoteOpen')}{item}{t('common.quoteClose')}</span>
                   </li>
                 ))}
               </ul>
@@ -140,11 +142,11 @@ export default function AdviceResult() {
             {/* 4. こんな返し方（コピー可能） */}
             <AdviceCard number={stepOf.tryReplies} title={a.tryReplies.title}>
               <p className="mb-3 text-xs text-ink-faint">
-                タップするとコピーできます。使えそうな言葉を選んでみてください。
+                {t('result.copyHint')}
               </p>
               <div className="space-y-2">
-                {a.tryReplies.items.map((t, i) => (
-                  <CopyableLine key={i} text={t} />
+                {a.tryReplies.items.map((text, i) => (
+                  <CopyableLine key={i} text={text} />
                 ))}
               </div>
               <ItemSources sources={a.tryReplies.sources ?? []} />
@@ -174,7 +176,7 @@ export default function AdviceResult() {
 
             {/* フッター注記 */}
             <p className="mt-6 text-[11px] leading-relaxed text-ink-faint">
-              このヒントは一般的な情報提供であり、医療・法律・緊急支援を提供するものではありません。
+              {t('result.disclaimer')}
             </p>
           </div>
         </div>
@@ -188,6 +190,7 @@ export default function AdviceResult() {
 // lines は電話で相談できる窓口。危険を示す言葉がないときも、ここには常に出す。
 // safety.sources は、その番号を確かめたページ（buildAdvice() が lines に合わせて入れる）
 function SafetyCard({ safety, lines }) {
+  const { t } = useI18n()
   return (
     <section aria-labelledby="safety-title" className="rounded-xl bg-brand-50 p-4 lg:p-6">
       <h2
@@ -202,7 +205,7 @@ function SafetyCard({ safety, lines }) {
         ))}
       </ul>
       <p className="mt-3 text-sm leading-relaxed text-ink-soft">{safety.body}</p>
-      <h3 className="mt-5 text-sm font-bold text-brand-700">電話で相談できる窓口</h3>
+      <h3 className="mt-5 text-sm font-bold text-brand-700">{t('result.phoneLines')}</h3>
       <SupportLineList lines={lines} />
       {/* 番号を確かめたページ */}
       <ItemSources sources={safety.sources ?? []} />
@@ -213,11 +216,12 @@ function SafetyCard({ safety, lines }) {
 // 最後のカードのすぐ後ろに小さく出す「このヒントの参考にした情報」。記事タイトル（外部リンク）とドメイン。
 // 項目ごとの出典（ItemSources）を重複なしでまとめたもの。安全の案内の出典（番号の確かめ先）は入れない。
 function AdviceSources({ sources }) {
+  const { t } = useI18n()
   if (sources.length === 0) return null
   return (
     <section className="pt-5" aria-labelledby="advice-sources-title">
       <h2 id="advice-sources-title" className="text-xs font-bold text-ink-soft">
-        このヒントの参考にした情報
+        {t('result.sourcesTitle')}
       </h2>
       <ul className="mt-1.5 space-y-1.5">
         {sources.map((s) => (
@@ -235,7 +239,7 @@ function AdviceSources({ sources }) {
                 aria-hidden="true"
                 className="ml-1 inline-block align-[-1px] text-ink-faint"
               />
-              <span className="sr-only">（外部サイトが新しいタブで開きます）</span>
+              <span className="sr-only">{t('common.opensInNewTab')}</span>
             </a>
             <span className="ml-1.5 inline-block whitespace-nowrap text-ink-faint">{s.domain}</span>
           </li>

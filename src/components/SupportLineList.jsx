@@ -1,9 +1,11 @@
 import { SUPPORT_LINES_NOTICE, telHref } from '../data/supportLines'
+import { useI18n } from '../i18n/useI18n'
 
 // 電話で相談できる窓口の一覧。番号はタップで電話をかけられる。
 // 電話で相談できる窓口のページ（/support）と、結果画面の安全の案内で共用。
 // 番号は途中で改行しない（whitespace-nowrap）。
 export default function SupportLineList({ lines }) {
+  const { t } = useI18n()
   return (
     <>
       <ul className="mt-2 [word-break:auto-phrase]">
@@ -13,7 +15,7 @@ export default function SupportLineList({ lines }) {
             <p className="flex flex-wrap items-baseline gap-x-2">
               <a
                 href={telHref(line.tel)}
-                aria-label={`${line.name}に電話をかける ${line.tel}`}
+                aria-label={t('supportLines.callLabel', { line: line.name, tel: line.tel })}
                 className="inline-block whitespace-nowrap py-1.5 text-lg font-bold tabular-nums text-ink underline decoration-control underline-offset-4"
               >
                 {line.tel}

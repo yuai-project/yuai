@@ -1,3 +1,5 @@
+import { useI18n } from '../../i18n/useI18n'
+
 // フォーム1項目分のラベル・必須/任意バッジ・補足・エラー表示。
 // htmlFor があれば <label>、なければ id 付きの見出し（ChoiceGroup の aria-labelledby 用）。
 export default function FormField({
@@ -9,6 +11,7 @@ export default function FormField({
   error,
   children,
 }) {
+  const { t } = useI18n()
   const labelClass = 'min-w-0 text-sm font-bold leading-relaxed text-ink [word-break:auto-phrase]'
   return (
     <section>
@@ -27,7 +30,7 @@ export default function FormField({
             required ? 'border-brand text-brand-700' : 'border-control text-ink-soft'
           }`}
         >
-          {required ? '必須' : '任意'}
+          {required ? t('common.required') : t('common.optional')}
         </span>
       </div>
       {hint && (

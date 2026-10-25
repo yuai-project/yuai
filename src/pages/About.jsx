@@ -1,15 +1,16 @@
 import ShareSiteButton from '../components/ShareSiteButton'
-import { APP } from '../config'
+import { translate } from '../i18n/translate'
 import InfoPage, { InfoList, InfoSection } from './InfoPage'
 
 // 運営について（#175）。チーム名などは載せず、Yorido の目的と大切にしていることだけを書く。
+// このページはまだ日本語だけなので、サービスの説明も日本語の辞書から出す（#215）
 // 「大切にしていること」は CLAUDE.md の「絶対に守るルール」を利用者向けの言葉にしたもの
 export default function About() {
   return (
     <InfoPage title="運営について">
       <InfoSection title="Yorido について">
-        <p>{APP.description}</p>
-        <p>「{APP.concept}」を大切にしています。</p>
+        <p>{translate('ja', 'app.description')}</p>
+        <p>「{translate('ja', 'app.concept')}」を大切にしています。</p>
       </InfoSection>
 
       <InfoSection title="大切にしていること">

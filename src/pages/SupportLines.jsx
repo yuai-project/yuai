@@ -1,4 +1,5 @@
 import Header from '../components/Header'
+import JapaneseOnlyNotice from '../components/JapaneseOnlyNotice'
 import Phrases from '../components/Phrases'
 import SupportLineList from '../components/SupportLineList'
 import { getSupportLines } from '../data/supportLines'
@@ -9,10 +10,11 @@ export default function SupportLines() {
   const lines = getSupportLines({ crisis: true, money: true })
 
   return (
-    <div>
+    <div lang="ja">
       <Header title="電話で相談できる窓口" back />
       <div className="px-5 pb-12 pt-4 lg:mx-auto lg:max-w-page lg:px-8 lg:pb-16">
         <div className="max-w-2xl">
+          <JapaneseOnlyNotice />
           <p className="text-sm leading-relaxed text-ink-soft">
             <Phrases
               phrases={[

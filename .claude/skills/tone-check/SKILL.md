@@ -14,7 +14,8 @@ description: 利用者の目に触れる日本語文言が、Yorido のプロダ
 
 - `src/data/adviceCards.ts` / `src/data/mockAdvice.ts` — アドバイスの6セクション（**最重要**）
 - `src/data/articles.json` — 記事の要約（体験談の記事を含む。体験談のモックは #148 で削除済み）
-- `src/config.js` — サービス名・タグライン・コンセプト
+- `src/i18n/ja.ts` / `src/i18n/en.ts` — 画面の文言の辞書（タグライン・コンセプト・見出し・ボタンなど）。
+  **英語にも同じ7項目を当てはめる**（英語でも断定しない・"conspiracy theorist" と呼ばない・やさしいトーン）
 - `src/pages/*.jsx` / `src/components/*.jsx` — 見出し・説明文・ボタン・プレースホルダ・エラー文言
 - LLM に渡すシステムプロンプト（API 接続後）
 

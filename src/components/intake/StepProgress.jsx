@@ -1,8 +1,10 @@
 import { Check } from 'lucide-react'
+import { useI18n } from '../../i18n/useI18n'
 
 // ステップ形式フォームの進捗表示（例: 2 / 3）。
 // onBrand のときはブランド色の帯の上に白で出す（スマホ）。そうでなければ白い面の上に出す（PCのパネル）。
 export default function StepProgress({ current, steps, onBrand = false }) {
+  const { t } = useI18n()
   const total = steps.length
   return (
     <div>
@@ -19,7 +21,7 @@ export default function StepProgress({ current, steps, onBrand = false }) {
             onBrand ? 'text-brand-ink' : 'text-brand-700'
           }`}
         >
-          <span className="sr-only">全{total}ステップ中 </span>
+          <span className="sr-only">{t('steps.srPrefix', { total })}</span>
           {current}
           <span className={`font-normal ${onBrand ? '' : 'text-ink-faint'}`}> / {total}</span>
         </p>

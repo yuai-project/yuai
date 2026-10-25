@@ -1,6 +1,7 @@
 import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { APP } from '../config'
+import { useI18n } from '../i18n/useI18n'
 
 const tones = {
   plain: {
@@ -24,25 +25,26 @@ const tones = {
 // 文字を大きくしても切れないよう、タイトルは省略せずに文節で折り返す。
 export default function Header({ title, subtitle, back = false, onBack, tone = 'plain' }) {
   const navigate = useNavigate()
-  const t = tones[tone] || tones.plain
+  const { t } = useI18n()
+  const s = tones[tone] || tones.plain
   return (
-    <header className={`sticky top-0 z-20 lg:static ${t.wrap}`}>
+    <header className={`sticky top-0 z-20 lg:static ${s.wrap}`}>
       <div className="flex items-center gap-2 px-4 py-3 lg:mx-auto lg:max-w-page lg:gap-3 lg:px-8 lg:pb-2 lg:pt-10">
         {back && (
           <button
             onClick={onBack ?? (() => navigate(-1))}
-            aria-label="戻る"
-            className={`-ml-1.5 flex size-9 shrink-0 items-center justify-center rounded-full transition active:scale-95 lg:ml-0 lg:size-10 ${t.back}`}
+            aria-label={t('common.back')}
+            className={`-ml-1.5 flex size-9 shrink-0 items-center justify-center rounded-full transition active:scale-95 lg:ml-0 lg:size-10 ${s.back}`}
           >
             <ChevronLeft size={22} />
           </button>
         )}
         <div className="min-w-0">
-          <h1 className={`text-base font-bold leading-snug [word-break:auto-phrase] lg:text-2xl ${t.title}`}>
+          <h1 className={`text-base font-bold leading-snug [word-break:auto-phrase] lg:text-2xl ${s.title}`}>
             {title || APP.name}
           </h1>
           {subtitle && (
-            <p className={`text-xs [word-break:auto-phrase] lg:mt-0.5 lg:text-sm ${t.subtitle}`}>
+            <p className={`text-xs [word-break:auto-phrase] lg:mt-0.5 lg:text-sm ${s.subtitle}`}>
               {subtitle}
             </p>
           )}
