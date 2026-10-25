@@ -14,8 +14,11 @@ import {
 } from '../src/data/consultationIntake.ts'
 import {
   CONCERN_KEYWORDS,
+  CONCERN_KEYWORDS_EN,
   CRISIS_KEYWORDS,
+  CRISIS_KEYWORDS_EN,
   DANGER_KEYWORDS,
+  DANGER_KEYWORDS_EN,
   mergeFreeText,
   readFreeText,
 } from '../src/data/freeTextKeywords.ts'
@@ -345,5 +348,170 @@ describe('記事選びへの反映', () => {
       assert.deepEqual(recommend({ ...intake, freeText: PLAIN }), recommend(intake))
       assert.equal(toRecommendationProfile(requestOf({ ...intake, freeText: PLAIN })).needsSafetySlot, false)
     }
+  })
+})
+
+// ---- 英語（#219） ----
+// 日本語と英語のどちらで書かれても、画面の言語に関係なく両方のキーワードで読み取る
+
+describe('英語の危険ワード', () => {
+  // 指示で挙がった言い回し（"disappear" は「消えたい」にあたる言い回しで持つ）
+  const REQUIRED = ['hit me', 'hurts me', 'threaten', 'I want to die', 'kill myself', 'want to disappear', "can't go home"]
+
+  test('指示で挙がった言い回しがすべて入っている', () => {
+    const all = DANGER_KEYWORDS_EN.join('|')
+    for (const k of REQUIRED) assert.equal(readFreeText(`Sometimes ${k}.`).danger, true, k)
+    assert.ok(all.includes('disappear'))
+  })
+
+  for (const keyword of DANGER_KEYWORDS_EN) {
+    test(`"${keyword}" で safetyFirst になる（日本語の画面でも英語の画面でも）`, () => {
+      const freeText = `My partner and I argued again. ${keyword} sometimes.`
+      assert.equal(readFreeText(freeText).danger, true)
+      for (const lang of ['ja', 'en']) {
+        const advice = buildAdvice(requestOf({ freeText }), lang)
+        assert.equal(advice.safetyFirst, true, lang)
+        assert.ok(advice.safetyNote, lang)
+      }
+    })
+  }
+
+  test('大文字・小文字を区別しない', () => {
+    for (const text of ['HE HIT ME.', 'He Threatened me', 'I WANT TO DIE', 'Kill Myself']) {
+      assert.equal(readFreeText(text).danger, true, text)
+    }
+  })
+
+  test('アポストロフィは省略・カーリー（’）でもよい。空白が多くても読み取る', () => {
+    for (const text of ["I can't go home", 'I cant go home', 'I can’t go home', 'I  can’t   go home', 'i dont want to live']) {
+      assert.equal(readFreeText(text).danger, true, text)
+    }
+  })
+
+  test('日本語の文の中に英語が混ざっていても読み取る', () => {
+    assert.equal(readFreeText('最近、彼が hit me してきます').danger, true)
+    assert.equal(readFreeText('正直、want to dieって思う').crisis, true)
+  })
+})
+
+describe('英語の crisis（「死にたい」系）', () => {
+  test('crisis の言葉はすべて危険の言葉にも入っている', () => {
+    for (const k of CRISIS_KEYWORDS_EN) assert.ok(DANGER_KEYWORDS_EN.includes(k), k)
+  })
+
+  for (const keyword of CRISIS_KEYWORDS_EN) {
+    test(`"${keyword}" で crisis になり、#いのちSOS が足される`, () => {
+      const freeText = `Lately I feel like I ${keyword}.`
+      assert.equal(readFreeText(freeText).crisis, true)
+      for (const lang of ['ja', 'en']) {
+        assert.ok(buildAdvice(requestOf({ freeText }), lang).supportLines.includes(CRISIS_SUPPORT_LINE), lang)
+      }
+    })
+  }
+
+  test('暴力・脅しだけの言葉では crisis にならない（日本語と同じ）', () => {
+    for (const text of ['He hit me.', 'She threatens me', "I can't go home"]) {
+      const read = readFreeText(text)
+      assert.equal(read.danger, true, text)
+      assert.equal(read.crisis, false, text)
+    }
+  })
+
+  test('英語の画面の crisis では、先頭が TELL Lifeline（TELL → よりそい → #いのちSOS）', () => {
+    const advice = buildAdvice(requestOf({ freeText: 'I want to die.' }), 'en')
+    assert.deepEqual(advice.supportLines.map((l) => l.id).slice(0, 3), ['tell', 'yorisoi', 'inochi-sos'])
+    // 日本語の言葉で書いても、英語の画面なら同じ並び
+    const ja = buildAdvice(requestOf({ freeText: '死にたい' }), 'en')
+    assert.deepEqual(ja.supportLines.map((l) => l.id).slice(0, 3), ['tell', 'yorisoi', 'inochi-sos'])
+  })
+
+  test('日本語の画面の crisis では、今までどおり #いのちSOS が先頭（英語の言葉で書いても同じ）', () => {
+    for (const freeText of ['死にたい', 'I want to die.']) {
+      const advice = buildAdvice(requestOf({ freeText }), 'ja')
+      assert.equal(advice.supportLines[0], CRISIS_SUPPORT_LINE, freeText)
+      assert.deepEqual(advice.supportLines.slice(1), SUPPORT_LINES, freeText)
+    }
+  })
+})
+
+describe('画面の言語に関係なく、両方の言葉で読み取る', () => {
+  test('英語の画面＋日本語の危険ワードでも反応する', () => {
+    for (const keyword of DANGER_KEYWORDS) {
+      const advice = buildAdvice(requestOf({ freeText: `${keyword}ことがありました` }), 'en')
+      assert.equal(advice.safetyFirst, true, keyword)
+    }
+  })
+
+  test('日本語の画面＋英語の危険ワードでも反応する', () => {
+    assert.equal(buildAdvice(requestOf({ freeText: 'He yells at me.' }), 'ja').safetyFirst, true)
+  })
+
+  test('読み取りの結果は、画面の言語で変わらない', () => {
+    for (const freeText of ['He hit me and I want to die', '疲れました', 'I am so tired of the videos', PLAIN]) {
+      const ja = buildAdvice(requestOf({ freeText }), 'ja')
+      const en = buildAdvice(requestOf({ freeText }), 'en')
+      assert.equal(en.safetyFirst, ja.safetyFirst, freeText)
+      assert.equal(en.freeTextNotes.length, ja.freeTextNotes.length, freeText)
+      assert.equal(en.supportLines.includes(CRISIS_SUPPORT_LINE), ja.supportLines.includes(CRISIS_SUPPORT_LINE), freeText)
+    }
+  })
+})
+
+describe('英語の誤検知を防ぐ（語の区切りで照らし合わせる）', () => {
+  test('"die" が "diet" などに反応しない', () => {
+    for (const text of [
+      'I want to diet.',
+      'She wants to diet and says sugar is poison.',
+      'He studied the diet plans all night.',
+      'The plant will die if he stops watering it.',
+      'Diesel cars are a conspiracy, he says.',
+    ]) {
+      assert.equal(readFreeText(text).danger, false, text)
+      assert.equal(readFreeText(text).crisis, false, text)
+    }
+  })
+
+  test('"disappear" だけ・"hit" だけ・"threat" だけでは反応しない', () => {
+    for (const text of [
+      'He says the evidence will disappear.',
+      'The posts disappear after a day.',
+      'That song was a hit.',
+      'He thinks 5G is a threat.',
+      'It is hard to hear him.',
+    ]) {
+      assert.deepEqual(readFreeText(text), { concerns: [], danger: false, crisis: false }, text)
+    }
+  })
+
+  test('語の一部では困りごとにならない（"retired" は "tired" ではない、"linked" は "link" ではない）', () => {
+    for (const text of ['My father retired last year.', 'He linked up with old friends.', 'He has a short temperament']) {
+      assert.deepEqual(readFreeText(text).concerns, [], text)
+    }
+  })
+})
+
+describe('英語の困りごとのキーワード', () => {
+  test('困りごとのキーは日本語と同じ（CONCERN_KEYWORDS と揃える）', () => {
+    assert.deepEqual(Object.keys(CONCERN_KEYWORDS_EN).sort(), Object.keys(CONCERN_KEYWORDS).sort())
+  })
+
+  for (const [concern, keywords] of Object.entries(CONCERN_KEYWORDS_EN)) {
+    test(`${concern}: それぞれの言葉で読み取る`, () => {
+      for (const keyword of keywords) {
+        const read = readFreeText(`Lately, ${keyword} is the problem.`)
+        assert.ok(read.concerns.includes(concern), `${concern}: ${keyword}`)
+        assert.equal(read.danger, false, keyword)
+      }
+    })
+  }
+
+  test('英語で書いても、日本語と同じように困りごとを足す（読み取った一行は画面の言語で出る）', () => {
+    const request = requestOf({ freeText: "I'm so tired. He keeps sending me videos." })
+    assert.deepEqual(mergeFreeText(request).inferredConcerns, ['self_exhausted', 'sends_lots_of_info'])
+    assert.equal(selectCardKey(request), 'exhausted')
+    assert.deepEqual(buildAdvice(request, 'ja').freeTextNotes, [
+      `詳しい内容から「${labelOf(CONCERNS, 'self_exhausted')}」「${labelOf(CONCERNS, 'sends_lots_of_info')}」も合わせて考えました`,
+    ])
+    assert.match(buildAdvice(request, 'en').freeTextNotes[0], /worn out myself.*send me a lot of information/)
   })
 })

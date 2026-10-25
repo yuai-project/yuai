@@ -139,19 +139,31 @@ export const isOtherLanguageOnly = (line: SupportLine, lang: DataLang = 'ja'): b
 export const telHref = (tel: string): string => `tel:${tel.replace(/[^\d+]/g, '')}`
 
 // 差し替え時はここだけ書き換える。
-// crisis: true のときは #いのちSOS を一番上に、money: true のときは消費者ホットラインを最後に足す。
+// crisis: true のときは #いのちSOS を足し、money: true のときは消費者ホットラインを最後に足す。
 // どちらも無ければ、いつもの一覧（マイページと同じ）。
-// lang: 'en' のときは、英語で相談できる TELL Lifeline を、#いのちSOS（crisis のとき）のすぐ後ろに足す。
-// 「死にたい」ほどつらいときに #いのちSOS を一番上に出す動きは、言語にかかわらず同じ
+// - 日本語の画面: #いのちSOS（crisis のとき）が一番上
+// - 英語の画面（lang: 'en'）: 英語で相談できる窓口を先に出す。
+//   TELL Lifeline → よりそいホットライン（ガイダンスで 2 を押すと外国語）→ #いのちSOS（crisis のとき）→ ほか（#219）
 export function getSupportLines({
   crisis = false,
   money = false,
   lang = 'ja',
 }: { crisis?: boolean; money?: boolean; lang?: DataLang } = {}): SupportLine[] {
   if (!crisis && !money && lang === 'ja') return SUPPORT_LINES
+  if (lang === 'en') {
+    // 英語でも相談できる日本の窓口（よりそいホットライン）を、ほかの日本の窓口より先に出す
+    const english = SUPPORT_LINES.filter((line) => line.languages.includes('en'))
+    const japaneseOnly = SUPPORT_LINES.filter((line) => !line.languages.includes('en'))
+    return [
+      ENGLISH_SUPPORT_LINE,
+      ...english,
+      ...(crisis ? [CRISIS_SUPPORT_LINE] : []),
+      ...japaneseOnly,
+      ...(money ? [CONSUMER_SUPPORT_LINE] : []),
+    ]
+  }
   return [
     ...(crisis ? [CRISIS_SUPPORT_LINE] : []),
-    ...(lang === 'en' ? [ENGLISH_SUPPORT_LINE] : []),
     ...SUPPORT_LINES,
     ...(money ? [CONSUMER_SUPPORT_LINE] : []),
   ]
