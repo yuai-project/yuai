@@ -6,8 +6,14 @@
 
 // ---- 相談フォーム（consultationIntake.ts） ----
 
-// 選択肢。value は英語キー（API・保存用）、label は画面表示用
-export type Option = { value: string; label: string }
+// 画面の言語（src/i18n の Lang と同じ）。src/data の文言は日本語と英語の両方を持つ（#217）
+export type DataLang = 'ja' | 'en'
+
+// 選択肢。value は英語キー（API・保存用。言語で変えない）、label / labelEn は画面表示用
+export type Option = { value: string; label: string; labelEn: string }
+
+// 画面に出す形の選択肢（どちらかの言語のラベルを選んだもの）
+export type LocalizedOption = { value: string; label: string }
 
 // フォームの入力状態。テキスト入力・select は文字列、未回答は '' / null / []
 export type Intake = {
@@ -79,7 +85,8 @@ export type WhatMayBeHappeningSection = {
 }
 
 // 項目の本文を裏づけている記事（項目のすぐ下と「このヒントの参考にした情報」に出す）の1件
-export type AdviceSource = { id: string; title: string; url: string; domain: string }
+// lang はそのページの言語（記事は日本語。TELL のページは英語）。画面の言語と違えば、そのことを添える
+export type AdviceSource = { id: string; title: string; url: string; domain: string; lang: DataLang }
 
 // 3. 避けたい対応（注意の色は「避けたい」のラベルだけ）
 export type AvoidContent = { title: string; items: string[]; reason: string }
@@ -98,6 +105,14 @@ export type SafetySection = SafetyContent & { sources: AdviceSource[] }
 export type CardSection<T extends { title: string }> = Omit<T, 'title'> & {
   title?: string
   sources: string[]
+}
+
+// カードの文章だけ（sources を除いたもの）。英語版（adviceCards.en.ts）はこの形で持つ
+export type CardSectionText<T extends { title: string }> = Omit<T, 'title'> & { title?: string }
+export type AdviceCardText = {
+  avoid: CardSectionText<AvoidContent>
+  tryReplies: CardSectionText<ItemsContent>
+  askNext?: CardSectionText<ItemsContent>
 }
 
 // 人が書いたカード（adviceCards.ts の ADVICE_CARDS）。askNext を持たないカードは、その枠ごと出さない
@@ -132,14 +147,19 @@ export type Advice = {
 
 // ---- 電話の相談窓口（supportLines.ts） ----
 
-export type SupportLine = {
+// 窓口の文言（name / note / description）
+export type SupportLineText = { name: string; note: string; description: string }
+
+export type SupportLine = SupportLineText & {
   id: string
-  name: string
   tel: string
-  note: string
-  description: string
-  // 番号や受付時間を確かめたページ（articles.json の ID）
-  sourceId: string
+  // 英語の画面に出す文言
+  en: SupportLineText
+  // 相談できる言語。英語の画面では、en を含まない窓口に「Japanese-language service」と添える
+  languages: DataLang[]
+  // 番号や受付時間を確かめたページ。articles.json の ID（sourceId）か、記事として載せていないページ（source）
+  sourceId?: string
+  source?: { title: string; url: string }
 }
 
 // ---- 記事（articles.json / articleTags.ts） ----
@@ -150,6 +170,8 @@ export type Article = {
   title: string
   publisher: string
   summary: string
+  // 英語の画面に出す要約（任意。無い記事は日本語の要約を出す）
+  summaryEn?: string
   relationships: string[]
   topics: string[]
   concerns: string[]

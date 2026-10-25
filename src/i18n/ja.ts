@@ -32,6 +32,9 @@ export const ja = {
   // 中身と別の文字列のまま並べる（1つの文字列にすると、かっこの前後の詰め方が変わって見た目がずれる）
   'common.quoteOpen': '「',
   'common.quoteClose': '」',
+  // 補足を囲むかっこ（窓口の「無料・24時間」など）。中身と別の文字列のまま並べる
+  'common.parenOpen': '（',
+  'common.parenClose': '）',
   'common.copy': 'コピー',
   'common.copied': 'コピーしました',
   // 外部リンクに添える、読み上げ用の一言
@@ -150,6 +153,9 @@ export const ja = {
   'articles.externalNote': '外部のサイトが開きます。',
   'articles.kindSupport': '相談できる先',
   'articles.kindBook': '書籍',
+  // 画面の言語と違う言語のページ・窓口に添える（日本語の画面では、日本語の記事・窓口には出さない）
+  'articles.inJapanese': '日本語',
+  'supportLines.japaneseOnly': '日本語で対応',
   'desiredSupport.title': 'あなたが求めているサポート',
   'desiredSupport.unsureNote':
     'まだはっきりしなくても大丈夫です。下のヒントから、気になるものをひとつ見てみてください。',

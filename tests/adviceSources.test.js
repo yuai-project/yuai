@@ -103,13 +103,14 @@ describe('invalidSourceIds', () => {
 })
 
 describe('resolveSources', () => {
-  test('画面に出す形（タイトル・URL・ドメイン）にする。www. はドメインから外す', () => {
+  test('画面に出す形（タイトル・URL・ドメイン・ページの言語）にする。www. はドメインから外す', () => {
     assert.deepEqual(resolveSources(['r08']), [
       {
         id: 'r08',
         title: byId('r08').title,
         url: 'https://www.businessinsider.jp/article/260362/',
         domain: 'businessinsider.jp',
+        lang: 'ja',
       },
     ])
   })

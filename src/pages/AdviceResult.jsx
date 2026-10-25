@@ -6,7 +6,7 @@ import CopyableLine from '../components/CopyableLine'
 import Header from '../components/Header'
 import DesiredSupportCard from '../components/intake/DesiredSupportCard'
 import IntakeSummary from '../components/intake/IntakeSummary'
-import ItemSources from '../components/ItemSources'
+import ItemSources, { SourceLangNote } from '../components/ItemSources'
 import SupportLineList from '../components/SupportLineList'
 import { buildAdvice } from '../data/mockAdvice'
 import { recommendArticles } from '../data/recommendArticles'
@@ -24,15 +24,16 @@ const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'a
 // 各項目の本文のすぐ下に、その項目の出典を小さなリンクで出す（ItemSources。出典が無い項目には出さない）。
 export default function AdviceResult() {
   const navigate = useNavigate()
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   // 相談フォームから来た場合は入力内容と回答を受け取る。直接開いた場合は、どの回答にも寄せないアドバイスを表示。
-  const { intake, request, advice } = useLocation().state ?? {}
-  const a = advice ?? buildAdvice(request)
+  // 受け取った回答と画面の言語が違う（結果画面で言語を切り替えた）ときは、今の言語で組み立て直す
+  const { intake, request, advice, adviceLang = 'ja' } = useLocation().state ?? {}
+  const a = advice && adviceLang === lang ? advice : buildAdvice(request, lang)
   // 見出しの番号は、出す枠（null でない枠）に合わせて振る
   const stepOf = Object.fromEntries(
     STEP_SECTIONS.filter((key) => a[key]).map((key, i) => [key, i + 1]),
   )
-  const supportLines = a.supportLines ?? getSupportLines()
+  const supportLines = a.supportLines ?? getSupportLines({ lang })
   // フォームの回答に合う記事。直接開いた場合は出さない。
   const recommended = request ? recommendArticles(request) : null
 
@@ -216,7 +217,7 @@ function SafetyCard({ safety, lines }) {
 // 最後のカードのすぐ後ろに小さく出す「このヒントの参考にした情報」。記事タイトル（外部リンク）とドメイン。
 // 項目ごとの出典（ItemSources）を重複なしでまとめたもの。安全の案内の出典（番号の確かめ先）は入れない。
 function AdviceSources({ sources }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   if (sources.length === 0) return null
   return (
     <section className="pt-5" aria-labelledby="advice-sources-title">
@@ -232,7 +233,7 @@ function AdviceSources({ sources }) {
               rel="noopener noreferrer"
               className="inline text-ink-soft underline decoration-line underline-offset-2 transition hover:text-brand-700"
             >
-              {s.title}
+              {s.lang === lang ? s.title : <span lang={s.lang}>{s.title}</span>}
               <ExternalLink
                 size={12}
                 strokeWidth={2.2}
@@ -242,6 +243,7 @@ function AdviceSources({ sources }) {
               <span className="sr-only">{t('common.opensInNewTab')}</span>
             </a>
             <span className="ml-1.5 inline-block whitespace-nowrap text-ink-faint">{s.domain}</span>
+            <SourceLangNote source={s} className="ml-1.5" />
           </li>
         ))}
       </ul>

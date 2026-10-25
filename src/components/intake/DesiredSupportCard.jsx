@@ -9,7 +9,7 @@ import { useI18n } from '../../i18n/useI18n'
 // 結果画面の「あなたが求めているサポート」。相談フォームで選んだ内容を振り返れるようにする。
 // 未選択なら何も表示しない。
 export default function DesiredSupportCard({ values = [] }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   if (values.length === 0) return null
   const onlyUnsure = values.length === 1 && values[0] === DESIRED_SUPPORT_UNSURE
 
@@ -20,7 +20,7 @@ export default function DesiredSupportCard({ values = [] }) {
       </h2>
 
       <ul className="space-y-1.5">
-        {labelsOf(DESIRED_SUPPORT, values).map((label) => (
+        {labelsOf(DESIRED_SUPPORT, values, lang).map((label) => (
           <li
             key={label}
             className="flex items-start gap-2 text-sm leading-relaxed text-ink"

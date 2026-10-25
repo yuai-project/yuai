@@ -23,6 +23,7 @@ export default function ItemSources({ sources }) {
         <SourceLink source={first} withTitle className="inline-flex min-h-8 items-center">
           {first.domain}
         </SourceLink>
+        <SourceLangNote source={first} />
         {rest > 0 && (
           <button
             type="button"
@@ -50,6 +51,7 @@ export default function ItemSources({ sources }) {
             <li key={s.id} className="py-1.5">
               <SourceLink source={s}>{s.title}</SourceLink>
               <span className="ml-1.5 inline-block whitespace-nowrap">{s.domain}</span>
+              <SourceLangNote source={s} className="ml-1.5" />
             </li>
           ))}
         </ul>
@@ -61,7 +63,7 @@ export default function ItemSources({ sources }) {
 // 外部の記事へのリンク。新しいタブで開く。
 // withTitle: 見た目はドメインだけのとき、読み上げでは記事のタイトルも伝える
 function SourceLink({ source, withTitle = false, className = 'inline', children }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   return (
     <a
       href={source.url}
@@ -70,7 +72,8 @@ function SourceLink({ source, withTitle = false, className = 'inline', children 
       title={source.title}
       className={`${className} text-ink-soft underline decoration-line underline-offset-2 transition hover:text-brand-700`}
     >
-      {children}
+      {/* 見た目が記事のタイトルのときは、そのページの言語で読み上げる */}
+      {withTitle || source.lang === lang ? children : <span lang={source.lang}>{children}</span>}
       <ExternalLink
         size={12}
         strokeWidth={2.2}
@@ -84,4 +87,11 @@ function SourceLink({ source, withTitle = false, className = 'inline', children 
       </span>
     </a>
   )
+}
+
+// 英語の画面で、日本語のページへのリンクに「Japanese」と添える（#217）。日本語の画面では何も出さない
+export function SourceLangNote({ source, className = '' }) {
+  const { t, lang } = useI18n()
+  if (lang !== 'en' || source.lang !== 'ja') return null
+  return <span className={`inline-block whitespace-nowrap text-ink-faint ${className}`}>({t('articles.inJapanese')})</span>
 }

@@ -12,6 +12,7 @@ import {
   ARTICLE_MULTI_AXES,
   ARTICLE_OPTIONAL_BOOLEAN_FIELDS,
   ARTICLE_OPTIONAL_DATE_FIELDS,
+  ARTICLE_OPTIONAL_TEXT_FIELDS,
   ARTICLE_REQUIRED_TEXT_FIELDS,
   ARTICLE_SINGLE_AXES,
   BOOK_SOURCE_TYPE,
@@ -29,6 +30,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const KNOWN_FIELDS = new Set([
   ...ARTICLE_REQUIRED_TEXT_FIELDS,
   ...ARTICLE_OPTIONAL_DATE_FIELDS,
+  ...ARTICLE_OPTIONAL_TEXT_FIELDS,
   ...ARTICLE_OPTIONAL_BOOLEAN_FIELDS,
   ...ARTICLE_BOOK_REQUIRED_TEXT_FIELDS,
   ...Object.keys(ARTICLE_MULTI_AXES),
@@ -66,6 +68,10 @@ function validateArticle(a, label) {
         err(`sourceType が "${BOOK_SOURCE_TYPE}" の記事は "${field}" が必須（文字列）`)
       }
     }
+  }
+  // 任意の文字列項目は、書くなら空でない文字列
+  for (const field of ARTICLE_OPTIONAL_TEXT_FIELDS) {
+    if (field in a && !isNonEmptyString(a[field])) err(`"${field}" は空でない文字列にする`)
   }
   for (const field of ARTICLE_OPTIONAL_DATE_FIELDS) {
     if (a[field] !== undefined && !isValidDate(a[field])) {

@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/useI18n'
 // 0件なら何も表示しない。点数（score）と減点（penalties）は画面に出さない。
 // 記事は罫線で区切った一覧にする（カードを重ねない）。
 export default function ArticleRecommendations({ result }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const items = result?.articles ?? []
   if (items.length === 0) return null
 
@@ -40,7 +40,12 @@ export default function ArticleRecommendations({ result }) {
               <span className="block text-sm font-bold leading-relaxed text-ink transition group-hover:text-brand-700">
                 {reasons.includes(REASONS.safetySlot) && <Kind>{t('articles.kindSupport')}</Kind>}
                 {article.sourceType === BOOK_SOURCE_TYPE && <Kind>{t('articles.kindBook')}</Kind>}
-                <span className="break-words underline decoration-line underline-offset-4 group-hover:decoration-brand-600">
+                {/* タイトルは原文のまま。英語の画面では、日本語の記事だと分かるようにする（#217） */}
+                {lang !== 'ja' && <Kind>{t('articles.inJapanese')}</Kind>}
+                <span
+                  lang={lang !== 'ja' ? 'ja' : undefined}
+                  className="break-words underline decoration-line underline-offset-4 group-hover:decoration-brand-600"
+                >
                   {article.title}
                 </span>
                 <ExternalLink
@@ -51,13 +56,20 @@ export default function ArticleRecommendations({ result }) {
                 />
                 <span className="sr-only">{t('common.opensInNewTab')}</span>
               </span>
-              <span className="mt-0.5 block break-words text-xs text-ink-faint">
+              <span
+                lang={lang !== 'ja' ? 'ja' : undefined}
+                className="mt-0.5 block break-words text-xs text-ink-faint"
+              >
                 {article.sourceType === BOOK_SOURCE_TYPE
                   ? `${article.author}／${article.publisher}`
                   : article.publisher}
               </span>
-              <span className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-soft">
-                {article.summary}
+              {/* 要約は英語版（summaryEn）があればそれを出す。無ければ日本語の要約 */}
+              <span
+                lang={lang === 'en' && !article.summaryEn ? 'ja' : undefined}
+                className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-soft"
+              >
+                {lang === 'en' ? (article.summaryEn ?? article.summary) : article.summary}
               </span>
             </a>
           </li>

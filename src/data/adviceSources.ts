@@ -54,7 +54,8 @@ export function resolveSources(
     .map((id) => articles.find((a) => a.id === id))
     .filter((article) => article !== undefined)
     .filter((article) => isCandidateArticle(article, profile))
-    .map(({ id, title, url }) => ({ id, title, url, domain: domainOf(url) }))
+    // 記事はどれも日本語のページ
+    .map(({ id, title, url }) => ({ id, title, url, domain: domainOf(url), lang: 'ja' as const }))
 }
 
 // 項目ごとに解決した sources を、重複を除いて出てきた順にまとめる（「このヒントの参考にした情報」用）
@@ -64,9 +65,20 @@ export function mergeSources(lists: AdviceSource[][]): AdviceSource[] {
 }
 
 // 安全の案内の出典: 一緒に出す電話窓口の番号を確かめたページ。
-// 番号の確かめ先なので、関係・話題での絞り込みはかけない（誰に出す窓口でも同じページで確かめている）
+// 番号の確かめ先なので、関係・話題での絞り込みはかけない（誰に出す窓口でも同じページで確かめている）。
+// articles.json の記事（sourceId）と、記事として載せていないページ（source。TELL）を、出てきた順に並べる
 export function supportLineSources(lines: SupportLine[] = []): AdviceSource[] {
-  return resolveSources([...new Set(lines.map((line) => line.sourceId))])
+  return mergeSources(
+    lines.map((line) => {
+      if (line.sourceId) return resolveSources([line.sourceId])
+      if (line.source) {
+        const { title, url } = line.source
+        // 記事として載せていないページは、その窓口が対応する言語のページ
+        return [{ id: `line:${line.id}`, title, url, domain: domainOf(url), lang: line.languages[0] }]
+      }
+      return []
+    }),
+  )
 }
 
 // 項目のすぐ下に出す小さなリンクの中身。空なら null（リンクを出さない）。
