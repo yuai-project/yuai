@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react'
+import { useI18n } from '../../i18n/useI18n'
 
 // フォーム用のプルダウン。未選択は value=''（placeholder を表示）。
 // iOSでフォーカス時にズームしないよう文字は16px、指で押しやすい高さ48px。
@@ -6,11 +7,12 @@ export default function SelectField({
   value,
   onChange,
   options,
-  placeholder = '選択してください',
+  placeholder,
   invalid = false,
   className = '',
   ...rest
 }) {
+  const { t } = useI18n()
   const current = value ?? ''
   return (
     <div className={`relative ${className}`}>
@@ -23,7 +25,7 @@ export default function SelectField({
         } ${current === '' ? 'text-ink-faint' : 'text-ink'}`}
         {...rest}
       >
-        <option value="">{placeholder}</option>
+        <option value="">{placeholder ?? t('common.selectPlaceholder')}</option>
         {options.map((o) => (
           <option key={o.value} value={o.value} className="text-ink">
             {o.label}

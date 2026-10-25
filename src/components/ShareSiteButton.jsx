@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { APP } from '../config'
+import { useI18n } from '../i18n/useI18n'
+import { joinPhrases } from '../i18n/language'
 
 // 控えめな「このサイトを伝える」ボタン。SNS のボタン部品は使わず、どのサービスとも直接つながない。
 // スマホ（指で操作する端末）では OS の共有画面を開き、それ以外や共有できない環境では URL をコピーする。
 export default function ShareSiteButton() {
+  const { t, lang } = useI18n()
   const [status, setStatus] = useState('') // '' | 'copied' | 'failed'
   const url = `${window.location.origin}/`
 
@@ -13,7 +16,7 @@ export default function ShareSiteButton() {
       window.matchMedia('(pointer: coarse)').matches
     if (canShare) {
       try {
-        await navigator.share({ title: APP.name, text: APP.tagline, url })
+        await navigator.share({ title: APP.name, text: joinPhrases(lang, t('app.taglinePhrases')), url })
         return
       } catch (e) {
         // 共有画面を閉じただけのときは何もしない
@@ -35,13 +38,13 @@ export default function ShareSiteButton() {
         onClick={share}
         className="rounded-xl border border-control bg-surface px-3.5 py-2 text-sm font-bold text-brand-700 transition hover:bg-brand-50"
       >
-        このサイトを伝える
+        {t('share.button')}
       </button>
       <p role="status" className="text-xs text-ink-faint">
-        {status === 'copied' && 'URLをコピーしました'}
+        {status === 'copied' && t('share.copied')}
         {status === 'failed' && (
           <>
-            コピーできませんでした。<span className="break-all">{url}</span>
+            {t('share.failed')}<span className="break-all">{url}</span>
           </>
         )}
       </p>

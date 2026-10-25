@@ -1,8 +1,10 @@
 import { ChevronDown, PencilLine } from 'lucide-react'
 import { summarizeRequest } from '../../data/consultationIntake'
+import { useI18n } from '../../i18n/useI18n'
 
 // AI相談結果の上部に出す「入力した内容のまとめ」。初期状態は折りたたみ。
 export default function IntakeSummary({ request, onEdit }) {
+  const { t } = useI18n()
   const rows = summarizeRequest(request)
   if (rows.length === 0) return null
 
@@ -11,10 +13,10 @@ export default function IntakeSummary({ request, onEdit }) {
       <summary className="flex cursor-pointer list-none items-center gap-2.5 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
           <span className="block text-base font-bold leading-snug text-ink [word-break:auto-phrase]">
-            入力した内容のまとめ
+            {t('intakeSummary.title')}
           </span>
           <span className="block text-xs text-ink-faint">
-            タップすると入力した内容を確認できます
+            {t('intakeSummary.hint')}
           </span>
         </span>
         <ChevronDown
@@ -41,7 +43,7 @@ export default function IntakeSummary({ request, onEdit }) {
           className="mt-4 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-brand bg-surface px-4 py-2.5 text-sm font-bold text-brand-700 transition hover:bg-brand-50 active:scale-[0.98]"
         >
           <PencilLine size={16} />
-          内容を修正する
+          {t('intakeSummary.edit')}
         </button>
       )}
     </details>

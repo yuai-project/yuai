@@ -1,11 +1,13 @@
 import { ExternalLink } from 'lucide-react'
 import { BOOK_SOURCE_TYPE } from '../data/articleTags'
 import { REASONS } from '../data/recommendArticles'
+import { useI18n } from '../i18n/useI18n'
 
 // 結果画面の「近い状況の記事や本」。recommendArticles() の戻り値をそのまま受け取る。
 // 0件なら何も表示しない。点数（score）と減点（penalties）は画面に出さない。
 // 記事は罫線で区切った一覧にする（カードを重ねない）。
 export default function ArticleRecommendations({ result }) {
+  const { t } = useI18n()
   const items = result?.articles ?? []
   if (items.length === 0) return null
 
@@ -18,12 +20,12 @@ export default function ArticleRecommendations({ result }) {
         id="article-recommendations-title"
         className="text-base font-bold leading-snug text-ink [word-break:auto-phrase]"
       >
-        近い状況の記事や本
+        {t('articles.title')}
       </h2>
       <p className="mt-0.5 text-xs leading-relaxed text-ink-faint">
         {result.isFallback
-          ? 'まずはこちらから。気になるものがあれば、読めそうなときに開いてみてください。外部のサイトが開きます。'
-          : '外部のサイトが開きます。'}
+          ? t('articles.fallbackNote')
+          : t('articles.externalNote')}
       </p>
 
       <ul className="mt-2">
@@ -36,8 +38,8 @@ export default function ArticleRecommendations({ result }) {
               className="group block py-3"
             >
               <span className="block text-sm font-bold leading-relaxed text-ink transition group-hover:text-brand-700">
-                {reasons.includes(REASONS.safetySlot) && <Kind>相談できる先</Kind>}
-                {article.sourceType === BOOK_SOURCE_TYPE && <Kind>書籍</Kind>}
+                {reasons.includes(REASONS.safetySlot) && <Kind>{t('articles.kindSupport')}</Kind>}
+                {article.sourceType === BOOK_SOURCE_TYPE && <Kind>{t('articles.kindBook')}</Kind>}
                 <span className="break-words underline decoration-line underline-offset-4 group-hover:decoration-brand-600">
                   {article.title}
                 </span>
@@ -47,7 +49,7 @@ export default function ArticleRecommendations({ result }) {
                   aria-hidden="true"
                   className="ml-1 inline-block align-[-1px] text-ink-faint"
                 />
-                <span className="sr-only">（外部サイトが新しいタブで開きます）</span>
+                <span className="sr-only">{t('common.opensInNewTab')}</span>
               </span>
               <span className="mt-0.5 block break-words text-xs text-ink-faint">
                 {article.sourceType === BOOK_SOURCE_TYPE

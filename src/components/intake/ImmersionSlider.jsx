@@ -1,9 +1,12 @@
 import { IMMERSION_MAX, IMMERSION_MIN } from '../../data/consultationIntake'
+import { useI18n } from '../../i18n/useI18n'
+import Phrases from '../Phrases'
 
 // 「その話をどのくらい強く信じているように見えるか」スライダー（1〜10・任意）。
 // 相談者本人の感じ方を聞くもので、医学的な評価ではない。
 // 未回答（null）を区別するため、触るまでは値を表示しない。
 export default function ImmersionSlider({ value, onChange, labelledBy }) {
+  const { t, lang } = useI18n()
   const answered = value != null
   const position = answered ? value : Math.floor((IMMERSION_MIN + IMMERSION_MAX) / 2)
   const fill = answered
@@ -26,10 +29,10 @@ export default function ImmersionSlider({ value, onChange, labelledBy }) {
             onClick={() => onChange(null)}
             className="rounded-full px-2 py-1 text-xs text-ink-faint underline underline-offset-2 transition hover:text-ink-soft"
           >
-            未回答にもどす
+            {t('immersion.reset')}
           </button>
         ) : (
-          <span className="text-xs text-ink-faint">つまみを動かして選べます</span>
+          <span className="text-xs text-ink-faint">{t('immersion.howTo')}</span>
         )}
       </div>
 
@@ -42,7 +45,9 @@ export default function ImmersionSlider({ value, onChange, labelledBy }) {
         onChange={set}
         onPointerUp={set}
         aria-labelledby={labelledBy}
-        aria-valuetext={answered ? `${value}（${IMMERSION_MAX}段階中）` : '未回答'}
+        aria-valuetext={
+          answered ? t('immersion.valueText', { value, max: IMMERSION_MAX }) : t('immersion.unanswered')
+        }
         data-unset={!answered}
         style={{ '--fill': `${fill}%` }}
         className="yorido-range mt-1"
@@ -51,14 +56,14 @@ export default function ImmersionSlider({ value, onChange, labelledBy }) {
       {/* 両端の説明。句ごとに inline-block にして、句の途中で改行しない */}
       <div className="flex justify-between gap-4 text-[11px] leading-snug text-ink-faint">
         <span className="basis-1/2">
-          <span className="font-bold text-ink-soft">1</span>：
-          <span className="inline-block">少しだけ信じている</span>
-          <span className="inline-block">ように見える</span>
+          <span className="font-bold text-ink-soft">1</span>
+          {t('immersion.scaleSep')}
+          <Phrases phrases={t('immersion.low')} spaced={lang === 'en'} />
         </span>
         <span className="basis-1/2 text-right">
-          <span className="font-bold text-ink-soft">10</span>：
-          <span className="inline-block">とても強く信じている</span>
-          <span className="inline-block">ように見える</span>
+          <span className="font-bold text-ink-soft">10</span>
+          {t('immersion.scaleSep')}
+          <Phrases phrases={t('immersion.high')} spaced={lang === 'en'} />
         </span>
       </div>
     </div>
