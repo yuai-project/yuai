@@ -135,23 +135,45 @@ export const supportLineText = (line: SupportLine, lang: DataLang = 'ja') =>
 export const isOtherLanguageOnly = (line: SupportLine, lang: DataLang = 'ja'): boolean =>
   !line.languages.includes(lang)
 
+// 日本の緊急通報の番号（結果画面の注記で、タップで発信できるようにする）
+export const EMERGENCY_NUMBERS = { ambulance: '119', police: '110' } as const
+
+// 英語の画面で crisis のとき（#いのちSOS を足していて、英語で相談できる窓口を先に並べているとき）に、
+// 窓口の一覧の上に「英語の窓口は夜遅くは閉まっていることがある。#いのちSOS は24時間（日本語）。
+// 命に関わるときは 119・110」の注記を出すか（#220）。
+// 日本語の画面では #いのちSOS が一番上なので出さない
+export const needsLateNightNote = (lines: SupportLine[] = [], lang: DataLang = 'ja'): boolean =>
+  lang === 'en' && lines.includes(CRISIS_SUPPORT_LINE)
+
 // 表示用の番号 → tel: リンク（ハイフンを除く）
 export const telHref = (tel: string): string => `tel:${tel.replace(/[^\d+]/g, '')}`
 
 // 差し替え時はここだけ書き換える。
-// crisis: true のときは #いのちSOS を一番上に、money: true のときは消費者ホットラインを最後に足す。
+// crisis: true のときは #いのちSOS を足し、money: true のときは消費者ホットラインを最後に足す。
 // どちらも無ければ、いつもの一覧（マイページと同じ）。
-// lang: 'en' のときは、英語で相談できる TELL Lifeline を、#いのちSOS（crisis のとき）のすぐ後ろに足す。
-// 「死にたい」ほどつらいときに #いのちSOS を一番上に出す動きは、言語にかかわらず同じ
+// - 日本語の画面: #いのちSOS（crisis のとき）が一番上
+// - 英語の画面（lang: 'en'）: 英語で相談できる窓口を先に出す。
+//   TELL Lifeline → よりそいホットライン（ガイダンスで 2 を押すと外国語）→ #いのちSOS（crisis のとき）→ ほか（#219）
 export function getSupportLines({
   crisis = false,
   money = false,
   lang = 'ja',
 }: { crisis?: boolean; money?: boolean; lang?: DataLang } = {}): SupportLine[] {
   if (!crisis && !money && lang === 'ja') return SUPPORT_LINES
+  if (lang === 'en') {
+    // 英語でも相談できる日本の窓口（よりそいホットライン）を、ほかの日本の窓口より先に出す
+    const english = SUPPORT_LINES.filter((line) => line.languages.includes('en'))
+    const japaneseOnly = SUPPORT_LINES.filter((line) => !line.languages.includes('en'))
+    return [
+      ENGLISH_SUPPORT_LINE,
+      ...english,
+      ...(crisis ? [CRISIS_SUPPORT_LINE] : []),
+      ...japaneseOnly,
+      ...(money ? [CONSUMER_SUPPORT_LINE] : []),
+    ]
+  }
   return [
     ...(crisis ? [CRISIS_SUPPORT_LINE] : []),
-    ...(lang === 'en' ? [ENGLISH_SUPPORT_LINE] : []),
     ...SUPPORT_LINES,
     ...(money ? [CONSUMER_SUPPORT_LINE] : []),
   ]

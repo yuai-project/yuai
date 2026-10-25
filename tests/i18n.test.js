@@ -148,7 +148,7 @@ describe('画面のコードで使っているキーが、辞書にある', () =
       return statSync(path).isDirectory() ? files(path) : /\.(jsx?|tsx?)$/.test(name) ? [path] : []
     })
   // t('key') / t("key") / t(cond ? 'a' : 'b') / key: 'infoPages.faq' の形で書かれたキー
-  const KEY = /['"]((?:app|common|pageTitle|siteHeader|footer|language|infoPages|home|share|consult|steps|immersion|result|sources|articles|desiredSupport|intakeSummary|supportLines)\.[\w.]+)['"]/g
+  const KEY = /['"]((?:app|common|pageTitle|siteHeader|footer|language|infoPages|home|share|consult|steps|immersion|result|sources|articles|desiredSupport|intakeSummary|supportLines|lateNight)\.[\w.]+)['"]/g
 
   test('src/ の中のキーがすべて ja にある', () => {
     const used = new Set()

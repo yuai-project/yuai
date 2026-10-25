@@ -304,11 +304,23 @@ describe('相談窓口', () => {
     }
   })
 
-  test('英語の画面では TELL を足す。#いのちSOS は一番上のまま', () => {
+  test('英語の画面では、英語で相談できる窓口を先に出す（TELL → よりそい → #いのちSOS。#219）', () => {
     assert.deepEqual(getSupportLines({ lang: 'en' }).map((l) => l.id), ['tell', 'yorisoi', 'kokoro'])
     assert.deepEqual(
+      getSupportLines({ crisis: true, lang: 'en' }).map((l) => l.id),
+      ['tell', 'yorisoi', 'inochi-sos', 'kokoro'],
+    )
+    assert.deepEqual(
       getSupportLines({ crisis: true, money: true, lang: 'en' }).map((l) => l.id),
-      ['inochi-sos', 'tell', 'yorisoi', 'kokoro', 'consumer'],
+      ['tell', 'yorisoi', 'inochi-sos', 'kokoro', 'consumer'],
+    )
+  })
+
+  test('日本語の画面の並びは変えない（crisis のときは #いのちSOS が一番上）', () => {
+    assert.deepEqual(getSupportLines({ crisis: true }).map((l) => l.id), ['inochi-sos', 'yorisoi', 'kokoro'])
+    assert.deepEqual(
+      getSupportLines({ crisis: true, money: true, lang: 'ja' }).map((l) => l.id),
+      ['inochi-sos', 'yorisoi', 'kokoro', 'consumer'],
     )
   })
 
@@ -320,15 +332,15 @@ describe('相談窓口', () => {
     })
     const sources = supportLineSources(getSupportLines({ crisis: true, lang: 'en' }), 'en')
     assert.deepEqual(sources.map((s) => [s.domain, s.lang]), [
-      ['mhlw.go.jp', 'ja'],
       ['telljp.com', 'en'],
+      ['mhlw.go.jp', 'ja'],
       ['since2011.net', 'en'],
     ])
   })
 
   test('英語の結果画面の安全の案内に、TELL と、その出典が入る', () => {
     const advice = buildAdvice(requestOf({ freeText: '死にたい' }), 'en')
-    assert.deepEqual(advice.supportLines.map((l) => l.id), ['inochi-sos', 'tell', 'yorisoi', 'kokoro'])
+    assert.deepEqual(advice.supportLines.map((l) => l.id), ['tell', 'yorisoi', 'inochi-sos', 'kokoro'])
     assert.ok(advice.safety.sources.some((s) => s.domain === 'telljp.com'))
     // よりそいホットラインの外国語の相談を確かめたページも、英語の画面でだけ出典に入る
     assert.ok(advice.safety.sources.some((s) => s.domain === 'since2011.net'))
