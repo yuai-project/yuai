@@ -4,7 +4,7 @@
 // 注意: 文章は下書きで、チーム・専門家の確認前。
 // 相手との関係（父・母など）は誰が選んでも合うように、続柄を文章に入れない。
 
-import type { AdviceCard, CardKey, ForYouSection, SafetySection, SectionKey } from './types.ts'
+import type { AdviceCard, CardKey, ForYouSection, SafetyContent, SectionKey } from './types.ts'
 
 // 各枠の見出し。カード側に title があればそちらを優先する。
 export const SECTION_TITLES: Record<SectionKey, string> = {
@@ -32,9 +32,11 @@ export const FOR_YOU: { default: ForYouSection } & Partial<Record<CardKey, ForYo
 // 3〜5. 避けたい対応 / 返し方 / 次に聞いてみる質問。
 // askNext を持たないカードは、その枠ごと画面に出さない。
 //
-// sources: カードの内容を裏づけている記事の ID（0〜3件。#156）。画面では「このヒントの参考にした情報」に出す。
-// articles.json で approved の記事だけ。書籍は入れない。本文を読んで、カードのどの部分を
-// 裏づけているかを確かめたものだけを入れる（対応表は #156 の PR）。
+// sources: その項目の本文を裏づけている記事の ID（0〜3件。#156・#213）。
+// 画面では項目のすぐ下に小さなリンクで出し、カード全体の分を「このヒントの参考にした情報」にまとめて出す。
+// articles.json で approved の記事だけ。書籍は入れない。本文を読んで、その項目のどの部分を
+// 裏づけているかを確かめたものだけを入れる。裏づけが無い項目は []（無理に割り当てない）。
+// 対応表は #157・#213 の PR。
 export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
   default: {
     avoid: {
@@ -45,6 +47,9 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
       ],
       reason:
         '頭ごなしに否定すると、相手は「分かってもらえない」と感じて防御的になり、かえって会話が続きにくくなることがあります。',
+      // r08: 「そんなのはデマだ」と否定しても頑なになるだけ
+      // r11: 責め立てたり見下したりすると、相手は心を閉ざす
+      sources: ['r08', 'r11'],
     },
     tryReplies: {
       items: [
@@ -53,6 +58,9 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         'よかったら、一緒に情報源を確認してみてもいい？',
         'そう感じるくらい、心配なことがあるんだね。',
       ],
+      // r20: どこから情報を得たのかを見つける／奥にある心配に耳を傾ける
+      // r11: 話してくれた心配事を復唱して、聞いていることを示す
+      sources: ['r20', 'r11'],
     },
     askNext: {
       items: [
@@ -60,11 +68,9 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         '何が一番、不安に感じている？',
         '私にできることって、何かある？',
       ],
+      // r20: 正当な心配を掘り下げて、その人の気持ちを見つける
+      sources: ['r20'],
     },
-    // r08: 「そんなのはデマだ」と否定しても頑なになるだけ（避けたい対応）
-    // r20: どこから情報を得たのかを見つけ、奥にある心配に耳を傾ける（返し方・質問）
-    // r11: 責め立てると心を閉ざす／心配事を復唱して、聞いていることを示す（避けたい対応・返し方）
-    sources: ['r08', 'r20', 'r11'],
   },
 
   // 困りごと「否定すると怒ってしまう」
@@ -73,6 +79,8 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
       items: ['そんなのデマだよ', '騙されているだけだよ', 'いい加減にして'],
       reason:
         '否定されると、考えではなく自分自身を否定されたように感じて、守りに入ってしまうことがあります。',
+      // r25: 論破は「攻撃された」と感じさせ、殻に閉じこもらせる
+      sources: ['r25'],
     },
     tryReplies: {
       items: [
@@ -81,6 +89,9 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         '私は少し違う考えだけど、あなたの気持ちは分かりたいと思ってる',
         '今日はこの話、ここまでにしてもいい？',
       ],
+      // r09: 「私はこう考えるけどね」とやんわり伝えて、次の話題に移る
+      // r20: そう思うようになったきっかけ（どこから情報を得たのか）を見つける
+      sources: ['r09', 'r20'],
     },
     askNext: {
       items: [
@@ -88,11 +99,9 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         'それを知って、どんな気持ちになった？',
         '私にできることって、何かある？',
       ],
+      // r20: 正当な心配を掘り下げ、奥にある心配に耳を傾ける
+      sources: ['r20'],
     },
-    // r25: 論破は「攻撃された」と感じさせ、殻に閉じこもらせる（避けたい対応の理由）
-    // r09: 「私はこう考えるけどね」とやんわり伝えて、次の話題に移る（返し方）
-    // r20: 情報のきっかけを聞き、奥にある心配に耳を傾ける（返し方・質問）
-    sources: ['r25', 'r09', 'r20'],
   },
 
   // 困りごと「自分自身が疲れている」
@@ -101,6 +110,8 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
       items: ['もう知らない', '何回言えば分かるの'],
       reason:
         '疲れているときほど強い言葉が出やすく、あとで自分を責めてしまうことがあります。話す前に、少し時間を置いても大丈夫です。',
+      // 裏づけになる記事が見つかっていない
+      sources: [],
     },
     tryReplies: {
       items: [
@@ -109,6 +120,9 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         'ごめん、今はうまく聞けないかも。落ち着いたらまた話そう',
         '話は聞くけど、今日は答えを出さなくてもいい？',
       ],
+      // r25: 「その話を聞かされるのが自分は辛い」と自分の気持ちを伝える
+      // r08: その話題を出さないようにして、ほかのことに持っていく
+      sources: ['r25', 'r08'],
     },
     askNext: {
       items: [
@@ -116,10 +130,9 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         'この話以外で、最近よかったことある？',
         'また今度、ゆっくり話してもいい？',
       ],
+      // r08: 陰謀論の話題は避けて、家族の思い出話など他のことに持っていく（「この話以外で…」）
+      sources: ['r08'],
     },
-    // r25: 「その話を聞かされるのが自分は辛い」と自分の気持ちを伝える（返し方）
-    // r08: その話題は避けて、家族の思い出話など他のことに持っていく（返し方・質問）
-    sources: ['r25', 'r08'],
   },
 
   // これからの関係「少し距離を置きたい」「かなり距離を置きたい」
@@ -128,6 +141,8 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
       items: ['もう二度と話さない', 'あなたのせいで疲れた'],
       reason:
         '強い言葉で区切ると、あとで関係を戻したくなったときに、戻りにくくなることがあります。安全のために離れる必要があるときは、無理に言葉を選ばなくて大丈夫です。',
+      // r12: 抜け出すときには、長く付き合い続けてくれた人の存在が大事だった
+      sources: ['r12'],
     },
     tryReplies: {
       title: '距離を置くときに伝えられる一言',
@@ -137,16 +152,16 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         'あなたのことを嫌いになったわけじゃないよ',
         'また話せそうになったら、私から連絡するね',
       ],
+      // r08: 話題を出さないようにしつつ、愛情を持って接している姿勢を見せる
+      // r25: 生活を共にしていない相手なら、議論の土俵に上がらず心の距離を保つ
+      sources: ['r08', 'r25'],
     },
-    // r08: 話題を出さないようにしつつ、愛情を持って接している姿勢を見せる（返し方）
-    // r25: 生活を共にしていない相手なら、議論せず心の距離を保つ（距離を置くこと）
-    // r12: 付き合い続けてくれた人の存在が大事だった（強い言葉で区切らない理由）
-    sources: ['r08', 'r25', 'r12'],
   },
 }
 
 // 6. 無理に話さなくていいサイン。どのカードでも必ず出す。
-export const SAFETY: SafetySection = {
+// 出典は、一緒に載せる電話窓口の番号を確かめたページ（supportLines.ts の sourceId）を mockAdvice.ts で足す。
+export const SAFETY: SafetyContent = {
   title: 'こんなときは、無理に話さなくて大丈夫',
   signs: [
     '怒鳴られる・暴言を受ける',

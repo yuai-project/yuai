@@ -9,17 +9,20 @@
 //
 //   forYou             1. まず、あなた自身へ            { title, body }
 //   whatMayBeHappening 2. 今起きていること              { title, hypotheses[], note } | null
-//   avoid              3. 避けたい対応（やさしい警告色） { title, items[], reason }
-//   tryReplies         4. こんな返し方（コピー可能）     { title, items[] }
-//   askNext            5. 次に聞いてみる質問            { title, items[] } | null
-//   safety             6. 無理に話さなくていいサイン     { title, signs[], body }
+//   avoid              3. 避けたい対応                 { title, items[], reason, sources[] }
+//   tryReplies         4. こんな返し方（コピー可能）     { title, items[], sources[] }
+//   askNext            5. 次に聞いてみる質問            { title, items[], sources[] } | null
+//   safety             6. 無理に話さなくていいサイン     { title, signs[], body, sources[] }
+//
+// sources[] はその項目の出典（{ id, title, url, domain }）。AI を足すときも、AI には作らせず
+// adviceCards.ts / supportLines.ts の人が確かめた ID から入れる（#213）。
 //
 // 以前あった 7. 似た体験談（relatedStoryIds）は、体験談のページごと外した（#148）。
 // null の枠は画面に出さない。whatMayBeHappening は相手の状況の見立てで、
 // 人が書いた固定の文章では回答に合わせられないため、今は常に null（AI を足すときに使う）。
 
 import { ADVICE_CARDS, FOR_YOU, SAFETY, SECTION_TITLES } from './adviceCards.ts'
-import { resolveSources } from './adviceSources.ts'
+import { mergeSources, resolveSources, supportLineSources } from './adviceSources.ts'
 import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.ts'
 import { mergeFreeText } from './freeTextKeywords.ts'
 import { getSupportLines } from './supportLines.ts'
@@ -27,6 +30,7 @@ import type {
   Advice,
   AdviceRequest,
   CardKey,
+  CardSection,
   MergedFreeText,
   RequestInput,
   SectionKey,
@@ -70,10 +74,16 @@ function freeTextNotesOf({ inferredConcerns }: MergedFreeText): string[] {
   return [`詳しい内容から${labels}も合わせて考えました`]
 }
 
-// カード側に title があればそちらを優先する
-const withTitle = <S extends { title?: string }>(key: SectionKey, section: S) => ({
+// カードの1項目 → 画面に出す形。カード側に title があればそちらを優先する。
+// sources（記事の ID）は、その人に合わない記事を外して、画面に出す形にする
+const sectionOf = <T extends { title: string }>(
+  key: SectionKey,
+  { sources, ...section }: CardSection<T>,
+  request: RequestInput,
+) => ({
   title: SECTION_TITLES[key],
   ...section,
+  sources: resolveSources(sources, { request }),
 })
 
 // フォームの回答 → アドバイス。同じ回答なら必ず同じ結果を返す純関数。
@@ -84,6 +94,13 @@ export function buildAdvice(request: RequestInput): Advice {
   const cardKey = selectCardKey(request)
   const card = ADVICE_CARDS[cardKey]
   const freeText = mergeFreeText(request)
+  const supportLines = getSupportLines({
+    crisis: freeText.crisis,
+    money: freeText.concerns.includes('money_worries'),
+  })
+  const avoid = sectionOf('avoid', card.avoid, request)
+  const tryReplies = sectionOf('tryReplies', card.tryReplies, request)
+  const askNext = card.askNext ? sectionOf('askNext', card.askNext, request) : null
 
   return {
     // どの回答に合わせたか（6つの枠の外。画面ではアドバイスの先頭に出す）
@@ -97,23 +114,23 @@ export function buildAdvice(request: RequestInput): Advice {
     // safety の枠の中に出す、電話で相談できる窓口（6つの枠の外）。
     // 番号を間違えると危ないので、AI を足すときも AI には作らせず、supportLines.ts から入れる
     // 消費者ホットラインは、「お金の使い方が心配」を選んだか、詳しい内容から読み取ったときだけ
-    supportLines: getSupportLines({
-      crisis: freeText.crisis,
-      money: freeText.concerns.includes('money_worries'),
-    }),
+    supportLines,
 
     // angry に専用の文章はないので default を使う
     forYou: FOR_YOU[cardKey] ?? FOR_YOU.default,
     whatMayBeHappening: null,
-    avoid: withTitle('avoid', card.avoid),
-    tryReplies: withTitle('tryReplies', card.tryReplies),
-    askNext: card.askNext ? withTitle('askNext', card.askNext) : null,
-    safety: SAFETY,
-
-    // このヒント（選ばれたカード）の参考にした記事（6つの枠の外）。[{ id, title, url, domain }]。
+    // avoid / tryReplies / askNext の sources は、その項目を裏づけている記事。[{ id, title, url, domain }]。
     // 推薦と同じ入口の絞り込みで、その人に合わない記事（関係・話題が合わないなど）は外す。
-    // 画面では最後のカードのすぐ後ろに小さく出す。空なら何も出さない
-    sources: resolveSources(card.sources, { request }),
+    // 画面では項目の本文のすぐ下に小さなリンクで出す。空ならリンクを出さない
+    avoid,
+    tryReplies,
+    askNext,
+    // safety の sources は、一緒に出す電話窓口の番号を確かめたページ
+    safety: { ...SAFETY, sources: supportLineSources(supportLines) },
+
+    // このヒント（選ばれたカード）の参考にした記事（6つの枠の外）。項目ごとの sources を重複なしでまとめたもの。
+    // 画面では最後の枠のすぐ後ろに小さく出す。空なら何も出さない
+    sources: mergeSources([avoid.sources, tryReplies.sources, askNext?.sources ?? []]),
   }
 }
 

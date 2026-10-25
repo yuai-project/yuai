@@ -204,7 +204,8 @@ describe('アドバイスへの反映', () => {
     for (const keyword of DANGER_KEYWORDS) {
       const advice = adviceOf({ freeText: `${keyword}ことがありました` })
       assert.equal(advice.safetyFirst, true, keyword)
-      assert.equal(advice.safety, SAFETY)
+      const { sources: _sources, ...safetyText } = advice.safety
+      assert.deepEqual(safetyText, SAFETY)
       assert.equal(advice.safetyNote, DANGER_NOTE, keyword)
       assert.ok(!advice.safetyNote.includes(keyword), keyword)
       assert.deepEqual(advice.freeTextNotes, [], keyword)
