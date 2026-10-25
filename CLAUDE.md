@@ -30,6 +30,7 @@
    安全の案内は淡いブランド色（`brand-50`）の面にする（`AdviceResult.jsx` の `SafetyCard` を参照）
 
 文言を追加・変更する PR では、この 7 項目に反していないかを必ず自己チェックしてください。
+**英語の文言にも同じ 7 項目を当てはめます**（断定しない、"conspiracy theorist" などと人にラベルを貼らない、やさしいトーン）。
 
 ## 技術スタック
 
@@ -53,7 +54,8 @@ npm run typecheck # tsc（型チェック）
 
 ```
 src/
-  config.js       # サービス名・共通コピー。名称や文言の変更はまずここを見る
+  config.js       # サービス名（APP.name）。名称の変更はまずここを見る
+  i18n/           # 画面の文言の辞書（ja.ts・en.ts）と、言語を決めるしくみ（#215）
   App.jsx         # ルーティング＋モバイルシェル（最大430px）
   index.css       # Tailwind＋デザイントークン（@theme）
   components/     # 再利用パーツ
@@ -69,6 +71,8 @@ src/
 - API 差し替えの境界は `src/data/*`。**UI から直接 fetch を書かない**
 - AI 回答の構造（6セクション）は `src/data/types.ts` の `Advice` 型の形を崩さない。LLM 接続時も同じ JSON 形にする
 - `src/data/*` は TypeScript、それ以外は今は JavaScript（#166 で段階移行中）。型チェックは `npm run typecheck`
+- 画面の文言はコンポーネントに直接書かず、`src/i18n/ja.ts` と `en.ts` の両方に足して `useI18n()` の `t()` で出す。
+  en にキーが足りないと typecheck で落ちる。選択肢・アドバイスなど `src/data/` の文言は、まだ日本語だけ
 - 秘密鍵・API キーを**絶対にコミットしない**。`.env.local` を使い `.env.example` に名前だけ書く
 - 依存パッケージの追加は最小限に。追加する場合は PR の説明に理由を書く
 
