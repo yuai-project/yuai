@@ -86,6 +86,23 @@ describe('辞書（ja と en）', () => {
     for (const key of Object.keys(ja)) assert.equal(shapeOf(en[key]), shapeOf(ja[key]), key)
   })
 
+  test('一覧の項目の数が同じ（よくある質問・ご利用にあたって・プライバシーポリシーなどの約束を、日英で揃える）', () => {
+    // 文節（改行してよい位置）で区切った配列は、言語ごとに区切り方が違ってよい
+    const PHRASES = /^(app\.catchcopy|app\.taglinePhrases|infoPages\.|immersion\.(low|high)|supportPage\.introPhrases)/
+    for (const key of Object.keys(ja)) {
+      if (!Array.isArray(ja[key]) || PHRASES.test(key)) continue
+      assert.equal(en[key].length, ja[key].length, key)
+      if (typeof ja[key][0] === 'object') {
+        ja[key].forEach((item, i) => assert.deepEqual(Object.keys(en[key][i]), Object.keys(item), `${key}[${i}]`))
+      }
+    }
+  })
+
+  test('「Japanese only」の注記はもう無い（フッターのページも英語になった。#221）', () => {
+    assert.ok(!('infoPages.japaneseOnly' in ja))
+    assert.ok(!('infoPages.japaneseOnly' in en))
+  })
+
   test('差し込み（{name} など）の名前が同じ', () => {
     for (const key of Object.keys(ja)) assert.deepEqual(varsOf(en[key]), varsOf(ja[key]), key)
   })
@@ -132,6 +149,15 @@ describe('translate', () => {
     assert.deepEqual(translate('ja', 'app.catchcopy'), ja['app.catchcopy'])
   })
 
+  test('一覧の中の {name} も埋める（よくある質問・プライバシーポリシー）', () => {
+    const faq = translate('en', 'faq.items')
+    assert.equal(faq[2].a.includes('{name}'), false)
+    assert.ok(faq[2].a.startsWith('Yorido never contacts'))
+    assert.ok(translate('ja', 'privacy.analyticsItems').includes('どこから Yorido に来たか'))
+    // 辞書そのものは書き換えない
+    assert.ok(ja['faq.items'][2].a.includes('{name}'))
+  })
+
   test('文節をつなぐ: 日本語は詰め、英語は空白', () => {
     assert.equal(joinPhrases('ja', ja['app.taglinePhrases']), 'あなたに合うヒントと、相談先を。')
     assert.equal(
@@ -148,7 +174,7 @@ describe('画面のコードで使っているキーが、辞書にある', () =
       return statSync(path).isDirectory() ? files(path) : /\.(jsx?|tsx?)$/.test(name) ? [path] : []
     })
   // t('key') / t("key") / t(cond ? 'a' : 'b') / key: 'infoPages.faq' の形で書かれたキー
-  const KEY = /['"]((?:app|common|pageTitle|siteHeader|footer|language|infoPages|home|share|consult|steps|immersion|result|sources|articles|desiredSupport|intakeSummary|supportLines|lateNight)\.[\w.]+)['"]/g
+  const KEY = /['"]((?:app|common|pageTitle|siteHeader|footer|language|infoPages|home|share|consult|steps|immersion|result|sources|articles|desiredSupport|intakeSummary|supportLines|lateNight|faq|terms|privacy|about|supportPage|infoPage)\.[\w.]+)['"]/g
 
   test('src/ の中のキーがすべて ja にある', () => {
     const used = new Set()
@@ -160,18 +186,39 @@ describe('画面のコードで使っているキーが、辞書にある', () =
     for (const key of used) assert.ok(key in ja, key)
   })
 
-  test('main の流れの画面と components/ に、日本語の文字列が直接書かれていない', () => {
-    const targets = [
-      ...files(join('src', 'components')),
-      join('src', 'pages', 'Home.jsx'),
-      join('src', 'pages', 'Consultation.jsx'),
-      join('src', 'pages', 'AdviceResult.jsx'),
-    ]
+  test('画面（pages/）と components/ に、日本語の文字列が直接書かれていない', () => {
+    // フッターのページ（#221）も含めて、src/pages と src/components のすべて
+    const targets = [...files(join('src', 'components')), ...files(join('src', 'pages'))]
     for (const file of targets) {
       const code = readFileSync(file, 'utf8')
         .replace(/\/\*[\s\S]*?\*\//g, '') // ブロックコメント（JSX の {/* */} も）
         .replace(/\/\/.*$/gm, '') // 行コメント
       assert.doesNotMatch(code, /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}「」]/u, file)
     }
+  })
+})
+
+describe('プライバシーポリシーと実装が一致している（#222）', () => {
+  const files = (dir) =>
+    readdirSync(dir).flatMap((name) => {
+      const path = join(dir, name)
+      return statSync(path).isDirectory() ? files(path) : /\.(jsx?|tsx?)$/.test(name) ? [path] : []
+    })
+
+  test('端末に保存するのは言語の設定だけ（localStorage などを使うのは src/i18n の2つのファイルだけ）', () => {
+    const STORAGE = /localStorage|sessionStorage|indexedDB|document\.cookie|\.setItem\(/
+    // コメント（説明として名前を書いている）は除く
+    const code = (f) => readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+    const users = files('src').filter((f) => STORAGE.test(code(f)))
+    assert.deepEqual(users.sort(), [join('src', 'i18n', 'I18nProvider.tsx'), join('src', 'i18n', 'language.ts')])
+    assert.equal(STORAGE_KEY, 'yorido.lang')
+  })
+
+  test('ポリシーに、言語の設定だけを保存し送信しないことが日英で書いてある', () => {
+    assert.match(ja['privacy.inputBody3'], /言語の設定.*だけ.*保存.*送信しません/)
+    assert.match(en['privacy.inputBody3'], /only thing we save.*language setting.*not sent/)
+    // 入力内容を保存しないという約束はそのまま
+    assert.match(ja['privacy.inputBody1'], /保存も、外部への送信もしません/)
+    assert.match(en['privacy.inputBody1'], /neither saved nor sent/)
   })
 })

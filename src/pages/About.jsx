@@ -1,37 +1,34 @@
 import ShareSiteButton from '../components/ShareSiteButton'
-import { translate } from '../i18n/translate'
+import { useI18n } from '../i18n/useI18n'
 import InfoPage, { InfoList, InfoSection } from './InfoPage'
 
 // 運営について（#175）。チーム名などは載せず、Yorido の目的と大切にしていることだけを書く。
-// このページはまだ日本語だけなので、サービスの説明も日本語の辞書から出す（#215）
+// 文言は src/i18n/ja.ts・en.ts の about.*（#221）。サービスの説明とコンセプトはホームと同じ app.*
 // 「大切にしていること」は CLAUDE.md の「絶対に守るルール」を利用者向けの言葉にしたもの
 export default function About() {
+  const { t } = useI18n()
   return (
-    <InfoPage title="運営について">
-      <InfoSection title="Yorido について">
-        <p>{translate('ja', 'app.description')}</p>
-        <p>「{translate('ja', 'app.concept')}」を大切にしています。</p>
+    <InfoPage title={t('about.title')}>
+      <InfoSection title={t('about.aboutTitle')}>
+        <p>{t('app.description')}</p>
+        <p>
+          {t('about.conceptBefore')}
+          {t('app.concept')}
+          {t('about.conceptAfter')}
+        </p>
       </InfoSection>
 
-      <InfoSection title="大切にしていること">
-        <InfoList
-          items={[
-            '相手やあなたの状態を決めつけません',
-            '人ではなく、いま起きている状況に目を向けます',
-            '相手が必ず変わるとはお約束しません',
-            'あなたの安全を、なによりも優先します',
-            '特定の人や団体、考え方を攻撃しません',
-          ]}
-        />
+      <InfoSection title={t('about.valuesTitle')}>
+        <InfoList items={t('about.values')} />
       </InfoSection>
 
-      <InfoSection title="Yorido を伝える">
-        <p>同じように悩んでいる人がいたら、このサイトを伝えることもできます。</p>
+      <InfoSection title={t('about.shareTitle')}>
+        <p>{t('home.shareLead')}</p>
         <ShareSiteButton />
       </InfoSection>
 
-      <InfoSection title="お問い合わせ">
-        <p>お問い合わせの窓口は、いま準備しています。</p>
+      <InfoSection title={t('infoPage.contactTitle')}>
+        <p>{t('infoPage.contactBody')}</p>
       </InfoSection>
     </InfoPage>
   )
