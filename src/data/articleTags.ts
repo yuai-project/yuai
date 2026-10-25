@@ -85,6 +85,8 @@ export const ARTICLE_REQUIRED_TEXT_FIELDS = [
   'reviewedAt',
 ]
 export const ARTICLE_OPTIONAL_DATE_FIELDS = ['publishedAt']
+// 任意の文字列項目。summaryEn は英語の画面に出す要約（#217。無い記事は日本語の要約を出す）
+export const ARTICLE_OPTIONAL_TEXT_FIELDS = ['summaryEn']
 
 // 書籍（sourceType: book）のときだけ必須になる文字列項目。author はほかの記事では使わない。
 export const BOOK_SOURCE_TYPE = 'book'

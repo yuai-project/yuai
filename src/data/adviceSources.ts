@@ -10,7 +10,7 @@
 import { BOOK_SOURCE_TYPE } from './articleTags.ts'
 import { mockArticles } from './articles.ts'
 import { isCandidateArticle, toRecommendationProfile } from './recommendArticles.ts'
-import type { AdviceCard, AdviceSource, Article, RequestInput, SupportLine } from './types.ts'
+import type { AdviceCard, AdviceSource, Article, DataLang, RequestInput, SupportLine } from './types.ts'
 
 export type InvalidSource = { id: string; reason: 'missing' | 'not_approved' | 'book' }
 
@@ -54,7 +54,8 @@ export function resolveSources(
     .map((id) => articles.find((a) => a.id === id))
     .filter((article) => article !== undefined)
     .filter((article) => isCandidateArticle(article, profile))
-    .map(({ id, title, url }) => ({ id, title, url, domain: domainOf(url) }))
+    // 記事はどれも日本語のページ
+    .map(({ id, title, url }) => ({ id, title, url, domain: domainOf(url), lang: 'ja' as const }))
 }
 
 // 項目ごとに解決した sources を、重複を除いて出てきた順にまとめる（「このヒントの参考にした情報」用）
@@ -64,10 +65,28 @@ export function mergeSources(lists: AdviceSource[][]): AdviceSource[] {
 }
 
 // 安全の案内の出典: 一緒に出す電話窓口の番号を確かめたページ。
-// 番号の確かめ先なので、関係・話題での絞り込みはかけない（誰に出す窓口でも同じページで確かめている）
-export function supportLineSources(lines: SupportLine[] = []): AdviceSource[] {
-  return resolveSources([...new Set(lines.map((line) => line.sourceId))])
+// 番号の確かめ先なので、関係・話題での絞り込みはかけない（誰に出す窓口でも同じページで確かめている）。
+// articles.json の記事（sourceId）と、記事として載せていないページ（source。TELL）を、出てきた順に並べる。
+// 英語の画面では、外国語で相談できることを確かめたページ（languageSource。よりそいホットライン）も足す
+export function supportLineSources(lines: SupportLine[] = [], lang: DataLang = 'ja'): AdviceSource[] {
+  return mergeSources(
+    lines.map((line) => [
+      ...(line.sourceId ? resolveSources([line.sourceId]) : []),
+      // 記事として載せていないページは、その窓口が対応する言語のページ
+      ...(line.source ? [pageSource(`line:${line.id}`, line.source, line.languages[0])] : []),
+      ...(lang === 'en' && line.languageSource
+        ? [pageSource(`line:${line.id}:language`, line.languageSource, 'en')]
+        : []),
+    ]),
+  )
 }
+
+// 記事として載せていないページ → 出典の形
+const pageSource = (
+  id: string,
+  { title, url }: { title: string; url: string },
+  lang: DataLang,
+): AdviceSource => ({ id, title, url, domain: domainOf(url), lang })
 
 // 項目のすぐ下に出す小さなリンクの中身。空なら null（リンクを出さない）。
 // 先頭の1件のドメインを出し、2件以上なら残りの件数を「＋1」のように添える

@@ -4,8 +4,8 @@ import { useI18n } from '../../i18n/useI18n'
 
 // AI相談結果の上部に出す「入力した内容のまとめ」。初期状態は折りたたみ。
 export default function IntakeSummary({ request, onEdit }) {
-  const { t } = useI18n()
-  const rows = summarizeRequest(request)
+  const { t, lang } = useI18n()
+  const rows = summarizeRequest(request, lang)
   if (rows.length === 0) return null
 
   return (

@@ -7,10 +7,27 @@
 // - 消費者ホットライン:
 //   政府広報オンライン https://www.gov-online.go.jp/kurashinosodan/list/fu_caa.html（articles.json の c02）
 //
+// - TELL Lifeline（英語の画面だけに出す。#217）:
+//   TELL「TELL Hours: Lifeline Phone and Chat」https://telljp.com/tell-hours/（確認日: 2026-10-25）
+//   フリーダイヤル 0800-300-8355（03-5774-0992 も載っている）。電話の受付時間は曜日によって違い、
+//   途中で空く時間帯もあるので、時間は書かずに公式サイトでの確認をすすめる
+// - よりそいホットラインの外国語の相談（#218）:
+//   社会的包摂サポートセンター「Yorisoi Hotline English」https://www.since2011.net/yorisoi/en/（確認日: 2026-10-25）
+//   最初の音声ガイダンスのあとに 2 を押すと外国語の相談につながる。毎日 10:00〜22:00。
+//   英語・タガログ語・韓国語・中国語・スペイン語・ポルトガル語・タイ語・ベトナム語・ネパール語・インドネシア語など。
+//   言語は時間帯によって変わる。日本語のトップページ https://www.since2011.net/yorisoi/ にも「外国語による相談」がある
+// - こころの健康相談統一ダイヤル・#いのちSOS・消費者ホットライン（188）は、外国語で相談できるという記載を
+//   公式ページ（厚生労働省「まもろうよ こころ」電話相談、ライフリンク https://www.lifelink.or.jp/inochisos/、
+//   政府広報オンライン・消費者庁の 188 のページ）で確かめられなかったので、日本語だけのままにしている（確認日: 2026-10-25）
+//
 // tel は表示用の番号。電話をかけるリンクは telHref() で作る。
 // sourceId は出典のページの articles.json の ID。結果画面の安全の案内に、出典として出す（#213）。
+// 記事として載せていないページが出典のときは source に書く（TELL）。
+//
+// 英語の画面では en の文言を出す（#217）。languages は相談できる言語で、日本の窓口は日本語だけ。
+// 英語の画面では、en を含まない窓口に「Japanese-language service」と添える。
 
-import type { SupportLine } from './types.ts'
+import type { DataLang, SupportLine } from './types.ts'
 
 export const SUPPORT_LINES_CHECKED_AT = '2026-10-13'
 
@@ -21,7 +38,16 @@ export const SUPPORT_LINES: SupportLine[] = [
     tel: '0120-279-338',
     note: '無料・24時間',
     description: 'どんな悩みでも相談できます。',
+    en: {
+      name: 'Yorisoi Hotline',
+      note: 'Free; foreign languages 10 am–10 pm daily',
+      description:
+        'You can talk about any kind of worry. For English and other languages, press 2 after the first recorded message. Available languages vary by time of day.',
+    },
+    // 外国語の相談がある（ガイダンスで 2。英語を含む）
+    languages: ['ja', 'en'],
     sourceId: 'c01',
+    languageSource: { title: 'Yorisoi Hotline English', url: 'https://www.since2011.net/yorisoi/en/' },
   },
   {
     id: 'kokoro',
@@ -30,6 +56,13 @@ export const SUPPORT_LINES: SupportLine[] = [
     note: '通話料がかかります',
     description:
       'お住まいの地域の公的な相談機関につながります。受付時間は地域によって異なります。',
+    en: {
+      name: 'Mental Health Consultation Dial (Kokoro no Kenko Sodan Toitsu Dial)',
+      note: 'Call charges apply',
+      description:
+        'Connects you to a public consultation service in your area. Hours vary by area.',
+    },
+    languages: ['ja'],
     sourceId: 'c01',
   },
 ]
@@ -44,6 +77,13 @@ export const CONSUMER_SUPPORT_LINE: SupportLine = {
   note: '',
   description:
     'お金やサービスのトラブルが心配なときに。身近な消費生活相談窓口につながります。',
+  en: {
+    name: 'Consumer Hotline',
+    note: '',
+    description:
+      'For when you are worried about trouble with money or services. Connects you to a local consumer affairs office.',
+  },
+  languages: ['ja'],
   sourceId: 'c02',
 }
 
@@ -55,12 +95,45 @@ export const CRISIS_SUPPORT_LINE: SupportLine = {
   tel: '0120-061-338',
   note: '無料・24時間',
   description: '「死にたい」と感じるほどつらいときに相談できます。',
+  en: {
+    name: '#Inochi SOS',
+    note: 'Free, 24 hours',
+    description: 'You can call when things feel so hard that you want to die.',
+  },
+  languages: ['ja'],
   sourceId: 'c01',
+}
+
+// 英語で相談できる窓口。英語の画面だけに出す（日本語の画面には出さない）
+export const ENGLISH_SUPPORT_LINE: SupportLine = {
+  id: 'tell',
+  name: 'TELL Lifeline',
+  tel: '0800-300-8355',
+  note: '無料・時間は曜日によって異なります',
+  description: '英語で相談できるライフラインです。匿名で、秘密は守られます。受付時間は公式サイトで確認してください。',
+  en: {
+    name: 'TELL Lifeline',
+    note: 'Free, hours vary by day',
+    description:
+      'An English-language lifeline offering anonymous, confidential support. Please check the official website for current hours.',
+  },
+  languages: ['en'],
+  source: { title: 'TELL Hours: Lifeline Phone and Chat', url: 'https://telljp.com/tell-hours/' },
 }
 
 // 窓口の一覧に添える注記
 export const SUPPORT_LINES_NOTICE =
   '番号や受付時間は変わることがあります。最新の情報は各窓口の公式サイトでご確認ください。'
+export const SUPPORT_LINES_NOTICE_EN =
+  "Numbers and hours may change. Please check each service's official website for the latest information."
+
+// 窓口の文言を、画面の言語に合わせて選ぶ
+export const supportLineText = (line: SupportLine, lang: DataLang = 'ja') =>
+  lang === 'en' ? line.en : { name: line.name, note: line.note, description: line.description }
+
+// その言語で相談できない窓口か（英語の画面で「Japanese-language service」と添える）
+export const isOtherLanguageOnly = (line: SupportLine, lang: DataLang = 'ja'): boolean =>
+  !line.languages.includes(lang)
 
 // 表示用の番号 → tel: リンク（ハイフンを除く）
 export const telHref = (tel: string): string => `tel:${tel.replace(/[^\d+]/g, '')}`
@@ -68,13 +141,17 @@ export const telHref = (tel: string): string => `tel:${tel.replace(/[^\d+]/g, ''
 // 差し替え時はここだけ書き換える。
 // crisis: true のときは #いのちSOS を一番上に、money: true のときは消費者ホットラインを最後に足す。
 // どちらも無ければ、いつもの一覧（マイページと同じ）。
+// lang: 'en' のときは、英語で相談できる TELL Lifeline を、#いのちSOS（crisis のとき）のすぐ後ろに足す。
+// 「死にたい」ほどつらいときに #いのちSOS を一番上に出す動きは、言語にかかわらず同じ
 export function getSupportLines({
   crisis = false,
   money = false,
-}: { crisis?: boolean; money?: boolean } = {}): SupportLine[] {
-  if (!crisis && !money) return SUPPORT_LINES
+  lang = 'ja',
+}: { crisis?: boolean; money?: boolean; lang?: DataLang } = {}): SupportLine[] {
+  if (!crisis && !money && lang === 'ja') return SUPPORT_LINES
   return [
     ...(crisis ? [CRISIS_SUPPORT_LINE] : []),
+    ...(lang === 'en' ? [ENGLISH_SUPPORT_LINE] : []),
     ...SUPPORT_LINES,
     ...(money ? [CONSUMER_SUPPORT_LINE] : []),
   ]

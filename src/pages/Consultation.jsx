@@ -28,6 +28,7 @@ import {
   TOPICS,
   buildAdviceRequest,
   initialIntake,
+  localizeOptions,
 } from '../data/consultationIntake'
 import { APP } from '../config'
 import { getAdvice } from '../data/mockAdvice'
@@ -50,7 +51,7 @@ const pairRow = 'space-y-7 lg:grid lg:grid-cols-2 lg:gap-x-6 lg:space-y-0'
 export default function Consultation() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const STEP_TITLES = t('consult.steps')
   // 結果画面の「内容を修正する」やブラウザの戻るで来た場合は、入力内容を復元する
   const [intake, setIntake] = useState(() => ({
@@ -88,8 +89,9 @@ export default function Consultation() {
     navigate(location.pathname, { replace: true, state: { intake, step } })
     const request = buildAdviceRequest(intake)
     // ここが将来のLLM API呼び出しポイント
-    const advice = await getAdvice(request)
-    navigate('/consult/result', { state: { intake, request, advice } })
+    const advice = await getAdvice(request, lang)
+    // adviceLang: どの言語で組み立てた回答か（結果画面で言語を切り替えたら組み立て直すため）
+    navigate('/consult/result', { state: { intake, request, advice, adviceLang: lang } })
   }
 
   return (
@@ -198,7 +200,7 @@ export default function Consultation() {
 
 /* ---------- Step 1：あなたと相手について ---------- */
 function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   return (
     <div className="space-y-7">
       <div className="rounded-xl bg-brand-50 p-4">
@@ -231,7 +233,7 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
         <FormField htmlFor="userGender" label={t('consult.gender')}>
           <SelectField
             id="userGender"
-            options={GENDERS}
+            options={localizeOptions(GENDERS, lang)}
             value={intake.userGender}
             onChange={(userGender) => update({ userGender })}
           />
@@ -250,7 +252,7 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
               id="relationship"
               required
               invalid={!!relationshipError}
-              options={RELATIONSHIPS}
+              options={localizeOptions(RELATIONSHIPS, lang)}
               value={intake.relationship}
               onChange={(relationship) => update({ relationship })}
             />
@@ -260,7 +262,7 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
         <FormField htmlFor="duration" label={t('consult.duration')}>
           <SelectField
             id="duration"
-            options={DURATIONS}
+            options={localizeOptions(DURATIONS, lang)}
             value={intake.duration}
             onChange={(duration) => update({ duration })}
           />
@@ -284,7 +286,7 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
 
 /* ---------- Step 2：いま困っていること ---------- */
 function StepConcerns({ intake, update }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   const otherSelected = intake.concerns.includes('other')
   return (
     <div className="space-y-7">
@@ -296,7 +298,7 @@ function StepConcerns({ intake, update }) {
         <ChoiceGroup
           labelledBy="topics-label"
           multiple
-          options={TOPICS}
+          options={localizeOptions(TOPICS, lang)}
           value={intake.topics}
           onChange={(topics) => update({ topics })}
         />
@@ -311,7 +313,7 @@ function StepConcerns({ intake, update }) {
           labelledBy="concerns-label"
           multiple
           variant="card"
-          options={CONCERNS}
+          options={localizeOptions(CONCERNS, lang)}
           value={intake.concerns}
           onChange={(concerns) => update({ concerns })}
         />
@@ -336,7 +338,7 @@ function StepConcerns({ intake, update }) {
             labelledBy="support-person-label"
             variant="grid"
             subtleValues={[SUPPORT_PERSON_UNSURE]}
-            options={SUPPORT_PERSON}
+            options={localizeOptions(SUPPORT_PERSON, lang)}
             value={intake.hasSupportPerson}
             onChange={(hasSupportPerson) => update({ hasSupportPerson })}
           />
@@ -348,7 +350,7 @@ function StepConcerns({ intake, update }) {
 
 /* ---------- Step 3：これからどうしたいか ---------- */
 function StepHopes({ intake, update }) {
-  const { t } = useI18n()
+  const { t, lang } = useI18n()
   return (
     <div className="space-y-7">
       <FormField
@@ -358,7 +360,7 @@ function StepHopes({ intake, update }) {
       >
         <ChoiceGroup
           labelledBy="desired-relationship-label"
-          options={DESIRED_RELATIONSHIP}
+          options={localizeOptions(DESIRED_RELATIONSHIP, lang)}
           value={intake.desiredRelationship}
           onChange={(desiredRelationship) => update({ desiredRelationship })}
         />
@@ -374,7 +376,7 @@ function StepHopes({ intake, update }) {
           multiple
           variant="card"
           exclusiveValue={DESIRED_SUPPORT_UNSURE}
-          options={DESIRED_SUPPORT}
+          options={localizeOptions(DESIRED_SUPPORT, lang)}
           value={intake.desiredSupport}
           onChange={(desiredSupport) => update({ desiredSupport })}
         />

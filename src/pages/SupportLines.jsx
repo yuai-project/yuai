@@ -1,13 +1,16 @@
 import Header from '../components/Header'
 import JapaneseOnlyNotice from '../components/JapaneseOnlyNotice'
 import Phrases from '../components/Phrases'
+import { useI18n } from '../i18n/useI18n'
 import SupportLineList from '../components/SupportLineList'
 import { getSupportLines } from '../data/supportLines'
 
 // 電話で相談できる窓口（#175）。フッターから、どの画面からでも開ける。
 // 結果画面では状況に合わせて窓口を足すが、ここでは「死にたいほどつらいとき」と「お金のトラブル」も含めて全部出す
 export default function SupportLines() {
-  const lines = getSupportLines({ crisis: true, money: true })
+  // 英語の画面では、英語で相談できる TELL Lifeline も出す（#217）
+  const { lang } = useI18n()
+  const lines = getSupportLines({ crisis: true, money: true, lang })
 
   return (
     <div lang="ja">
