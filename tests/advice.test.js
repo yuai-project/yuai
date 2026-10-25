@@ -123,7 +123,9 @@ describe('アドバイスの形', () => {
     })
 
     test(`${key}: safety が必ずある`, () => {
-      assert.equal(advice.safety, SAFETY)
+      // 文章は SAFETY のまま。sources（電話番号を確かめたページ）だけを足す（#213）
+      const { sources: _sources, ...text } = advice.safety
+      assert.deepEqual(text, SAFETY)
       assert.ok(advice.safety.title && advice.safety.body)
       assert.ok(advice.safety.signs.length > 0)
     })
@@ -209,12 +211,15 @@ describe('続柄が文章に出ない', () => {
     /お?[父母](さま|さん|親)?|両親|息子|娘|お子さ|子ども|(?<!丈)夫|妻|旦那|奥さ|[兄弟姉妹]|祖父|祖母|おじい|おばあ|親戚|友人|友達|恋人|パートナー|彼氏/
 
   // 利用者に見える、人が書いた文字列だけを集める。
-  // sources（参考にした情報）は外部記事のタイトルと URL なので除く（#156）
-  const textsOf = ({ sources: _sources, ...advice }) => {
+  // sources（参考にした情報）は外部記事のタイトルと URL なので、どの項目のものも除く（#156・#213）
+  const textsOf = (advice) => {
     const out = []
     const walk = (v) => {
       if (typeof v === 'string') out.push(v)
-      else if (v && typeof v === 'object') Object.values(v).forEach(walk)
+      else if (Array.isArray(v)) v.forEach(walk)
+      else if (v && typeof v === 'object') {
+        for (const [k, x] of Object.entries(v)) if (k !== 'sources') walk(x)
+      }
     }
     walk(advice)
     return out

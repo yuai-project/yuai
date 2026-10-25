@@ -78,27 +78,34 @@ export type WhatMayBeHappeningSection = {
   note: string
 }
 
-// 3. 避けたい対応（やさしい警告色）
-export type AvoidSection = { title: string; items: string[]; reason: string }
+// 項目の本文を裏づけている記事（項目のすぐ下と「このヒントの参考にした情報」に出す）の1件
+export type AdviceSource = { id: string; title: string; url: string; domain: string }
+
+// 3. 避けたい対応（注意の色は「避けたい」のラベルだけ）
+export type AvoidContent = { title: string; items: string[]; reason: string }
+export type AvoidSection = AvoidContent & { sources: AdviceSource[] }
 
 // 4. こんな返し方 / 5. 次に聞いてみる質問
-export type ItemsSection = { title: string; items: string[] }
+export type ItemsContent = { title: string; items: string[] }
+export type ItemsSection = ItemsContent & { sources: AdviceSource[] }
 
-// 6. 無理に話さなくていいサイン
-export type SafetySection = { title: string; signs: string[]; body: string }
+// 6. 無理に話さなくていいサイン。sources は、載せている電話番号を確かめたページ
+export type SafetyContent = { title: string; signs: string[]; body: string }
+export type SafetySection = SafetyContent & { sources: AdviceSource[] }
 
-// 人が書いたカード（adviceCards.ts の ADVICE_CARDS）。
-// title を省いた枠は SECTION_TITLES の見出しを使う。askNext を持たないカードは、その枠ごと出さない
-export type AdviceCard = {
-  avoid: Omit<AvoidSection, 'title'> & { title?: string }
-  tryReplies: Omit<ItemsSection, 'title'> & { title?: string }
-  askNext?: Omit<ItemsSection, 'title'> & { title?: string }
-  // カードの内容を裏づけている記事の ID（0〜3件）
+// カードの1項目。title を省くと SECTION_TITLES の見出しを使う。
+// sources はその項目の本文を裏づけている記事の ID（0〜3件。裏づけが無ければ []）
+export type CardSection<T extends { title: string }> = Omit<T, 'title'> & {
+  title?: string
   sources: string[]
 }
 
-// 「このヒントの参考にした情報」の1件
-export type AdviceSource = { id: string; title: string; url: string; domain: string }
+// 人が書いたカード（adviceCards.ts の ADVICE_CARDS）。askNext を持たないカードは、その枠ごと出さない
+export type AdviceCard = {
+  avoid: CardSection<AvoidContent>
+  tryReplies: CardSection<ItemsContent>
+  askNext?: CardSection<ItemsContent>
+}
 
 // 結果画面のアドバイス（buildAdvice() / getAdvice() の戻り値）。
 // null の枠は画面に出さない
@@ -119,6 +126,7 @@ export type Advice = {
   safety: SafetySection
 
   // ---- 6つの枠の外 ----
+  // 項目ごとの sources をまとめたもの（重複なし・出てきた順）。「このヒントの参考にした情報」に出す
   sources: AdviceSource[]
 }
 
@@ -130,6 +138,8 @@ export type SupportLine = {
   tel: string
   note: string
   description: string
+  // 番号や受付時間を確かめたページ（articles.json の ID）
+  sourceId: string
 }
 
 // ---- 記事（articles.json / articleTags.ts） ----

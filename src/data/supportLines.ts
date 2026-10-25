@@ -3,11 +3,12 @@
 //
 // 出典（確認日: 2026-10-13）
 // - #いのちSOS / よりそいホットライン / こころの健康相談統一ダイヤル:
-//   厚生労働省「まもろうよ こころ」電話相談 https://www.mhlw.go.jp/mamorouyokokoro/soudan/tel
+//   厚生労働省「まもろうよ こころ」電話相談 https://www.mhlw.go.jp/mamorouyokokoro/soudan/tel（articles.json の c01）
 // - 消費者ホットライン:
-//   政府広報オンライン https://www.gov-online.go.jp/kurashinosodan/list/fu_caa.html
+//   政府広報オンライン https://www.gov-online.go.jp/kurashinosodan/list/fu_caa.html（articles.json の c02）
 //
 // tel は表示用の番号。電話をかけるリンクは telHref() で作る。
+// sourceId は出典のページの articles.json の ID。結果画面の安全の案内に、出典として出す（#213）。
 
 import type { SupportLine } from './types.ts'
 
@@ -20,6 +21,7 @@ export const SUPPORT_LINES: SupportLine[] = [
     tel: '0120-279-338',
     note: '無料・24時間',
     description: 'どんな悩みでも相談できます。',
+    sourceId: 'c01',
   },
   {
     id: 'kokoro',
@@ -28,6 +30,7 @@ export const SUPPORT_LINES: SupportLine[] = [
     note: '通話料がかかります',
     description:
       'お住まいの地域の公的な相談機関につながります。受付時間は地域によって異なります。',
+    sourceId: 'c01',
   },
 ]
 
@@ -41,6 +44,7 @@ export const CONSUMER_SUPPORT_LINE: SupportLine = {
   note: '',
   description:
     'お金やサービスのトラブルが心配なときに。身近な消費生活相談窓口につながります。',
+  sourceId: 'c02',
 }
 
 // 「死にたい」と感じるほどつらいときの窓口。
@@ -51,6 +55,7 @@ export const CRISIS_SUPPORT_LINE: SupportLine = {
   tel: '0120-061-338',
   note: '無料・24時間',
   description: '「死にたい」と感じるほどつらいときに相談できます。',
+  sourceId: 'c01',
 }
 
 // 窓口の一覧に添える注記

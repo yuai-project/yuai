@@ -1,19 +1,29 @@
-// アドバイスのカード（adviceCards.ts）の sources を、画面に出す形に組み立てる（#156）。
+// アドバイスのカード（adviceCards.ts）の項目ごとの sources を、画面に出す形に組み立てる（#156・#213）。
 //
 // - sources に入れてよいのは、articles.json で status が approved の記事だけ。
 // - 書籍（sourceType: book）は本文を読んで照らし合わせられないので入れない。
-// - 1枚のカードにつき 0〜3件。カードの内容を本文で裏づけている記事だけを入れる（テーマが近いだけの記事は入れない）。
+// - 1つの項目につき 0〜3件、1枚のカード全体でも重複を除いて 3件まで。
+//   項目の本文を裏づけている記事だけを入れる（テーマが近いだけの記事は入れない）。
 // - 画面に出すときは、推薦と同じ入口の絞り込み（関係・話題が合わない記事、健康の情報の発信元のルール）をかけ、
 //   その人に合わない記事は外す。全部外れたら空（画面には欄ごと出さない）。
 
 import { BOOK_SOURCE_TYPE } from './articleTags.ts'
 import { mockArticles } from './articles.ts'
 import { isCandidateArticle, toRecommendationProfile } from './recommendArticles.ts'
-import type { AdviceSource, Article, RequestInput } from './types.ts'
+import type { AdviceCard, AdviceSource, Article, RequestInput, SupportLine } from './types.ts'
 
 export type InvalidSource = { id: string; reason: 'missing' | 'not_approved' | 'book' }
 
 export const MAX_SOURCES_PER_CARD = 3
+export const MAX_SOURCES_PER_SECTION = 3
+
+// sources を持つ項目（表示順）
+export const SOURCE_SECTIONS = ['avoid', 'tryReplies', 'askNext'] as const
+
+// カードの項目ごとの sources を、重複を除いて表示順に並べたもの
+export function cardSourceIds(card: AdviceCard): string[] {
+  return [...new Set(SOURCE_SECTIONS.flatMap((key) => card[key]?.sources ?? []))]
+}
 
 // sources の ID のうち、引用してはいけないもの。[{ id, reason }]（問題が無ければ []）。
 // reason: 'missing'（存在しない）/ 'not_approved'（approved でない）/ 'book'（書籍）
@@ -45,4 +55,25 @@ export function resolveSources(
     .filter((article) => article !== undefined)
     .filter((article) => isCandidateArticle(article, profile))
     .map(({ id, title, url }) => ({ id, title, url, domain: domainOf(url) }))
+}
+
+// 項目ごとに解決した sources を、重複を除いて出てきた順にまとめる（「このヒントの参考にした情報」用）
+export function mergeSources(lists: AdviceSource[][]): AdviceSource[] {
+  const seen = new Set<string>()
+  return lists.flat().filter((s) => !seen.has(s.id) && seen.add(s.id))
+}
+
+// 安全の案内の出典: 一緒に出す電話窓口の番号を確かめたページ。
+// 番号の確かめ先なので、関係・話題での絞り込みはかけない（誰に出す窓口でも同じページで確かめている）
+export function supportLineSources(lines: SupportLine[] = []): AdviceSource[] {
+  return resolveSources([...new Set(lines.map((line) => line.sourceId))])
+}
+
+// 項目のすぐ下に出す小さなリンクの中身。空なら null（リンクを出さない）。
+// 先頭の1件のドメインを出し、2件以上なら残りの件数を「＋1」のように添える
+export function sourceSummary(
+  sources: AdviceSource[] = [],
+): { first: AdviceSource; rest: number } | null {
+  if (sources.length === 0) return null
+  return { first: sources[0], rest: sources.length - 1 }
 }

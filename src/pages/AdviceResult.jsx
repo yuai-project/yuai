@@ -6,6 +6,7 @@ import CopyableLine from '../components/CopyableLine'
 import Header from '../components/Header'
 import DesiredSupportCard from '../components/intake/DesiredSupportCard'
 import IntakeSummary from '../components/intake/IntakeSummary'
+import ItemSources from '../components/ItemSources'
 import SupportLineList from '../components/SupportLineList'
 import { buildAdvice } from '../data/mockAdvice'
 import { recommendArticles } from '../data/recommendArticles'
@@ -19,6 +20,7 @@ const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'a
 // PC: 左2/3にアドバイス、右1/3に サポート/記事/まとめ の追従サイドバー。
 // 直接開いた場合（フォームの回答が無い）は、サイドバーに出すものが無いので1カラム。
 // アドバイスはカードを積まず、罫線で区切った読み物にする。面の色はグレー（避けたい）と淡いブランド色（安全）だけ。
+// 各項目の本文のすぐ下に、その項目の出典を小さなリンクで出す（ItemSources。出典が無い項目には出さない）。
 export default function AdviceResult() {
   const navigate = useNavigate()
   // 相談フォームから来た場合は入力内容と回答を受け取る。直接開いた場合は、どの回答にも寄せないアドバイスを表示。
@@ -132,6 +134,7 @@ export default function AdviceResult() {
                 ))}
               </ul>
               <p className="mt-3">{a.avoid.reason}</p>
+              <ItemSources sources={a.avoid.sources ?? []} />
             </AdviceCard>
 
             {/* 4. こんな返し方（コピー可能） */}
@@ -144,6 +147,7 @@ export default function AdviceResult() {
                   <CopyableLine key={i} text={t} />
                 ))}
               </div>
+              <ItemSources sources={a.tryReplies.sources ?? []} />
             </AdviceCard>
 
             {/* 5. 次に聞いてみる質問。持たないカードでは出さない */}
@@ -154,6 +158,7 @@ export default function AdviceResult() {
                     <li key={i} className="pl-1">{q}</li>
                   ))}
                 </ol>
+                <ItemSources sources={a.askNext.sources ?? []} />
               </AdviceCard>
             )}
 
@@ -180,7 +185,8 @@ export default function AdviceResult() {
 
 // 無理に話さなくていいサイン。ふだんはアドバイスの最後、safetyFirst のときはイントロのすぐ下に出す。
 // 結果画面で面を囲むのはここだけ（淡いブランド色）。
-// lines は電話で相談できる窓口。危険を示す言葉がないときも、ここには常に出す
+// lines は電話で相談できる窓口。危険を示す言葉がないときも、ここには常に出す。
+// safety.sources は、その番号を確かめたページ（buildAdvice() が lines に合わせて入れる）
 function SafetyCard({ safety, lines }) {
   return (
     <section aria-labelledby="safety-title" className="rounded-xl bg-brand-50 p-4 lg:p-6">
@@ -198,11 +204,14 @@ function SafetyCard({ safety, lines }) {
       <p className="mt-3 text-sm leading-relaxed text-ink-soft">{safety.body}</p>
       <h3 className="mt-5 text-sm font-bold text-brand-700">電話で相談できる窓口</h3>
       <SupportLineList lines={lines} />
+      {/* 番号を確かめたページ */}
+      <ItemSources sources={safety.sources ?? []} />
     </section>
   )
 }
 
 // 最後のカードのすぐ後ろに小さく出す「このヒントの参考にした情報」。記事タイトル（外部リンク）とドメイン。
+// 項目ごとの出典（ItemSources）を重複なしでまとめたもの。安全の案内の出典（番号の確かめ先）は入れない。
 function AdviceSources({ sources }) {
   if (sources.length === 0) return null
   return (
