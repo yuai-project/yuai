@@ -228,19 +228,19 @@ describe('どの回答に合わせたかの一行', () => {
   test('困りごとで選ばれたときは、その選択肢の文言を出す', () => {
     assert.equal(
       adviceOf(INTAKE_OF.angry).matchedLabel,
-      '「否定すると怒ってしまう」を選んだあなたへ',
+      '「否定すると怒ってしまう」の回答に合わせています',
     )
     assert.equal(
       adviceOf(INTAKE_OF.exhausted).matchedLabel,
-      '「自分自身が疲れている」を選んだあなたへ',
+      '「自分自身が疲れている」の回答に合わせています',
     )
   })
 
   test('距離を置きたいときは、選んだほうの文言を出す', () => {
-    assert.equal(adviceOf(INTAKE_OF.distance).matchedLabel, '少し距離を置きたいあなたへ')
+    assert.equal(adviceOf(INTAKE_OF.distance).matchedLabel, '「少し距離を置きたい」の回答に合わせています')
     assert.equal(
       adviceOf({ desiredRelationship: 'more_distance' }).matchedLabel,
-      'かなり距離を置きたいあなたへ',
+      '「かなり距離を置きたい」の回答に合わせています',
     )
   })
 

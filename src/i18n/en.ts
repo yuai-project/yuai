@@ -16,7 +16,6 @@ export const en: Messages = {
     ['When conspiracy', 'theories come up,'],
     ['you and someone', 'you care about', 'end up talking', 'past each other.'],
   ],
-  'app.taglinePhrases': ['Tips that fit your situation,', 'and places to turn for support.'],
   'app.description':
     "When conspiracy theories come up, you and someone you care about can end up talking past each other. {name} helps you find tips for how to respond and places to turn for support, based on your situation. So you don't have to carry this alone.",
   'app.concept': 'Before getting the facts across, first keep the conversation going.',
@@ -62,7 +61,6 @@ export const en: Messages = {
   'home.finds': [
     'Tips for how to respond',
     'Articles and books about similar situations',
-    'Phone lines where you can talk to someone',
   ],
   'home.start': 'Describe your situation and get tips',
   'home.supportLead': 'If this feels like too much to carry alone',
@@ -73,8 +71,6 @@ export const en: Messages = {
     "I don't know what to say",
     "I've started to feel worn out too",
   ],
-  'home.worriesFollow':
-    'If even one of these sounds familiar, you could start by sorting through your own feelings.',
   'home.shareLead': 'If you know someone in a similar situation, you can also tell them about this site.',
   'share.button': 'Share this site',
   'share.copied': 'Link copied',
@@ -120,8 +116,6 @@ I'm also feeling a little tired myself.`,
 
   // ---- 結果画面 ----
   'result.title': 'Tips for you',
-  'result.intro':
-    "We've received what you shared. You don't need to solve everything at once. One step at a time, starting with whatever feels doable.",
   'result.keyPoints.title': 'Just these three, for now',
   'result.keyPoints.lead': "You don't have to read everything. The details are further down.",
   'result.keyPoints.forYou': 'For you',
@@ -140,8 +134,6 @@ I'm also feeling a little tired myself.`,
   'lateNight.emergencyEnd': '.',
   'lateNight.callLabel': 'Call {number}',
   'result.sourcesTitle': 'Sources for these tips',
-  'result.disclaimer':
-    'These tips are general information and do not provide medical, legal, or emergency support.',
   'sources.label': 'Source: ',
   'sources.linkWithTitle': ' ({title}. Opens an external site in a new tab)',
   'sources.showMore': 'Show more sources ({count})',

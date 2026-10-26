@@ -7,7 +7,7 @@
 // レスポンスの「形」= buildAdvice() の戻り値の構造（6つの枠）。
 // APIにはこの構造でJSONを返させるようプロンプト設計する。
 //
-//   forYou             1. まず、あなた自身へ            { title, body }
+//   forYou             1. あなた自身のこと              { title, body }
 //   whatMayBeHappening 2. 今起きていること              { title, hypotheses[], note } | null
 //   avoid              3. 避けたい対応                 { title, items[], reason, sources[] }
 //   tryReplies         4. こんな返し方（コピー可能）     { title, items[], sources[] }
@@ -66,21 +66,21 @@ const CONCERN_OF_CARD: Partial<Record<CardKey, string>> = { exhausted: 'self_exh
 
 // 「どの回答に合わせたか」の一行。default のときは出さない（null）。
 // 困りごとをフォームで選んでいない（自由記述から読み取っただけ）のときも出さない。
-// 「選んだあなたへ」が事実と違ってしまうため。その場合は freeTextNotes の一行で伝える。
+// 「〜の回答に合わせています」が事実と違ってしまうため。その場合は freeTextNotes の一行で伝える。
 function matchedLabelOf(cardKey: CardKey, request: RequestInput, lang: DataLang): string | null {
   if (cardKey === 'distance') {
     const label = labelOf(DESIRED_RELATIONSHIP, request?.desiredRelationship ?? '', lang)
-    return lang === 'en' ? `Since you chose “${label}”` : `${label}あなたへ`
+    return lang === 'en' ? `Since you chose “${label}”` : `「${label}」の回答に合わせています`
   }
   const concern = CONCERN_OF_CARD[cardKey]
   if (!concern || !(request?.concerns ?? []).includes(concern)) return null
   const label = labelOf(CONCERNS, concern, lang)
-  return lang === 'en' ? `Since you chose “${label}”` : `「${label}」を選んだあなたへ`
+  return lang === 'en' ? `Since you chose “${label}”` : `「${label}」の回答に合わせています`
 }
 
 // 詳しい内容（自由記述）に危険を示す言葉があったときに、安全のカードの上に出す一行。
 // どの言葉に反応したかは出さない。
-export const SAFETY_NOTE = '詳しい内容から、あなたの安全が心配な状況かもしれないと考えました'
+export const SAFETY_NOTE = '詳しい内容に、あなたの安全が心配になる言葉がありました'
 export const SAFETY_NOTE_EN =
   'Based on the details you shared, we thought you might be in a situation where your safety is a concern'
 
@@ -92,7 +92,7 @@ function freeTextNotesOf({ inferredConcerns }: MergedFreeText, lang: DataLang): 
     return [`Based on the details you shared, we also took ${labels} into account`]
   }
   const labels = inferredConcerns.map((c) => `「${labelOf(CONCERNS, c)}」`).join('')
-  return [`詳しい内容から${labels}も合わせて考えました`]
+  return [`詳しい内容から読み取った${labels}も合わせています`]
 }
 
 // 「まずは、この3つだけ」（#226）。詳しい内容に危険を示す言葉があるとき（danger）は、

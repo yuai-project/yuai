@@ -69,12 +69,6 @@ export default function AdviceResult() {
     <div>
       <Header title={t('result.title')} back tone="brand" />
 
-      {/* イントロ（ブランド色の帯） */}
-      <div className="bg-brand px-5 pb-6 pt-1 text-brand-ink lg:pb-9 lg:pt-0">
-        <p className="max-w-[40em] text-sm leading-relaxed [word-break:auto-phrase] lg:mx-auto lg:max-w-page lg:px-8 lg:pl-[5.25rem] lg:text-base">
-          {t('result.intro')}
-        </p>
-      </div>
 
       <div className="px-5 pb-12 pt-6 lg:mx-auto lg:max-w-page lg:px-8 lg:pb-16 lg:pt-10">
         <div
@@ -122,7 +116,7 @@ export default function AdviceResult() {
               </p>
             ))}
 
-            {/* 1. まず、あなた自身へ */}
+            {/* 1. あなた自身のこと */}
             <AdviceCard id={KEY_POINT_TARGETS.forYou} number={stepOf.forYou} title={a.forYou.title}>
               <p>{a.forYou.body}</p>
             </AdviceCard>
@@ -194,11 +188,6 @@ export default function AdviceResult() {
                 <SafetyCard safety={a.safety} lines={supportLines} />
               </div>
             )}
-
-            {/* フッター注記（PC と、フォームの回答が無いとき）。スマホでフォームから来たときは、まとめの後ろに出す */}
-            <p className={`mt-6 text-[11px] leading-relaxed text-ink-faint ${request ? 'hidden lg:block' : ''}`}>
-              {t('result.disclaimer')}
-            </p>
           </div>
 
           {/* サイドバー（PCでは右列・追従）。フォームから来たときだけ出す。スマホではアドバイスの後ろに並ぶ */}
@@ -219,12 +208,6 @@ export default function AdviceResult() {
                 }
               />
             </aside>
-          )}
-
-          {request && (
-            <p className="text-[11px] leading-relaxed text-ink-faint lg:hidden">
-              {t('result.disclaimer')}
-            </p>
           )}
         </div>
       </div>
