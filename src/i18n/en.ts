@@ -93,14 +93,7 @@ export const en: Messages = {
   'consult.intro':
     'If you answer a few questions, it becomes easier for us to suggest tips, helpful information, and places to turn for support that fit your situation.',
   'consult.introNote': 'This is not a diagnosis. Just answer what you can.',
-  'consult.age': 'Your age',
-  'consult.agePlaceholder': 'e.g. 35',
-  'consult.ageUnit': 'years old',
-  'consult.gender': 'Your gender',
   'consult.relationship': 'Your relationship with them',
-  'consult.duration': 'How long has this been on your mind?',
-  'consult.immersion': 'How strongly does it seem to you that they believe it?',
-  'consult.immersionHint': 'This is not a medical assessment. Just go with your own impression.',
   'consult.topics': 'What is it about?',
   'consult.topicsHint': 'Choose as many as you like. This is not a judgment of whether the content is true.',
   'consult.concerns': 'What is troubling you?',
@@ -120,13 +113,6 @@ I'm also feeling a little tired myself.`,
 
   // ---- 相談フォームの部品 ----
   'steps.srPrefix': '{total} steps in total. Step ',
-  'immersion.reset': 'Clear answer',
-  'immersion.howTo': 'Move the slider to choose',
-  'immersion.valueText': '{value} out of {max}',
-  'immersion.unanswered': 'Not answered',
-  'immersion.scaleSep': ': ',
-  'immersion.low': ['Seems to believe it', 'a little'],
-  'immersion.high': ['Seems to believe it', 'very strongly'],
 
   // ---- 結果画面 ----
   'result.title': 'Tips for you',

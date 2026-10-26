@@ -349,7 +349,6 @@ describe('recommendArticles', () => {
   test('関係だけ入力、ほかは「わからない」 → フォールバック', () => {
     const result = recommend({
       relationship: 'father',
-      duration: 'unsure',
       hasSupportPerson: 'unsure',
       desiredRelationship: 'unsure',
       desiredSupport: ['unsure'],

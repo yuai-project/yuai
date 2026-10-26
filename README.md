@@ -111,7 +111,7 @@ src/
     CopyableLine.jsx     # コピー可能な「返し方」
     Tag.jsx              # 関係性・テーマタグ
     ScrollToTop.jsx      # 画面遷移時にページ最上部へスクロール
-    intake/              # 相談フォーム部品（StepProgress / ChoiceGroup / SelectField / FormField / ImmersionSlider / IntakeSummary / DesiredSupportCard）
+    intake/              # 相談フォーム部品（StepProgress / ChoiceGroup / SelectField / FormField / IntakeSummary / DesiredSupportCard）
   pages/                 # 上記4画面
   data/
     adviceCards.ts       # ヒントの文章（人が書いたカード）
