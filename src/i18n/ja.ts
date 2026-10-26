@@ -158,14 +158,14 @@ export const ja = {
   'articles.fallbackNote':
     'まずはこちらから。気になるものがあれば、読めそうなときに開いてみてください。外部のサイトが開きます。',
   'articles.externalNote': '外部のサイトが開きます。',
+  // 相談フォームで選んだ「求めるサポート」の名前を入れる（#225）
+  'articles.matchedNote': '{labels}も手がかりに選びました。外部のサイトが開きます。',
+  'articles.labelSep': '',
   'articles.kindSupport': '相談できる先',
   'articles.kindBook': '書籍',
   // 画面の言語と違う言語のページ・窓口に添える（日本語の画面では、日本語の記事・窓口には出さない）
   'articles.inJapanese': '日本語',
   'supportLines.japaneseOnly': '日本語で対応',
-  'desiredSupport.title': 'あなたが求めているサポート',
-  'desiredSupport.unsureNote':
-    'まだはっきりしなくても大丈夫です。下のヒントから、気になるものをひとつ見てみてください。',
   'intakeSummary.title': '入力した内容のまとめ',
   'intakeSummary.hint': 'タップすると入力した内容を確認できます',
   'intakeSummary.edit': '内容を修正する',

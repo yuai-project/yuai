@@ -62,7 +62,7 @@ export const PENALTIES = {
 }
 
 // フォームの desiredSupport → 記事の supportTypes。ai_consultation と unsure は対応なし。
-const SUPPORT_TYPE_BY_DESIRED: Record<string, string> = {
+export const SUPPORT_TYPE_BY_DESIRED: Record<string, string> = {
   coping_tips: 'coping_tips',
   read_stories: 'experience',
   talk_with_peers: 'peer_support',

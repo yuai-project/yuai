@@ -1,31 +1,46 @@
 import { ExternalLink } from 'lucide-react'
+import { useId } from 'react'
 import { BOOK_SOURCE_TYPE } from '../data/articleTags'
-import { REASONS } from '../data/recommendArticles'
+import { DESIRED_SUPPORT, labelsOf } from '../data/consultationIntake'
+import { REASONS, SUPPORT_TYPE_BY_DESIRED } from '../data/recommendArticles'
 import { useI18n } from '../i18n/useI18n'
 
 // 結果画面の「近い状況の記事や本」。recommendArticles() の戻り値をそのまま受け取る。
 // 0件なら何も表示しない。点数（score）と減点（penalties）は画面に出さない。
 // 記事は罫線で区切った一覧にする（カードを重ねない）。
-export default function ArticleRecommendations({ result }) {
+// desiredSupport はフォームで選んだ「求めるサポート」。記事選びに効くものだけ、説明の一言に名前を出す（#225）
+// 結果画面では幅によって2か所に出すことがあるので、見出しの id は useId で作る
+export default function ArticleRecommendations({ result, desiredSupport = [], className = '' }) {
   const { t, lang } = useI18n()
+  const titleId = useId()
   const items = result?.articles ?? []
   if (items.length === 0) return null
+  const matched = labelsOf(
+    DESIRED_SUPPORT,
+    desiredSupport.filter((v) => SUPPORT_TYPE_BY_DESIRED[v]),
+    lang,
+  )
+    .map((label) => `${t('common.quoteOpen')}${label}${t('common.quoteClose')}`)
+    .join(t('articles.labelSep'))
+  const note = result.isFallback
+    ? t('articles.fallbackNote')
+    : matched
+      ? t('articles.matchedNote', { labels: matched })
+      : t('articles.externalNote')
 
   return (
     <section
-      aria-labelledby="article-recommendations-title"
-      className="rounded-xl border border-line bg-surface p-4 lg:p-5"
+      aria-labelledby={titleId}
+      className={`rounded-xl border border-line bg-surface p-4 lg:p-5 ${className}`}
     >
       <h2
-        id="article-recommendations-title"
+        id={titleId}
         className="text-base font-bold leading-snug text-ink [word-break:auto-phrase]"
       >
         {t('articles.title')}
       </h2>
       <p className="mt-0.5 text-xs leading-relaxed text-ink-faint">
-        {result.isFallback
-          ? t('articles.fallbackNote')
-          : t('articles.externalNote')}
+        {note}
       </p>
 
       <ul className="mt-2">
