@@ -145,7 +145,6 @@ export const ja = {
   'articles.externalNote': '外部のサイトが開きます。',
   // 相談フォームで選んだ「求めるサポート」の名前を入れる（#225）
   'articles.matchedNote': '{labels}も手がかりに選びました。外部のサイトが開きます。',
-  'articles.labelSep': '',
   'articles.kindSupport': '相談できる先',
   'articles.kindBook': '書籍',
   // 画面の言語と違う言語のページ・窓口に添える（日本語の画面では、日本語の記事・窓口には出さない）

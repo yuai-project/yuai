@@ -15,13 +15,14 @@ export default function ArticleRecommendations({ result, desiredSupport = [], cl
   const titleId = useId()
   const items = result?.articles ?? []
   if (items.length === 0) return null
-  const matched = labelsOf(
+  const labels = labelsOf(
     DESIRED_SUPPORT,
     desiredSupport.filter((v) => SUPPORT_TYPE_BY_DESIRED[v]),
     lang,
   )
     .map((label) => `${t('common.quoteOpen')}${label}${t('common.quoteClose')}`)
-    .join(t('articles.labelSep'))
+  // 区切りは言語に合わせる（ja「A」、「B」／en “A” and “B”）
+  const matched = labels.length > 0 ? new Intl.ListFormat(lang).format(labels) : ''
   const note = result.isFallback
     ? t('articles.fallbackNote')
     : matched
