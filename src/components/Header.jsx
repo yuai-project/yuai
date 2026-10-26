@@ -23,7 +23,8 @@ const tones = {
 // onBack を渡すと戻る動作を差し替えられる（ステップ形式フォームなど）。
 // スマホでは上部に固定、PC（lg〜）では上部ナビの下に置くページタイトルになる。
 // 文字を大きくしても切れないよう、タイトルは省略せずに文節で折り返す。
-export default function Header({ title, subtitle, back = false, onBack, tone = 'plain' }) {
+// trailing は右端に置く要素（例: 何問目か）、children はヘッダーの下端に置く要素（例: 進み具合のバー）。
+export default function Header({ title, subtitle, back = false, onBack, tone = 'plain', trailing, children }) {
   const navigate = useNavigate()
   const { t } = useI18n()
   const s = tones[tone] || tones.plain
@@ -39,7 +40,7 @@ export default function Header({ title, subtitle, back = false, onBack, tone = '
             <ChevronLeft size={22} />
           </button>
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className={`text-base font-bold leading-snug [word-break:auto-phrase] lg:text-2xl ${s.title}`}>
             {title || APP.name}
           </h1>
@@ -49,7 +50,9 @@ export default function Header({ title, subtitle, back = false, onBack, tone = '
             </p>
           )}
         </div>
+        {trailing}
       </div>
+      {children && <div className="lg:mx-auto lg:max-w-page lg:px-8">{children}</div>}
     </header>
   )
 }

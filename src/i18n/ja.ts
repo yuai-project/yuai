@@ -27,7 +27,6 @@ export const ja = {
   'common.selectPlaceholder': '選択してください',
   'common.chooseAny': 'いくつでも選べます。',
   'common.notDiagnosisSkip': 'これは診断ではありません。答えたくない項目は、とばして大丈夫です。',
-  'common.skipOk': '答えたくない項目は、とばして大丈夫です。',
   // 言葉を囲むかっこ（避けたい対応・返し方・コンセプト）。
   // 中身と別の文字列のまま並べる（1つの文字列にすると、かっこの前後の詰め方が変わって見た目がずれる）
   'common.quoteOpen': '「',
@@ -82,8 +81,11 @@ export const ja = {
 
   // ---- 相談フォーム ----
   'consult.title': 'あなたの状況を教えてください',
-  'consult.steps': ['あなたと相手について', 'いま困っていること', 'これからどうしたいか'],
+  // PC で左列に出す、7問の一覧（短い名前）
+  'consult.questionNames': ['相手との関係', 'どんな内容か', '困っていること', '相談できる人', 'これからの関係', '求めるサポート', '詳しい内容'],
   'consult.next': '次へ',
+  'consult.skip': '答えずに次へ',
+  'consult.submitWithoutText': '書かずにヒントをみる',
   'consult.submit': 'ヒントをみる',
   'consult.loading': 'あなたの気持ちを整理しています…',
   // サービス名（APP.name）のすぐ後ろに続ける。名前と別の文字列のまま並べる（つなぐと文字の間隔が変わる）
@@ -94,6 +96,7 @@ export const ja = {
     'いくつかの質問に答えていただくと、あなたに合ったヒントや、参考になる情報・相談先をご案内しやすくなります。',
   'consult.introNote': 'これは診断ではありません。分かる範囲で大丈夫です。',
   'consult.relationship': '相手との関係',
+  'consult.chooseOne': '1つ選んでください。',
   'consult.topics': 'どんな内容についてですか？',
   'consult.topicsHint': 'いくつでも選べます。内容が正しいかどうかを判断するものではありません。',
   'consult.concerns': 'どんなことで困っていますか？',
@@ -104,7 +107,10 @@ export const ja = {
   'consult.desiredRelationshipHint':
     'どれを選んでも大丈夫です。距離を置くことも、あなたを守る大切な選択肢です。',
   'consult.desiredSupport': 'どんなサポートを求めていますか？',
+  // 「わからない」をほかの選択肢から離して置くときの区切り
+  'consult.or': 'または',
   'consult.freeText': 'もう少し詳しく教えてください',
+  'consult.freeTextOptional': '書かなくても大丈夫です。',
   'consult.privacyNote':
     '個人が特定できる情報（実名・住所・勤務先・SNSアカウントなど）は入力しないでください。',
   'consult.freeTextPlaceholder': `最近、父が健康に関する情報を強く信じるようになりました。
@@ -112,8 +118,8 @@ export const ja = {
 自分自身も少し疲れています。`,
 
   // ---- 相談フォームの部品 ----
-  // 読み上げ用。見た目の「2 / 3」の前に付く
-  'steps.srPrefix': '全{total}ステップ中 ',
+  // 読み上げ用。見た目の「3 / 7」の前に付く
+  'steps.srPrefix': '全{total}問中 ',
 
   // ---- 結果画面 ----
   'result.title': 'あなたへのヒント',

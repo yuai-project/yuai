@@ -74,7 +74,7 @@ body {
 }
 
 /* キーボード操作時のフォーカス表示（白背景で3:1以上の緑） */
-:where(a, button, summary, [role='radio'], [role='checkbox']):focus-visible {
+:where(a, button, summary, input[type='radio'], input[type='checkbox'], [role='radio'], [role='checkbox']):focus-visible {
   outline: 2px solid var(--color-brand-600);
   outline-offset: 2px;
 }
