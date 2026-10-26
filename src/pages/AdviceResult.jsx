@@ -4,7 +4,6 @@ import AdviceCard from '../components/AdviceCard'
 import ArticleRecommendations from '../components/ArticleRecommendations'
 import CopyableLine from '../components/CopyableLine'
 import Header from '../components/Header'
-import DesiredSupportCard from '../components/intake/DesiredSupportCard'
 import IntakeSummary from '../components/intake/IntakeSummary'
 import ItemSources, { SourceLangNote } from '../components/ItemSources'
 import SupportLineList from '../components/SupportLineList'
@@ -14,12 +13,16 @@ import { EMERGENCY_NUMBERS, getSupportLines, needsLateNightNote, telHref } from 
 import { useI18n } from '../i18n/useI18n'
 
 // 番号を振る枠（表示順）。安全の案内には番号を振らない。
-const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'avoid', 'tryReplies', 'askNext']
+const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'tryReplies', 'avoid', 'askNext']
 
 // 上の帯（ブランド色）にイントロ。その下は、
-// スマホ: （安全の案内）→ サポート/記事/まとめ → アドバイス の1カラム。
-// PC: 左2/3にアドバイス、右1/3に サポート/記事/まとめ の追従サイドバー。
+// スマホ: アドバイス → 安全の案内 → 記事 → 相談内容のまとめ（閉じた状態）の1カラム（#225）。
+//   危険を示す言葉があるときは、安全の案内をイントロのすぐ下に出す。
+//   相談先を求めたとき（professional_referral）は、安全の案内と記事をアドバイスより上に出す。
+// PC: 左2/3にアドバイス、右1/3に 記事/まとめ の追従サイドバー。
 // 直接開いた場合（フォームの回答が無い）は、サイドバーに出すものが無いので1カラム。
+// 並び（DOM の順）はスマホの順にそろえ、PC ではサイドバーを右列に置く。読み上げ・Tab の順も見た目の順と同じになる。
+// 相談先を求めたときの記事は、スマホでは上の枠に、PC ではサイドバーに出す（同じ一覧を幅で出し分ける）。
 // アドバイスはカードを積まず、罫線で区切った読み物にする。面の色はグレー（避けたい）と淡いブランド色（安全）だけ。
 // 各項目の本文のすぐ下に、その項目の出典を小さなリンクで出す（ItemSources。出典が無い項目には出さない）。
 export default function AdviceResult() {
@@ -36,6 +39,9 @@ export default function AdviceResult() {
   const supportLines = a.supportLines ?? getSupportLines({ lang })
   // フォームの回答に合う記事。直接開いた場合は出さない。
   const recommended = request ? recommendArticles(request) : null
+  // 相談先を求めたときは、電話窓口と「相談できる先」の記事を、ヒントより先に見せる
+  const referralFirst = request?.desiredSupport?.includes('professional_referral') ?? false
+  const safetyOnTop = a.safetyFirst || referralFirst
 
   return (
     <div>
@@ -56,36 +62,31 @@ export default function AdviceResult() {
               : 'lg:mx-auto lg:max-w-3xl'
           }`}
         >
-          {/* 詳しい内容に危険を示す言葉があったときは、無理に話さなくていい案内を
-              イントロのすぐ下（スマホでも記事・相談内容のまとめより上）に出す */}
-          {a.safetyFirst && (
-            <div className="space-y-3 lg:col-start-1 lg:row-start-1">
-              {a.safetyNote && (
-                <p className="text-sm leading-relaxed text-ink-soft">{a.safetyNote}</p>
-              )}
-              <SafetyCard safety={a.safety} lines={supportLines} />
-            </div>
-          )}
+          {/* 要点の枠（#226）は、イントロのすぐ下（ここ）に入れる */}
 
-          {/* サイドバー（PCでは右列・追従）。フォームから来たときだけ出す */}
-          {request && (
-            <aside className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-mx-1 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:px-1 lg:pb-1">
-              <DesiredSupportCard values={request.desiredSupport} />
-              <ArticleRecommendations result={recommended} />
-              <IntakeSummary
-                request={request}
-                onEdit={
-                  intake
-                    ? () => navigate('/consult', { state: { intake, step: 0 } })
-                    : undefined
-                }
-              />
-            </aside>
+          {/* 危険を示す言葉があったとき・相談先を求めたときは、無理に話さなくていい案内を
+              イントロのすぐ下（スマホでもアドバイス・記事・相談内容のまとめより上）に出す */}
+          {safetyOnTop && (
+            <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1">
+              <div className="space-y-3">
+                {a.safetyFirst && a.safetyNote && (
+                  <p className="text-sm leading-relaxed text-ink-soft">{a.safetyNote}</p>
+                )}
+                <SafetyCard safety={a.safety} lines={supportLines} />
+              </div>
+              {referralFirst && (
+                <ArticleRecommendations
+                  result={recommended}
+                  desiredSupport={request.desiredSupport}
+                  className="lg:hidden"
+                />
+              )}
+            </div>
           )}
 
           <div
             className={`[&>section:first-child]:pt-0 ${
-              a.safetyFirst
+              safetyOnTop
                 ? 'lg:col-start-1 lg:row-start-2'
                 : 'lg:col-start-1 lg:row-span-2 lg:row-start-1'
             }`}
@@ -124,7 +125,20 @@ export default function AdviceResult() {
               </AdviceCard>
             )}
 
-            {/* 3. 避けたい対応。面はグレー、注意の色は「避けたい」のラベルにだけ使う（取り消し線は使わない） */}
+            {/* 3. こんな返し方（コピー可能）。避けたい対応より先に、できることを見せる */}
+            <AdviceCard number={stepOf.tryReplies} title={a.tryReplies.title}>
+              <p className="mb-3 text-xs text-ink-faint">
+                {t('result.copyHint')}
+              </p>
+              <div className="space-y-2">
+                {a.tryReplies.items.map((text, i) => (
+                  <CopyableLine key={i} text={text} />
+                ))}
+              </div>
+              <ItemSources sources={a.tryReplies.sources ?? []} />
+            </AdviceCard>
+
+            {/* 4. 避けたい対応。面はグレー、注意の色は「避けたい」のラベルにだけ使う（取り消し線は使わない） */}
             <AdviceCard number={stepOf.avoid} title={a.avoid.title}>
               <ul className="space-y-2 rounded-xl bg-cream px-3.5 py-3">
                 {a.avoid.items.map((item, i) => (
@@ -138,19 +152,6 @@ export default function AdviceResult() {
               </ul>
               <p className="mt-3">{a.avoid.reason}</p>
               <ItemSources sources={a.avoid.sources ?? []} />
-            </AdviceCard>
-
-            {/* 4. こんな返し方（コピー可能） */}
-            <AdviceCard number={stepOf.tryReplies} title={a.tryReplies.title}>
-              <p className="mb-3 text-xs text-ink-faint">
-                {t('result.copyHint')}
-              </p>
-              <div className="space-y-2">
-                {a.tryReplies.items.map((text, i) => (
-                  <CopyableLine key={i} text={text} />
-                ))}
-              </div>
-              <ItemSources sources={a.tryReplies.sources ?? []} />
             </AdviceCard>
 
             {/* 5. 次に聞いてみる質問。持たないカードでは出さない */}
@@ -168,25 +169,51 @@ export default function AdviceResult() {
             {/* このヒントの参考にした情報。最後の枠のすぐ後ろ、安全の案内の前。空のときは何も出さない */}
             <AdviceSources sources={a.sources ?? []} />
 
-            {/* 6. 無理に話さなくていい（safetyFirst のときはイントロのすぐ下に出している） */}
-            {!a.safetyFirst && (
+            {/* 6. 無理に話さなくていい（危険を示す言葉があるとき・相談先を求めたときはイントロのすぐ下に出している） */}
+            {!safetyOnTop && (
               <div className="mt-6">
                 <SafetyCard safety={a.safety} lines={supportLines} />
               </div>
             )}
 
-            {/* フッター注記 */}
-            <p className="mt-6 text-[11px] leading-relaxed text-ink-faint">
+            {/* フッター注記（PC と、フォームの回答が無いとき）。スマホでフォームから来たときは、まとめの後ろに出す */}
+            <p className={`mt-6 text-[11px] leading-relaxed text-ink-faint ${request ? 'hidden lg:block' : ''}`}>
               {t('result.disclaimer')}
             </p>
           </div>
+
+          {/* サイドバー（PCでは右列・追従）。フォームから来たときだけ出す。スマホではアドバイスの後ろに並ぶ */}
+          {request && (
+            <aside className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-mx-1 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:px-1 lg:pb-1">
+              <ArticleRecommendations
+                result={recommended}
+                desiredSupport={request.desiredSupport}
+                className={referralFirst ? 'hidden lg:block' : ''}
+              />
+              {/* 相談内容のまとめ。最初は閉じていて、開くと中身と「内容を修正する」が出る */}
+              <IntakeSummary
+                request={request}
+                onEdit={
+                  intake
+                    ? () => navigate('/consult', { state: { intake, step: 0 } })
+                    : undefined
+                }
+              />
+            </aside>
+          )}
+
+          {request && (
+            <p className="text-[11px] leading-relaxed text-ink-faint lg:hidden">
+              {t('result.disclaimer')}
+            </p>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-// 無理に話さなくていいサイン。ふだんはアドバイスの最後、safetyFirst のときはイントロのすぐ下に出す。
+// 無理に話さなくていいサイン。ふだんはアドバイスの最後、危険を示す言葉があるとき・相談先を求めたときはイントロのすぐ下に出す。
 // 結果画面で面を囲むのはここだけ（淡いブランド色）。
 // lines は電話で相談できる窓口。危険を示す言葉がないときも、ここには常に出す。
 // safety.sources は、その番号を確かめたページ（buildAdvice() が lines に合わせて入れる）
