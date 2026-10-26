@@ -8,13 +8,6 @@
 
 import type { AdviceRequest, DataLang, Intake, LocalizedOption, Option, SummaryRow } from './types.ts'
 
-export const GENDERS: Option[] = [
-  { value: 'male', label: '男性', labelEn: 'Male' },
-  { value: 'female', label: '女性', labelEn: 'Female' },
-  { value: 'other', label: 'その他', labelEn: 'Other' },
-  { value: 'no_answer', label: '回答しない', labelEn: 'Prefer not to say' },
-]
-
 export const RELATIONSHIPS: Option[] = [
   { value: 'father', label: '父', labelEn: 'Father' },
   { value: 'mother', label: '母', labelEn: 'Mother' },
@@ -25,17 +18,6 @@ export const RELATIONSHIPS: Option[] = [
   { value: 'grandparent', label: '祖父母', labelEn: 'Grandparent' },
   { value: 'relative', label: '親戚', labelEn: 'Relative' },
   { value: 'other', label: 'その他', labelEn: 'Other' },
-]
-
-// いつ頃から気になっているか（おおまかな期間）
-export const DURATIONS: Option[] = [
-  { value: 'under_1_month', label: '最近（1か月未満）', labelEn: 'Recently (less than a month)' },
-  { value: '1_3_months', label: '1〜3か月くらい', labelEn: 'About 1–3 months' },
-  { value: 'about_6_months', label: '半年くらい', labelEn: 'About six months' },
-  { value: 'about_1_year', label: '1年くらい', labelEn: 'About a year' },
-  { value: '2_3_years', label: '2〜3年くらい', labelEn: 'About 2–3 years' },
-  { value: 'longer', label: 'それ以上', labelEn: 'Longer than that' },
-  { value: 'unsure', label: 'わからない', labelEn: 'Not sure' },
 ]
 
 export const TOPICS: Option[] = [
@@ -85,20 +67,12 @@ export const DESIRED_SUPPORT: Option[] = [
   { value: DESIRED_SUPPORT_UNSURE, label: 'わからない', labelEn: 'Not sure' },
 ]
 
-// その話をどのくらい強く信じているように見えるか（相談者本人の主観。医学的評価ではない）
-export const IMMERSION_MIN = 1
-export const IMMERSION_MAX = 10
-
 export const FREE_TEXT_MAX = 1000
 export const CONCERNS_OTHER_MAX = 200
 
 // フォームの入力状態。テキスト入力・selectは文字列、未回答は '' / null / []。
 export const initialIntake: Intake = {
-  userAge: '',
-  userGender: '',
   relationship: '',
-  duration: '',
-  immersionLevel: null,
   topics: [],
   concerns: [],
   concernsOther: '',
@@ -108,12 +82,6 @@ export const initialIntake: Intake = {
   freeText: '',
 }
 
-const toIntOrNull = (s: string | null | undefined, min: number, max: number) => {
-  if (s === '' || s == null) return null
-  const n = Number(s)
-  return Number.isInteger(n) && n >= min && n <= max ? n : null
-}
-
 // フォーム状態 → API送信用リクエスト。未回答は null / [] にそろえる。
 export function buildAdviceRequest(intake: Intake): AdviceRequest {
   const concernsOther = intake.concerns.includes('other')
@@ -121,11 +89,7 @@ export function buildAdviceRequest(intake: Intake): AdviceRequest {
     : null
 
   return {
-    userAge: toIntOrNull(intake.userAge, 1, 120),
-    userGender: intake.userGender || null,
     relationship: intake.relationship || null,
-    duration: intake.duration || null,
-    immersionLevel: intake.immersionLevel,
     topics: intake.topics,
     concerns: intake.concerns,
     concernsOther,
@@ -153,12 +117,7 @@ export const localizeOptions = (options: Option[], lang: DataLang = 'ja'): Local
 // 「相談内容のまとめ」の見出しと、値の書き方
 const SUMMARY_TEXT = {
   ja: {
-    age: 'あなたの年齢',
-    ageValue: (age: number) => `${age}歳`,
-    gender: 'あなたの性別',
     relationship: '相手との関係',
-    duration: '気になり始めた時期',
-    immersion: '信じている強さ（あなたの感じ方）',
     topics: 'どんな内容について',
     concerns: '困っていること',
     supportPerson: '周囲に相談できる人',
@@ -168,12 +127,7 @@ const SUMMARY_TEXT = {
     other: (text: string) => `（${text}）`,
   },
   en: {
-    age: 'Your age',
-    ageValue: (age: number) => `${age}`,
-    gender: 'Your gender',
     relationship: 'Your relationship with them',
-    duration: 'When it started to concern you',
-    immersion: 'How strongly they seem to believe it (your impression)',
     topics: 'What it is about',
     concerns: 'What is troubling you',
     supportPerson: 'Someone you can talk to',
@@ -195,14 +149,7 @@ export function summarizeRequest(req: AdviceRequest, lang: DataLang = 'ja'): Sum
     : null
 
   const rows: [string, string | null][] = [
-    [s.age, req.userAge != null ? s.ageValue(req.userAge) : null],
-    [s.gender, req.userGender && labelOf(GENDERS, req.userGender, lang)],
     [s.relationship, req.relationship && labelOf(RELATIONSHIPS, req.relationship, lang)],
-    [s.duration, req.duration && labelOf(DURATIONS, req.duration, lang)],
-    [
-      s.immersion,
-      req.immersionLevel != null ? `${req.immersionLevel} / ${IMMERSION_MAX}` : null,
-    ],
     [
       s.topics,
       req.topics?.length ? labelsOf(TOPICS, req.topics, lang).join(s.separator) : null,

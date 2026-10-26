@@ -105,8 +105,8 @@ const sectionOf = <T extends { title: string }>(
 
 // フォームの回答 → アドバイス。同じ回答なら必ず同じ結果を返す純関数。
 // request は相談フォームの buildAdviceRequest()（src/data/consultationIntake.ts）の戻り値:
-//   { userAge, userGender, relationship, duration, immersionLevel, topics,
-//     concerns, concernsOther, hasSupportPerson, desiredRelationship, desiredSupport, freeText }
+//   { relationship, topics, concerns, concernsOther, hasSupportPerson,
+//     desiredRelationship, desiredSupport, freeText }
 // lang は画面の言語。省くと日本語
 export function buildAdvice(request: RequestInput, lang: DataLang = 'ja'): Advice {
   const cardKey = selectCardKey(request)

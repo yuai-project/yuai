@@ -10,7 +10,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import ChoiceGroup from '../components/intake/ChoiceGroup'
 import FormField from '../components/intake/FormField'
-import ImmersionSlider from '../components/intake/ImmersionSlider'
 import SelectField from '../components/intake/SelectField'
 import StepProgress, { StepList } from '../components/intake/StepProgress'
 import {
@@ -19,9 +18,7 @@ import {
   DESIRED_RELATIONSHIP,
   DESIRED_SUPPORT,
   DESIRED_SUPPORT_UNSURE,
-  DURATIONS,
   FREE_TEXT_MAX,
-  GENDERS,
   RELATIONSHIPS,
   SUPPORT_PERSON,
   SUPPORT_PERSON_UNSURE,
@@ -43,9 +40,6 @@ const buttonBase =
   'flex min-h-12 min-w-0 items-center justify-center gap-1.5 rounded-xl px-4 py-3 text-center font-bold leading-snug transition active:scale-[0.98]'
 const primaryButton =
   'flex-[3_1_12rem] bg-brand text-brand-ink hover:bg-brand-400 lg:flex-[0_1_24rem]'
-
-// PC幅で2項目を横に並べる行。スマホでは縦に並び、読む順序は同じ。
-const pairRow = 'space-y-7 lg:grid lg:grid-cols-2 lg:gap-x-6 lg:space-y-0'
 
 // AI相談の入力フォーム（3ステップ）。送信内容は buildAdviceRequest() の形で getAdvice() に渡す。
 export default function Consultation() {
@@ -212,74 +206,23 @@ function StepAboutYou({ intake, update, relationshipRef, relationshipError }) {
         </p>
       </div>
 
-      <div className={pairRow}>
-        <FormField htmlFor="userAge" label={t('consult.age')}>
-          <div className="flex items-center gap-2">
-            <input
-              id="userAge"
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={3}
-              value={intake.userAge}
-              onChange={(e) => update({ userAge: e.target.value.replace(/\D/g, '') })}
-              placeholder={t('consult.agePlaceholder')}
-              className={`${inputClass} min-h-12 w-24 px-3.5 py-2.5`}
-            />
-            <span className="text-sm text-ink-soft">{t('consult.ageUnit')}</span>
-          </div>
-        </FormField>
-
-        <FormField htmlFor="userGender" label={t('consult.gender')}>
+      <div ref={relationshipRef} className="scroll-mt-24 lg:max-w-md">
+        <FormField
+          htmlFor="relationship"
+          label={t('consult.relationship')}
+          required
+          error={relationshipError}
+        >
           <SelectField
-            id="userGender"
-            options={localizeOptions(GENDERS, lang)}
-            value={intake.userGender}
-            onChange={(userGender) => update({ userGender })}
-          />
-        </FormField>
-      </div>
-
-      <div className={pairRow}>
-        <div ref={relationshipRef} className="scroll-mt-24">
-          <FormField
-            htmlFor="relationship"
-            label={t('consult.relationship')}
+            id="relationship"
             required
-            error={relationshipError}
-          >
-            <SelectField
-              id="relationship"
-              required
-              invalid={!!relationshipError}
-              options={localizeOptions(RELATIONSHIPS, lang)}
-              value={intake.relationship}
-              onChange={(relationship) => update({ relationship })}
-            />
-          </FormField>
-        </div>
-
-        <FormField htmlFor="duration" label={t('consult.duration')}>
-          <SelectField
-            id="duration"
-            options={localizeOptions(DURATIONS, lang)}
-            value={intake.duration}
-            onChange={(duration) => update({ duration })}
+            invalid={!!relationshipError}
+            options={localizeOptions(RELATIONSHIPS, lang)}
+            value={intake.relationship}
+            onChange={(relationship) => update({ relationship })}
           />
         </FormField>
       </div>
-
-      <FormField
-        id="immersion-label"
-        label={t('consult.immersion')}
-        hint={t('consult.immersionHint')}
-      >
-        <ImmersionSlider
-          labelledBy="immersion-label"
-          value={intake.immersionLevel}
-          onChange={(immersionLevel) => update({ immersionLevel })}
-        />
-      </FormField>
     </div>
   )
 }
