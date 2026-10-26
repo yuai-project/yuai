@@ -67,9 +67,9 @@ for (const row of picked) {
     if (drafted.notes) notes.push(`AI: ${drafted.notes}`)
   } else {
     // 仮の値で入れて paused にする。人が要約を書いて approved に戻す
-    drafted = { summary: '（要約はまだありません）', stance: 'neutral', burden: 'moderate', sourceType: 'media', medicalInfo: false, supportTypes: ['coping_tips'] }
+    drafted = { summary: '（要約はまだありません）', summaryEn: 'No summary yet.', stance: 'neutral', burden: 'moderate', sourceType: 'media', medicalInfo: false, supportTypes: ['coping_tips'] }
     status = 'paused'
-    notes.push(`${result.error}。要約・stance・burden・sourceType は仮の値なので、書いてから approved にする`)
+    notes.push(`${result.error}。要約・英語の要約・stance・burden・sourceType は仮の値なので、書いてから approved にする`)
   }
   if (tags.supportTypes.length === 0) {
     tags.supportTypes = drafted.supportTypes.slice(0, 2)
@@ -82,6 +82,7 @@ for (const row of picked) {
     title: row['タイトル'],
     publisher: row['発信元'],
     summary: drafted.summary,
+    summaryEn: drafted.summaryEn,
     ...tags,
     stance: drafted.stance,
     burden: drafted.burden,

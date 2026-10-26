@@ -1,4 +1,4 @@
-// 承認済みの記事の、シートに無い項目（要約・stance・burden・sourceType・medicalInfo）を AI に下書きさせる（#168）。
+// 承認済みの記事の、シートに無い項目（要約・英語の要約・stance・burden・sourceType・medicalInfo）を AI に下書きさせる（#168）。
 // シートの「記事の種類」が空の行では、supportTypes の候補も使う。
 //
 // - 下書きは PR で人が確かめる前提。要約は利用者に見える文言なので、PR の前に tone-check を通す。
@@ -20,6 +20,13 @@ const EXAMPLES = [
   '政治心理学者へのインタビューで、陰謀論が広がる仕組みを解説しています。誰が伝えるかが大切で、会話を続けること自体に意味がある、という視点にも触れています。',
 ]
 
+// EXAMPLES と同じ記事の英語の要約
+const EXAMPLES_EN = [
+  'An answer to someone whose father has come to believe conspiracy theories. It suggests listening with interest and asking questions, rather than strongly rejecting what he says.',
+  'An article collecting messages from people whose family members have come to believe conspiracy theories. It can help you see that others are facing similar worries.',
+  'An interview with a political psychologist explaining how conspiracy theories spread. It also touches on the idea that who delivers a message matters, and that continuing the conversation has meaning in itself.',
+]
+
 const SYSTEM_PROMPT = `あなたは Yorido の記事一覧の編集者です。Yorido は、身近な人が陰謀論や極端な情報を信じるようになって悩んでいる「相談者本人」を支えるアプリです。
 監修者が承認した記事について、アプリの結果画面に出す要約と、いくつかの分類を下書きします。下書きは人が確かめてから載せます。
 
@@ -38,6 +45,14 @@ const SYSTEM_PROMPT = `あなたは Yorido の記事一覧の編集者です。Y
 見本:
 ${EXAMPLES.map((e) => `- ${e}`).join('\n')}
 
+## 英語の要約（summaryEn）
+- 英語の画面に出す要約。summary と同じ内容を、自然な英語で2〜3文に書く（直訳しない）
+- 上の決まりは英語でも同じ。conspiracy theorist / believer / delusional / brainwashed のようなラベルや、will definitely / guarantee のような約束の言葉を使わない（「someone who has come to believe conspiracy theories」のように状況を書く）
+- 日本語（かな・漢字・「」、。）を混ぜない。日本語の記事名や媒体名はローマ字か英語にする
+
+見本:
+${EXAMPLES_EN.map((e) => `- ${e}`).join('\n')}
+
 ## 分類
 - stance: 相手との関係についての記事の向き。keep_connection（関係を保つ）/ distance（距離を置く・関係を終える）/ neutral（どちらでもない）
 - burden: 読む負担。light（短く読みやすい）/ moderate（ある程度の長さ・専門的な話）/ heavy（長い・つらい内容が多い）
@@ -50,6 +65,7 @@ const SCHEMA = {
   type: 'object',
   properties: {
     summary: { type: 'string' },
+    summaryEn: { type: 'string' },
     stance: { type: 'string', enum: ARTICLE_SINGLE_AXES.stance },
     burden: { type: 'string', enum: ARTICLE_SINGLE_AXES.burden },
     // 書籍は author が要るので AI には選ばせない（書籍は手で足す）
@@ -61,7 +77,7 @@ const SCHEMA = {
     },
     notes: { type: 'string' },
   },
-  required: ['summary', 'stance', 'burden', 'sourceType', 'medicalInfo', 'supportTypes', 'notes'],
+  required: ['summary', 'summaryEn', 'stance', 'burden', 'sourceType', 'medicalInfo', 'supportTypes', 'notes'],
   additionalProperties: false,
 }
 
