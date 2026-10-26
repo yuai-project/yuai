@@ -29,7 +29,6 @@ export const en: Messages = {
   'common.chooseAny': 'Choose as many as you like.',
   'common.notDiagnosisSkip':
     "This is not a diagnosis. You can skip any question you'd rather not answer.",
-  'common.skipOk': "You can skip any question you'd rather not answer.",
   'common.quoteOpen': '“',
   'common.quoteClose': '”',
   'common.parenOpen': ' (',
@@ -83,8 +82,10 @@ export const en: Messages = {
 
   // ---- 相談フォーム ----
   'consult.title': 'Tell us about your situation',
-  'consult.steps': ['About you and the other person', "What's troubling you now", 'What you would like from here'],
+  'consult.questionNames': ['Your relationship', 'What it is about', 'What is troubling you', 'Someone to talk to', 'Your relationship from here', 'Support you want', 'Details'],
   'consult.next': 'Next',
+  'consult.skip': 'Skip this question',
+  'consult.submitWithoutText': 'See tips without writing',
   'consult.submit': 'See tips',
   'consult.loading': 'Sorting through what you shared…',
   'consult.notDebateAfterName': ' is not a tool for winning arguments.',
@@ -94,6 +95,7 @@ export const en: Messages = {
     'If you answer a few questions, it becomes easier for us to suggest tips, helpful information, and places to turn for support that fit your situation.',
   'consult.introNote': 'This is not a diagnosis. Just answer what you can.',
   'consult.relationship': 'Your relationship with them',
+  'consult.chooseOne': 'Choose one.',
   'consult.topics': 'What is it about?',
   'consult.topicsHint': 'Choose as many as you like. This is not a judgment of whether the content is true.',
   'consult.concerns': 'What is troubling you?',
@@ -104,7 +106,9 @@ export const en: Messages = {
   'consult.desiredRelationshipHint':
     'Any choice is okay. Keeping some distance is also an important way to protect yourself.',
   'consult.desiredSupport': 'What kind of support are you looking for?',
+  'consult.or': 'or',
   'consult.freeText': 'Tell us a little more',
+  'consult.freeTextOptional': "It's okay to leave this blank.",
   'consult.privacyNote':
     'Please do not enter information that could identify someone (real names, addresses, workplaces, social media accounts, etc.).',
   'consult.freeTextPlaceholder': `Recently, my father has come to strongly believe some health information.
@@ -112,7 +116,7 @@ He gets upset when I disagree, so I don't know how to talk with him.
 I'm also feeling a little tired myself.`,
 
   // ---- 相談フォームの部品 ----
-  'steps.srPrefix': '{total} steps in total. Step ',
+  'steps.srPrefix': '{total} questions in total. Question ',
 
   // ---- 結果画面 ----
   'result.title': 'Tips for you',
