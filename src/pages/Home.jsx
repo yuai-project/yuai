@@ -32,9 +32,6 @@ export default function Home() {
                 </span>
               ))}
             </h1>
-            <p className="mt-3 text-base leading-relaxed [word-break:auto-phrase] lg:mt-5 lg:text-lg">
-              <Phrases phrases={t('app.taglinePhrases')} spaced={spaced} />
-            </p>
 
             {/* 白い面はボタンだけにする。ここも白いカードにすると、どこが押す場所か迷う（#204） */}
             <div className="mt-6 border-t border-brand-ink/30 pt-4 lg:mt-8 lg:max-w-md">
@@ -97,9 +94,6 @@ export default function Home() {
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-sm leading-relaxed text-ink-soft lg:mt-5">
-            {t('home.worriesFollow')}
-          </p>
         </section>
 
         {/* 控えめな共有 */}

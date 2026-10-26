@@ -14,10 +14,8 @@ export const ja = {
     ['陰謀論の', '話になると、'],
     ['大切な人と', 'すれ違って', 'しまう。'],
   ],
-  // タグライン（キャッチの下の一文）。共有するときの文は、これをつないだもの
-  'app.taglinePhrases': ['あなたに合う', 'ヒントと、', '相談先を。'],
   'app.description':
-    '陰謀論の話になると、大切な人とすれ違ってしまう。{name}は、あなたの状況に合わせて、関わり方のヒントと相談先を見つけるお手伝いをします。ひとりで抱え込まないために。',
+    '陰謀論の話になると、大切な人とすれ違ってしまう。{name}は、状況に合わせて関わり方のヒントと相談先を案内するサイトです。',
   'app.concept': '正しい情報を届ける前に、まず会話を終わらせない。',
 
   // ---- 共通 ----
@@ -61,8 +59,8 @@ export const ja = {
   'infoPages.about': ['運営に', 'ついて'],
 
   // ---- ホーム ----
-  'home.findsTitle': 'あなたの状況に合わせて見つかるもの',
-  'home.finds': ['関わり方のヒント', '近い状況の記事や本', '電話で相談できる窓口'],
+  'home.findsTitle': '答えた内容に合わせて出るもの',
+  'home.finds': ['関わり方のヒント', '近い状況の記事や本'],
   'home.start': '状況を入れてヒントをみる',
   'home.supportLead': 'ひとりで抱えきれないときは',
   'home.supportLink': '電話で相談できる窓口を見る',
@@ -72,8 +70,6 @@ export const ja = {
     '何を言えばいいか分からない',
     '自分まで疲れてしまった',
   ],
-  'home.worriesFollow':
-    'どれかひとつでも当てはまったら、まずは気持ちを整理するところから始めましょう。',
   'home.shareLead': '同じように悩んでいる人がいたら、このサイトを伝えることもできます。',
   'share.button': 'このサイトを伝える',
   'share.copied': 'URLをコピーしました',
@@ -87,7 +83,7 @@ export const ja = {
   'consult.skip': '答えずに次へ',
   'consult.submitWithoutText': '書かずにヒントをみる',
   'consult.submit': 'ヒントをみる',
-  'consult.loading': 'あなたの気持ちを整理しています…',
+  'consult.loading': 'ヒントを選んでいます…',
   // サービス名（APP.name）のすぐ後ろに続ける。名前と別の文字列のまま並べる（つなぐと文字の間隔が変わる）
   'consult.notDebateAfterName': 'は相手を論破するためのものではありません。',
   'consult.gentleSupport': 'あなたと大切な人の関係を、そっと支えます。',
@@ -123,18 +119,16 @@ export const ja = {
 
   // ---- 結果画面 ----
   'result.title': 'あなたへのヒント',
-  'result.intro':
-    'お話を受け止めました。すぐに全部を解決しようとしなくて大丈夫です。できそうなものから、ひとつずつ。',
   // 結果画面の最初の要点（#226）。危険を示す言葉があるときは出さない
-  'result.keyPoints.title': 'まずは、この3つだけ',
-  'result.keyPoints.lead': '全部読まなくても大丈夫です。詳しいことは、この下にあります。',
-  'result.keyPoints.forYou': 'あなた自身へ',
+  'result.keyPoints.title': 'まずはこの3つだけ',
+  'result.keyPoints.lead': '全部読まなくても大丈夫です。詳しくはこの下にあります。',
+  'result.keyPoints.forYou': 'あなた自身のこと',
   'result.keyPoints.reply': '使えそうな一言',
   'result.keyPoints.supportLine': '話せる先',
   // 読み上げ用。各項目のボタンの最後に付く
   'result.keyPoints.jumpHint': '（詳しい説明へ移動します）',
   'result.avoidLabel': '避けたい',
-  'result.copyHint': 'タップするとコピーできます。使えそうな言葉を選んでみてください。',
+  'result.copyHint': '使えそうな言葉をタップするとコピーできます。',
   'result.phoneLines': '電話で相談できる窓口',
   // 英語の画面で crisis のときだけ、窓口の一覧の上に出す（#220）。日本語の画面では出さない
   'lateNight.note':
@@ -146,8 +140,6 @@ export const ja = {
   'lateNight.emergencyEnd': 'に電話してください。',
   'lateNight.callLabel': '{number}に電話をかける',
   'result.sourcesTitle': 'このヒントの参考にした情報',
-  'result.disclaimer':
-    'このヒントは一般的な情報提供であり、医療・法律・緊急支援を提供するものではありません。',
   'sources.label': '参考：',
   // 見た目はドメインだけのリンクの読み上げ。記事のタイトルも伝える
   'sources.linkWithTitle': '（{title}。外部サイトが新しいタブで開きます）',
@@ -155,7 +147,7 @@ export const ja = {
   'sources.hideMore': 'ほかに参考にした記事 {count} 件の一覧を閉じる',
   'articles.title': '近い状況の記事や本',
   'articles.fallbackNote':
-    'まずはこちらから。気になるものがあれば、読めそうなときに開いてみてください。外部のサイトが開きます。',
+    '気になるものがあれば、読めそうなときに開いてみてください。外部のサイトが開きます。',
   'articles.externalNote': '外部のサイトが開きます。',
   // 相談フォームで選んだ「求めるサポート」の名前を入れる（#225）
   'articles.matchedNote': '{labels}も手がかりに選びました。外部のサイトが開きます。',

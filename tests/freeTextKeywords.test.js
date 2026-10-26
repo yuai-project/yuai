@@ -45,7 +45,7 @@ const recommend = (intake) =>
 
 // キーワードを含まない、ふつうの文
 const PLAIN = '最近、実家に帰ると話題に困ります。'
-const DANGER_NOTE = '詳しい内容から、あなたの安全が心配な状況かもしれないと考えました'
+const DANGER_NOTE = '詳しい内容に、あなたの安全が心配になる言葉がありました'
 // 「怖い」を外した分を補う言葉
 const ADDED_DANGER_KEYWORDS = ['家に帰れない', '帰りたくない']
 
@@ -174,17 +174,17 @@ describe('アドバイスへの反映', () => {
     assert.deepEqual(advice.forYou, adviceOf({ concerns: ['self_exhausted'] }).forYou)
     assert.deepEqual(advice.avoid, adviceOf({ concerns: ['self_exhausted'] }).avoid)
     assert.deepEqual(advice.freeTextNotes, [
-      '詳しい内容から「自分自身が疲れている」「同じ話を何度もされる」も合わせて考えました',
+      '詳しい内容から読み取った「自分自身が疲れている」「同じ話を何度もされる」も合わせています',
     ])
   })
 
-  test('読み取っただけの困りごとには「選んだあなたへ」と出さない', () => {
+  test('読み取っただけの困りごとには「〜の回答に合わせています」と出さない', () => {
     assert.equal(adviceOf({ freeText: '疲れました' }).matchedLabel, null)
     assert.equal(adviceOf({ freeText: 'すぐ怒るんです' }).matchedLabel, null)
     // フォームで選んでいれば、今までどおり出す
     assert.equal(
       adviceOf({ concerns: ['self_exhausted'], freeText: '疲れました' }).matchedLabel,
-      '「自分自身が疲れている」を選んだあなたへ',
+      '「自分自身が疲れている」の回答に合わせています',
     )
   })
 
@@ -279,7 +279,7 @@ describe('アドバイスへの反映', () => {
     assert.equal(advice.safetyFirst, true)
     assert.equal(advice.safetyNote, DANGER_NOTE)
     assert.deepEqual(advice.freeTextNotes, [
-      '詳しい内容から「お金の使い方が心配」も合わせて考えました',
+      '詳しい内容から読み取った「お金の使い方が心配」も合わせています',
     ])
   })
 
@@ -513,7 +513,7 @@ describe('英語の困りごとのキーワード', () => {
     assert.deepEqual(mergeFreeText(request).inferredConcerns, ['self_exhausted', 'sends_lots_of_info'])
     assert.equal(selectCardKey(request), 'exhausted')
     assert.deepEqual(buildAdvice(request, 'ja').freeTextNotes, [
-      `詳しい内容から「${labelOf(CONCERNS, 'self_exhausted')}」「${labelOf(CONCERNS, 'sends_lots_of_info')}」も合わせて考えました`,
+      `詳しい内容から読み取った「${labelOf(CONCERNS, 'self_exhausted')}」「${labelOf(CONCERNS, 'sends_lots_of_info')}」も合わせています`,
     ])
     assert.match(buildAdvice(request, 'en').freeTextNotes[0], /worn out myself.*send me a lot of information/)
   })

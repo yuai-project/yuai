@@ -16,7 +16,7 @@ export default function ShareSiteButton() {
       window.matchMedia('(pointer: coarse)').matches
     if (canShare) {
       try {
-        await navigator.share({ title: APP.name, text: joinPhrases(lang, t('app.taglinePhrases')), url })
+        await navigator.share({ title: APP.name, text: joinPhrases(lang, t('app.catchcopy').flat()), url })
         return
       } catch (e) {
         // 共有画面を閉じただけのときは何もしない

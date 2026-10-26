@@ -66,7 +66,7 @@ export type CardKey = 'default' | 'angry' | 'exhausted' | 'distance'
 // 見出しの決まっている枠（SECTION_TITLES のキー）
 export type SectionKey = 'avoid' | 'tryReplies' | 'askNext'
 
-// 1. まず、あなた自身へ
+// 1. あなた自身のこと
 export type ForYouSection = { title: string; body: string }
 
 // 人が書いた 1. の文章（adviceCards.ts の FOR_YOU）。

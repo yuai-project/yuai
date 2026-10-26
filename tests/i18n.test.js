@@ -88,7 +88,7 @@ describe('辞書（ja と en）', () => {
 
   test('一覧の項目の数が同じ（よくある質問・ご利用にあたって・プライバシーポリシーなどの約束を、日英で揃える）', () => {
     // 文節（改行してよい位置）で区切った配列は、言語ごとに区切り方が違ってよい
-    const PHRASES = /^(app\.catchcopy|app\.taglinePhrases|infoPages\.|supportPage\.introPhrases)/
+    const PHRASES = /^(app\.catchcopy|infoPages\.|supportPage\.introPhrases)/
     for (const key of Object.keys(ja)) {
       if (!Array.isArray(ja[key]) || PHRASES.test(key)) continue
       assert.equal(en[key].length, ja[key].length, key)
@@ -159,11 +159,8 @@ describe('translate', () => {
   })
 
   test('文節をつなぐ: 日本語は詰め、英語は空白', () => {
-    assert.equal(joinPhrases('ja', ja['app.taglinePhrases']), 'あなたに合うヒントと、相談先を。')
-    assert.equal(
-      joinPhrases('en', en['app.taglinePhrases']),
-      'Tips that fit your situation, and places to turn for support.',
-    )
+    assert.equal(joinPhrases('ja', ja['app.catchcopy'].flat()), '陰謀論の話になると、大切な人とすれ違ってしまう。')
+    assert.equal(joinPhrases('en', ['Tips that fit,', 'your situation.']), 'Tips that fit, your situation.')
   })
 })
 
