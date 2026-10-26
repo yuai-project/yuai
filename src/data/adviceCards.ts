@@ -4,7 +4,7 @@
 // 注意: 文章は下書きで、チーム・専門家の確認前。
 // 相手との関係（父・母など）は誰が選んでも合うように、続柄を文章に入れない。
 
-import type { AdviceCard, CardKey, ForYouSection, SafetyContent, SectionKey } from './types.ts'
+import type { AdviceCard, CardKey, ForYouCard, SafetyContent, SectionKey } from './types.ts'
 
 // 各枠の見出し。カード側に title があればそちらを優先する。
 export const SECTION_TITLES: Record<SectionKey, string> = {
@@ -13,24 +13,29 @@ export const SECTION_TITLES: Record<SectionKey, string> = {
   askNext: '次に聞いてみる質問',
 }
 
-// 1. まず、あなた自身へ。default 以外は、専用の文章があるカードだけ
-export const FOR_YOU: { default: ForYouSection } & Partial<Record<CardKey, ForYouSection>> = {
+// 1. まず、あなた自身へ。default 以外は、専用の文章があるカードだけ。
+// keyPoint は結果画面の最初の「まずは、この3つだけ」に出す一文（#226）。body から抜き出す（新しい表現は足さない）
+export const FOR_YOU: { default: ForYouCard } & Partial<Record<CardKey, ForYouCard>> = {
   default: {
     title: 'まず、あなた自身へ',
     body: '相手の考えを変える責任を、あなた一人で背負う必要はありません。会話を続けることがつらいときは、少し距離を取ることも大切な選択肢です。まずは、ここまで向き合ってきたご自身をねぎらってあげてください。',
+    keyPoint: '相手の考えを変える責任を、あなた一人で背負う必要はありません。',
   },
   exhausted: {
     title: 'まず、あなた自身へ',
     body: 'ここまで向き合ってきたこと自体が、とても大きなことです。疲れを感じているなら、まずはあなたが休むことを優先して大丈夫です。話す時間を減らすことは、関係をあきらめることではありません。',
+    keyPoint: 'まずは、あなたが休むことを優先して大丈夫です。',
   },
   distance: {
     title: 'まず、あなた自身へ',
     body: '距離を置きたいと感じるのは、自然なことです。自分を守るための距離は、相手を見捨てることとは違います。無理に今までどおりでいようとしなくて大丈夫です。',
+    keyPoint: '自分を守るための距離は、相手を見捨てることとは違います。',
   },
 }
 
 // 3〜5. 避けたい対応 / 返し方 / 次に聞いてみる質問。
 // askNext を持たないカードは、その枠ごと画面に出さない。
+// 返し方（tryReplies）の1つ目は「まずは、この3つだけ」にも出すので、一番やさしく使いやすいものを先頭に置く（#226）。
 //
 // sources: その項目の本文を裏づけている記事の ID（0〜3件。#156・#213）。
 // 画面では項目のすぐ下に小さなリンクで出し、カード全体の分を「このヒントの参考にした情報」にまとめて出す。
@@ -53,10 +58,10 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
     },
     tryReplies: {
       items: [
+        'そう感じるくらい、心配なことがあるんだね。',
         'それを知ったきっかけって、何だったの？',
         'その話の、どんなところが一番気になってる？',
         'よかったら、一緒に情報源を確認してみてもいい？',
-        'そう感じるくらい、心配なことがあるんだね。',
       ],
       // r20: どこから情報を得たのかを見つける／奥にある心配に耳を傾ける
       // r11: 話してくれた心配事を復唱して、聞いていることを示す

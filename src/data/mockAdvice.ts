@@ -14,6 +14,10 @@
 //   askNext            5. 次に聞いてみる質問            { title, items[], sources[] } | null
 //   safety             6. 無理に話さなくていいサイン     { title, signs[], body, sources[] }
 //
+// 6つの枠の外に keyPoints（結果画面の最初に出す「まずは、この3つだけ」。#226）を持つ。
+// 中身は 1. の要の一文（FOR_YOU の keyPoint）・4. の1つ目・電話窓口の1つ目で、6つの枠などから取る。
+// AI を足すときも、keyPoints は AI に書かせず、ここで組み立てる。
+//
 // sources[] はその項目の出典（{ id, title, url, domain }）。AI を足すときも、AI には作らせず
 // adviceCards.ts / supportLines.ts の人が確かめた ID から入れる（#213）。
 //
@@ -29,9 +33,11 @@ import { ADVICE_CARDS_EN, FOR_YOU_EN, SAFETY_EN, SECTION_TITLES_EN } from './adv
 import { mergeSources, resolveSources, supportLineSources } from './adviceSources.ts'
 import { CONCERNS, DESIRED_RELATIONSHIP, labelOf } from './consultationIntake.ts'
 import { mergeFreeText } from './freeTextKeywords.ts'
-import { getSupportLines } from './supportLines.ts'
+import { getSupportLines, supportLineText } from './supportLines.ts'
 import type {
   Advice,
+  ForYouCard,
+  KeyPoints,
   AdviceRequest,
   CardKey,
   CardSection,
@@ -40,6 +46,7 @@ import type {
   MergedFreeText,
   RequestInput,
   SectionKey,
+  SupportLine,
 } from './types.ts'
 
 const DISTANCE_VALUES = ['some_distance', 'more_distance']
@@ -88,6 +95,20 @@ function freeTextNotesOf({ inferredConcerns }: MergedFreeText, lang: DataLang): 
   return [`詳しい内容から${labels}も合わせて考えました`]
 }
 
+// 「まずは、この3つだけ」（#226）。詳しい内容に危険を示す言葉があるとき（danger）は、
+// 相手への一言を勧める場面ではないので出さない（null）。安全の案内を一番上に出す
+function keyPointsOf(
+  danger: boolean,
+  forYou: ForYouCard,
+  reply: string,
+  [line]: SupportLine[],
+  lang: DataLang,
+): KeyPoints | null {
+  if (danger || !line) return null
+  const { name, note } = supportLineText(line, lang)
+  return { forYou: forYou.keyPoint, reply, supportLine: { id: line.id, name, tel: line.tel, note } }
+}
+
 // カードの1項目 → 画面に出す形。カード側に title があればそちらを優先する。
 // 文章は lang に合わせて選び（英語は en の文章）、sources（記事の ID）は日本語のカードのものを使う。
 // sources は、その人に合わない記事を外して、画面に出す形にする
@@ -124,9 +145,14 @@ export function buildAdvice(request: RequestInput, lang: DataLang = 'ja'): Advic
     card.askNext && cardEn.askNext
       ? sectionOf('askNext', card.askNext, cardEn.askNext, request, lang)
       : null
-  const forYou = lang === 'en' ? FOR_YOU_EN : FOR_YOU
+  // angry に専用の文章はないので default を使う
+  const forYouCards = lang === 'en' ? FOR_YOU_EN : FOR_YOU
+  const forYouCard = forYouCards[cardKey] ?? forYouCards.default
+  const { keyPoint: _keyPoint, ...forYou } = forYouCard
 
   return {
+    // 「まずは、この3つだけ」（6つの枠の外。画面ではイントロのすぐ下に出す）。危険を示す言葉があるときは null
+    keyPoints: keyPointsOf(freeText.danger, forYouCard, tryReplies.items[0], supportLines, lang),
     // どの回答に合わせたか（6つの枠の外。画面ではアドバイスの先頭に出す）
     matchedLabel: matchedLabelOf(cardKey, request, lang),
     // 詳しい内容から読み取った困りごと（6つの枠の外。matchedLabel の下に出す）
@@ -140,8 +166,7 @@ export function buildAdvice(request: RequestInput, lang: DataLang = 'ja'): Advic
     // 消費者ホットラインは、「お金の使い方が心配」を選んだか、詳しい内容から読み取ったときだけ
     supportLines,
 
-    // angry に専用の文章はないので default を使う
-    forYou: forYou[cardKey] ?? forYou.default,
+    forYou,
     whatMayBeHappening: null,
     // avoid / tryReplies / askNext の sources は、その項目を裏づけている記事。[{ id, title, url, domain }]。
     // 推薦と同じ入口の絞り込みで、その人に合わない記事（関係・話題が合わないなど）は外す。

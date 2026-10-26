@@ -6,7 +6,7 @@
 //   変えられると約束しない・無理に話さなくていい逃げ道を残す）
 // - 相手との関係（father / mother など）は誰が選んでも合うように、文章に入れない（they / them を使う）
 
-import type { AdviceCardText, CardKey, ForYouSection, SafetyContent, SectionKey } from './types.ts'
+import type { AdviceCardText, CardKey, ForYouCard, SafetyContent, SectionKey } from './types.ts'
 
 export const SECTION_TITLES_EN: Record<SectionKey, string> = {
   avoid: 'Responses you might want to avoid',
@@ -14,18 +14,21 @@ export const SECTION_TITLES_EN: Record<SectionKey, string> = {
   askNext: 'Questions you could ask next',
 }
 
-export const FOR_YOU_EN: { default: ForYouSection } & Partial<Record<CardKey, ForYouSection>> = {
+export const FOR_YOU_EN: { default: ForYouCard } & Partial<Record<CardKey, ForYouCard>> = {
   default: {
     title: 'First, for you',
     body: "You don't have to carry the responsibility of changing their mind on your own. When it is hard to keep talking, stepping back a little is also an important choice. First, please take a moment to appreciate yourself for facing this so far.",
+    keyPoint: "You don't have to carry the responsibility of changing their mind on your own.",
   },
   exhausted: {
     title: 'First, for you',
     body: 'Having faced this so far is a big thing in itself. If you are feeling tired, it is okay to put your own rest first. Spending less time talking does not mean giving up on the relationship.',
+    keyPoint: 'It is okay to put your own rest first.',
   },
   distance: {
     title: 'First, for you',
     body: "Wanting some distance is a natural feeling. Keeping distance to protect yourself is not the same as abandoning them. You don't have to force yourself to keep things the way they were.",
+    keyPoint: 'Keeping distance to protect yourself is not the same as abandoning them.',
   },
 }
 
@@ -42,10 +45,10 @@ export const ADVICE_CARDS_EN: Record<CardKey, AdviceCardText> = {
     },
     tryReplies: {
       items: [
+        'It sounds like something is worrying you enough to feel that way.',
         'How did you first come across that?',
         'What part of it concerns you the most?',
         "If you're okay with it, could we look at where the information came from together?",
-        'It sounds like something is worrying you enough to feel that way.',
       ],
     },
     askNext: {

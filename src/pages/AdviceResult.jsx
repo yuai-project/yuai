@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react'
+import { ChevronDown, ExternalLink } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AdviceCard from '../components/AdviceCard'
 import ArticleRecommendations from '../components/ArticleRecommendations'
@@ -15,8 +15,23 @@ import { useI18n } from '../i18n/useI18n'
 // 番号を振る枠（表示順）。安全の案内には番号を振らない。
 const STEP_SECTIONS = ['forYou', 'whatMayBeHappening', 'tryReplies', 'avoid', 'askNext']
 
+// 左列（PC）に縦に積むもの（要点・上に出す安全の案内・アドバイス）の数 → PC のグリッドでの置き場所。
+// サイドバーは左列の行をすべてまたぐ
+const LG_LAYOUT = {
+  1: { grid: 'lg:grid-rows-[auto_1fr]', rows: ['lg:row-span-2 lg:row-start-1'], aside: 'lg:row-span-2' },
+  2: { grid: 'lg:grid-rows-[auto_1fr]', rows: ['lg:row-start-1', 'lg:row-start-2'], aside: 'lg:row-span-2' },
+  3: {
+    grid: 'lg:grid-rows-[auto_auto_1fr]',
+    rows: ['lg:row-start-1', 'lg:row-start-2', 'lg:row-start-3'],
+    aside: 'lg:row-span-3',
+  },
+}
+
+// 「まずは、この3つだけ」の各項目から移動する先（#226）
+const KEY_POINT_TARGETS = { forYou: 'for-you', reply: 'try-replies', supportLine: 'phone-lines' }
+
 // 上の帯（ブランド色）にイントロ。その下は、
-// スマホ: アドバイス → 安全の案内 → 記事 → 相談内容のまとめ（閉じた状態）の1カラム（#225）。
+// スマホ: 要点（まずは、この3つだけ。#226）→ アドバイス → 安全の案内 → 記事 → 相談内容のまとめ（閉じた状態）の1カラム（#225）。
 //   危険を示す言葉があるときは、安全の案内をイントロのすぐ下に出す。
 //   相談先を求めたとき（professional_referral）は、安全の案内と記事をアドバイスより上に出す。
 // PC: 左2/3にアドバイス、右1/3に 記事/まとめ の追従サイドバー。
@@ -42,6 +57,13 @@ export default function AdviceResult() {
   // 相談先を求めたときは、電話窓口と「相談できる先」の記事を、ヒントより先に見せる
   const referralFirst = request?.desiredSupport?.includes('professional_referral') ?? false
   const safetyOnTop = a.safetyFirst || referralFirst
+  // 要点は、危険を示す言葉があるときは buildAdvice() が null にしている
+  const keyPoints = a.keyPoints ?? null
+  const lg = LG_LAYOUT[1 + (keyPoints ? 1 : 0) + (safetyOnTop ? 1 : 0)]
+  const lgRows = [...lg.rows]
+  const keyPointsRow = keyPoints ? lgRows.shift() : ''
+  const safetyRow = safetyOnTop ? lgRows.shift() : ''
+  const adviceRow = lgRows.shift()
 
   return (
     <div>
@@ -58,16 +80,17 @@ export default function AdviceResult() {
         <div
           className={`flex flex-col gap-6 ${
             request
-              ? 'lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-6'
+              ? `lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] ${lg.grid} lg:gap-x-12 lg:gap-y-6`
               : 'lg:mx-auto lg:max-w-3xl'
           }`}
         >
-          {/* 要点の枠（#226）は、イントロのすぐ下（ここ）に入れる */}
+          {/* まずは、この3つだけ（#226）。全部読まなくても、ここだけ持ち帰れば閉じてよい形にする */}
+          {keyPoints && <KeyPointsCard points={keyPoints} className={`lg:col-start-1 ${keyPointsRow}`} />}
 
           {/* 危険を示す言葉があったとき・相談先を求めたときは、無理に話さなくていい案内を
               イントロのすぐ下（スマホでもアドバイス・記事・相談内容のまとめより上）に出す */}
           {safetyOnTop && (
-            <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1">
+            <div className={`flex flex-col gap-6 lg:col-start-1 ${safetyRow}`}>
               <div className="space-y-3">
                 {a.safetyFirst && a.safetyNote && (
                   <p className="text-sm leading-relaxed text-ink-soft">{a.safetyNote}</p>
@@ -85,11 +108,7 @@ export default function AdviceResult() {
           )}
 
           <div
-            className={`[&>section:first-child]:pt-0 ${
-              safetyOnTop
-                ? 'lg:col-start-1 lg:row-start-2'
-                : 'lg:col-start-1 lg:row-span-2 lg:row-start-1'
-            }`}
+            className={`[&>section:first-child]:pt-0 lg:col-start-1 ${adviceRow}`}
           >
             {/* どの回答に合わせたか */}
             {a.matchedLabel && (
@@ -104,7 +123,7 @@ export default function AdviceResult() {
             ))}
 
             {/* 1. まず、あなた自身へ */}
-            <AdviceCard number={stepOf.forYou} title={a.forYou.title}>
+            <AdviceCard id={KEY_POINT_TARGETS.forYou} number={stepOf.forYou} title={a.forYou.title}>
               <p>{a.forYou.body}</p>
             </AdviceCard>
 
@@ -126,7 +145,7 @@ export default function AdviceResult() {
             )}
 
             {/* 3. こんな返し方（コピー可能）。避けたい対応より先に、できることを見せる */}
-            <AdviceCard number={stepOf.tryReplies} title={a.tryReplies.title}>
+            <AdviceCard id={KEY_POINT_TARGETS.reply} number={stepOf.tryReplies} title={a.tryReplies.title}>
               <p className="mb-3 text-xs text-ink-faint">
                 {t('result.copyHint')}
               </p>
@@ -184,7 +203,7 @@ export default function AdviceResult() {
 
           {/* サイドバー（PCでは右列・追従）。フォームから来たときだけ出す。スマホではアドバイスの後ろに並ぶ */}
           {request && (
-            <aside className="space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:-mx-1 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:px-1 lg:pb-1">
+            <aside className={`space-y-4 lg:sticky lg:top-24 lg:col-start-2 ${lg.aside} lg:row-start-1 lg:-mx-1 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:px-1 lg:pb-1`}>
               <ArticleRecommendations
                 result={recommended}
                 desiredSupport={request.desiredSupport}
@@ -233,11 +252,85 @@ function SafetyCard({ safety, lines }) {
         ))}
       </ul>
       <p className="mt-3 text-sm leading-relaxed text-ink-soft">{safety.body}</p>
-      <h3 className="mt-5 text-sm font-bold text-brand-700">{t('result.phoneLines')}</h3>
+      {/* 「まずは、この3つだけ」の「話せる先」から移動してくる先（#226） */}
+      <h3
+        id={KEY_POINT_TARGETS.supportLine}
+        tabIndex={-1}
+        className="mt-5 scroll-mt-16 text-sm font-bold text-brand-700 focus:outline-none lg:scroll-mt-6"
+      >
+        {t('result.phoneLines')}
+      </h3>
       {needsLateNightNote(lines, lang) && <LateNightNote />}
       <SupportLineList lines={lines} />
       {/* 番号を確かめたページ */}
       <ItemSources sources={safety.sources ?? []} />
+    </section>
+  )
+}
+
+// 結果画面の最初に出す「まずは、この3つだけ」（#226）。
+// 1. の要の一文・返し方の1つ目・電話窓口の1つ目。押すと、ページ内の詳しい部分へ移動する。
+// 面の色は付けず（結果画面で面を塗るのは避けたい・安全の案内だけ）、罫線で囲む。
+// 移動は <a href="#…"> ではなくボタンで行う。ハッシュで移動すると履歴の state（フォームの回答）が消えるため
+function KeyPointsCard({ points, className = '' }) {
+  const { t } = useI18n()
+  const jump = (key) => {
+    const target = document.getElementById(KEY_POINT_TARGETS[key])
+    if (!target) return
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+    // 読み上げ・キーボードの位置も移す
+    target.focus({ preventScroll: true })
+  }
+  const { name, tel, note } = points.supportLine
+  const items = [
+    { key: 'forYou', body: points.forYou },
+    { key: 'reply', body: <>{t('common.quoteOpen')}{points.reply}{t('common.quoteClose')}</> },
+    {
+      key: 'supportLine',
+      body: (
+        <>
+          {/* 窓口の名前は1行に置き、番号と（無料・24時間）はその下に並べる。狭い幅でも名前の途中で折り返さない */}
+          <span className="block">{name}</span>
+          <span className="flex flex-wrap items-baseline gap-x-2">
+            <span className="whitespace-nowrap font-bold tabular-nums">{tel}</span>
+            {note && (
+              <span className="text-xs text-ink-soft">
+                {t('common.parenOpen')}{note}{t('common.parenClose')}
+              </span>
+            )}
+          </span>
+        </>
+      ),
+    },
+  ]
+  return (
+    <section aria-labelledby="key-points-title" className={`rounded-xl border border-brand-200 px-4 pb-2 pt-4 lg:px-6 lg:pt-5 ${className}`}>
+      <h2 id="key-points-title" className="text-base font-bold leading-snug text-brand-700 lg:text-lg">
+        {t('result.keyPoints.title')}
+      </h2>
+      <p className="mt-1 text-xs leading-relaxed text-ink-soft lg:text-sm">{t('result.keyPoints.lead')}</p>
+      <ol className="mt-2">
+        {items.map(({ key, body }, i) => (
+          <li key={key} className="border-t border-line first:border-t-0">
+            <button
+              type="button"
+              onClick={() => jump(key)}
+              className="flex w-full items-start gap-3 rounded-lg py-3 text-left transition hover:bg-brand-50"
+            >
+              <span className="mt-px shrink-0 text-sm font-bold tabular-nums text-brand-700">{i + 1}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-bold text-brand-700">{t(`result.keyPoints.${key}`)}</span>
+                <span className="mt-0.5 block text-sm leading-relaxed text-ink [word-break:auto-phrase] lg:text-base">
+                  {body}
+                </span>
+                <span className="sr-only">{t('result.keyPoints.jumpHint')}</span>
+              </span>
+              <ChevronDown size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-brand-600" />
+            </button>
+          </li>
+        ))}
+      </ol>
     </section>
   )
 }

@@ -69,6 +69,21 @@ export type SectionKey = 'avoid' | 'tryReplies' | 'askNext'
 // 1. まず、あなた自身へ
 export type ForYouSection = { title: string; body: string }
 
+// 人が書いた 1. の文章（adviceCards.ts の FOR_YOU）。
+// keyPoint は「まずは、この3つだけ」に出す、body から抜き出した要の一文（#226）。画面の 1. には出さない
+export type ForYouCard = ForYouSection & { keyPoint: string }
+
+// 結果画面の最初に出す「まずは、この3つだけ」（#226）。6つの枠の外。
+// どれも6つの枠などにある文章から取る（新しい文章は作らない）
+export type KeyPoints = {
+  // 1. の keyPoint
+  forYou: string
+  // 4. こんな返し方の1つ目
+  reply: string
+  // 電話で相談できる窓口の1つ目（supportLines の先頭。画面の言語の文言）
+  supportLine: { id: string; name: string; tel: string; note: string }
+}
+
 // 2. 今起きていること。AI を足すまでは常に null
 export type WhatMayBeHappeningSection = {
   title: string
@@ -118,6 +133,8 @@ export type AdviceCard = {
 // null の枠は画面に出さない
 export type Advice = {
   // ---- 6つの枠の外 ----
+  // 「まずは、この3つだけ」。safetyFirst のときは null（出さない）
+  keyPoints: KeyPoints | null
   matchedLabel: string | null
   freeTextNotes: string[]
   safetyFirst: boolean
