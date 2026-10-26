@@ -17,11 +17,7 @@ export type LocalizedOption = { value: string; label: string }
 
 // フォームの入力状態。テキスト入力・select は文字列、未回答は '' / null / []
 export type Intake = {
-  userAge: string
-  userGender: string
   relationship: string
-  duration: string
-  immersionLevel: number | null
   topics: string[]
   concerns: string[]
   concernsOther: string
@@ -33,11 +29,7 @@ export type Intake = {
 
 // API に送るリクエスト（buildAdviceRequest() の戻り値）。未回答は null / []
 export type AdviceRequest = {
-  userAge: number | null
-  userGender: string | null
   relationship: string | null
-  duration: string | null
-  immersionLevel: number | null
   topics: string[]
   concerns: string[]
   concernsOther: string | null

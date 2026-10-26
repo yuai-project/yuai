@@ -88,7 +88,7 @@ describe('辞書（ja と en）', () => {
 
   test('一覧の項目の数が同じ（よくある質問・ご利用にあたって・プライバシーポリシーなどの約束を、日英で揃える）', () => {
     // 文節（改行してよい位置）で区切った配列は、言語ごとに区切り方が違ってよい
-    const PHRASES = /^(app\.catchcopy|app\.taglinePhrases|infoPages\.|immersion\.(low|high)|supportPage\.introPhrases)/
+    const PHRASES = /^(app\.catchcopy|app\.taglinePhrases|infoPages\.|supportPage\.introPhrases)/
     for (const key of Object.keys(ja)) {
       if (!Array.isArray(ja[key]) || PHRASES.test(key)) continue
       assert.equal(en[key].length, ja[key].length, key)
@@ -174,7 +174,7 @@ describe('画面のコードで使っているキーが、辞書にある', () =
       return statSync(path).isDirectory() ? files(path) : /\.(jsx?|tsx?)$/.test(name) ? [path] : []
     })
   // t('key') / t("key") / t(cond ? 'a' : 'b') / key: 'infoPages.faq' の形で書かれたキー
-  const KEY = /['"]((?:app|common|pageTitle|siteHeader|footer|language|infoPages|home|share|consult|steps|immersion|result|sources|articles|desiredSupport|intakeSummary|supportLines|lateNight|faq|terms|privacy|about|supportPage|infoPage)\.[\w.]+)['"]/g
+  const KEY = /['"]((?:app|common|pageTitle|siteHeader|footer|language|infoPages|home|share|consult|steps|result|sources|articles|desiredSupport|intakeSummary|supportLines|lateNight|faq|terms|privacy|about|supportPage|infoPage)\.[\w.]+)['"]/g
 
   test('src/ の中のキーがすべて ja にある', () => {
     const used = new Set()

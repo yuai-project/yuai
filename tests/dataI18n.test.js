@@ -17,8 +17,6 @@ import {
   CONCERNS,
   DESIRED_RELATIONSHIP,
   DESIRED_SUPPORT,
-  DURATIONS,
-  GENDERS,
   RELATIONSHIPS,
   SUPPORT_PERSON,
   TOPICS,
@@ -63,9 +61,7 @@ const PROMISES = /\b(will definitely|guarantee[sd]?|always works|for sure|will c
 const KINSHIP = /\b(father|mother|dad|mom|parents?|son|daughter|husband|wife|brother|sister|grand(?:father|mother|parents?))\b/i
 
 const OPTION_LISTS = {
-  GENDERS,
   RELATIONSHIPS,
-  DURATIONS,
   TOPICS,
   CONCERNS,
   SUPPORT_PERSON,
@@ -78,9 +74,7 @@ describe('フォームの選択肢', () => {
     assert.deepEqual(
       Object.fromEntries(Object.entries(OPTION_LISTS).map(([k, o]) => [k, o.map((x) => x.value)])),
       {
-        GENDERS: ['male', 'female', 'other', 'no_answer'],
         RELATIONSHIPS: ['father', 'mother', 'sibling', 'child', 'friend', 'partner', 'grandparent', 'relative', 'other'],
-        DURATIONS: ['under_1_month', '1_3_months', 'about_6_months', 'about_1_year', '2_3_years', 'longer', 'unsure'],
         TOPICS: ['politics_society', 'religion_spiritual', 'celebrity', 'health', 'science_technology', 'other'],
         CONCERNS: ['angry_when_disagreed', 'conversation_breaks_down', 'repeats_same_topic', 'sends_lots_of_info', 'relationships_worsening', 'money_worries', 'self_exhausted', 'unsure_how_to_respond', 'other'],
         SUPPORT_PERSON: ['yes', 'no', 'unsure'],
@@ -119,11 +113,7 @@ describe('フォームの選択肢', () => {
 
 describe('入力した内容のまとめ', () => {
   const request = requestOf({
-    userAge: '35',
-    userGender: 'female',
     relationship: 'father',
-    duration: 'about_1_year',
-    immersionLevel: 7,
     topics: ['health', 'politics_society'],
     concerns: ['angry_when_disagreed', 'other'],
     concernsOther: '夜遅くに電話がくる',
@@ -132,13 +122,9 @@ describe('入力した内容のまとめ', () => {
     freeText: '話すと怒ってしまいます。',
   })
 
-  test('日本語は今までと同じ', () => {
+  test('日本語は今までと同じ（年齢・性別・時期・信じている強さは #223 で聞かなくなった）', () => {
     assert.deepEqual(summarizeRequest(request), [
-      { label: 'あなたの年齢', value: '35歳' },
-      { label: 'あなたの性別', value: '女性' },
       { label: '相手との関係', value: '父' },
-      { label: '気になり始めた時期', value: '1年くらい' },
-      { label: '信じている強さ（あなたの感じ方）', value: '7 / 10' },
       { label: 'どんな内容について', value: '健康・ワクチン・健康療法、政治・社会' },
       { label: '困っていること', value: '否定すると怒ってしまう、その他（夜遅くに電話がくる）' },
       { label: '周囲に相談できる人', value: 'いない' },
@@ -147,24 +133,26 @@ describe('入力した内容のまとめ', () => {
     ])
   })
 
+  test('リクエストに、聞かなくなった項目（年齢・性別・時期・信じている強さ）を持たない', () => {
+    for (const key of ['userAge', 'userGender', 'duration', 'immersionLevel']) {
+      assert.equal(key in request, false, key)
+    }
+  })
+
   test('英語では、見出しと選択肢が英語。書かれた文はそのまま', () => {
     const rows = summarizeRequest(request, 'en')
     assert.deepEqual(rows.map((r) => r.label), [
-      'Your age',
-      'Your gender',
       'Your relationship with them',
-      'When it started to concern you',
-      'How strongly they seem to believe it (your impression)',
       'What it is about',
       'What is troubling you',
       'Someone you can talk to',
       'Your relationship from here',
       'Details',
     ])
-    assert.equal(rows[5].value, 'Health, vaccines, and health remedies, Politics and society')
-    assert.equal(rows[6].value, 'They get upset when I disagree, Other (夜遅くに電話がくる)')
-    assert.equal(rows[9].value, '話すと怒ってしまいます。')
-    for (const row of rows.slice(0, 6)) assert.doesNotMatch(row.value, JAPANESE, row.label)
+    assert.equal(rows[1].value, 'Health, vaccines, and health remedies, Politics and society')
+    assert.equal(rows[2].value, 'They get upset when I disagree, Other (夜遅くに電話がくる)')
+    assert.equal(rows[5].value, '話すと怒ってしまいます。')
+    for (const row of rows.slice(0, 2)) assert.doesNotMatch(row.value, JAPANESE, row.label)
   })
 })
 

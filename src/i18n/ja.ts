@@ -93,14 +93,7 @@ export const ja = {
   'consult.intro':
     'いくつかの質問に答えていただくと、あなたに合ったヒントや、参考になる情報・相談先をご案内しやすくなります。',
   'consult.introNote': 'これは診断ではありません。分かる範囲で大丈夫です。',
-  'consult.age': 'あなたの年齢',
-  'consult.agePlaceholder': '例）35',
-  'consult.ageUnit': '歳',
-  'consult.gender': 'あなたの性別',
   'consult.relationship': '相手との関係',
-  'consult.duration': 'いつ頃から気になっていますか？',
-  'consult.immersion': 'その話を、どのくらい強く信じているように感じますか？',
-  'consult.immersionHint': '医学的な評価ではありません。あなたが感じているままで大丈夫です。',
   'consult.topics': 'どんな内容についてですか？',
   'consult.topicsHint': 'いくつでも選べます。内容が正しいかどうかを判断するものではありません。',
   'consult.concerns': 'どんなことで困っていますか？',
@@ -121,14 +114,6 @@ export const ja = {
   // ---- 相談フォームの部品 ----
   // 読み上げ用。見た目の「2 / 3」の前に付く
   'steps.srPrefix': '全{total}ステップ中 ',
-  'immersion.reset': '未回答にもどす',
-  'immersion.howTo': 'つまみを動かして選べます',
-  'immersion.valueText': '{value}（{max}段階中）',
-  'immersion.unanswered': '未回答',
-  // 両端の数字と説明のあいだ
-  'immersion.scaleSep': '：',
-  'immersion.low': ['少しだけ信じている', 'ように見える'],
-  'immersion.high': ['とても強く信じている', 'ように見える'],
 
   // ---- 結果画面 ----
   'result.title': 'あなたへのヒント',
