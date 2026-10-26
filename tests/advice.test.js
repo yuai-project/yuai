@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { ADVICE_CARDS, FOR_YOU, SAFETY } from '../src/data/adviceCards.ts'
+import { FOR_YOU_EN } from '../src/data/adviceCards.en.ts'
 import {
   CONCERNS,
   DESIRED_RELATIONSHIP,
@@ -83,21 +84,74 @@ describe('判定の優先順位', () => {
 })
 
 describe('forYou', () => {
+  // 画面の 1. には、要点用の一文（keyPoint）を除いた title / body だけを出す
+  const sectionOf = ({ keyPoint: _keyPoint, ...section }) => section
+
   test('距離を置きたい場合は distance 用（疲れていても）', () => {
-    assert.equal(adviceOf(INTAKE_OF.distance).forYou, FOR_YOU.distance)
-    assert.equal(
+    assert.deepEqual(adviceOf(INTAKE_OF.distance).forYou, sectionOf(FOR_YOU.distance))
+    assert.deepEqual(
       adviceOf({ concerns: ['self_exhausted'], desiredRelationship: 'some_distance' }).forYou,
-      FOR_YOU.distance,
+      sectionOf(FOR_YOU.distance),
     )
   })
 
   test('「自分自身が疲れている」があれば exhausted 用', () => {
-    assert.equal(adviceOf(INTAKE_OF.exhausted).forYou, FOR_YOU.exhausted)
+    assert.deepEqual(adviceOf(INTAKE_OF.exhausted).forYou, sectionOf(FOR_YOU.exhausted))
   })
 
   test('それ以外（angry を含む）は default 用', () => {
-    assert.equal(adviceOf(INTAKE_OF.angry).forYou, FOR_YOU.default)
-    assert.equal(adviceOf(INTAKE_OF.default).forYou, FOR_YOU.default)
+    assert.deepEqual(adviceOf(INTAKE_OF.angry).forYou, sectionOf(FOR_YOU.default))
+    assert.deepEqual(adviceOf(INTAKE_OF.default).forYou, sectionOf(FOR_YOU.default))
+  })
+
+  test('6つの枠の forYou には keyPoint を出さない', () => {
+    for (const key of CARD_KEYS) assert.ok(!('keyPoint' in adviceOf(INTAKE_OF[key]).forYou), key)
+  })
+})
+
+describe('keyPoints（まずは、この3つだけ。#226）', () => {
+  // 読点・空白・大文字小文字の違いは見ない
+  const normalize = (text) => text.replace(/[、,\s]/g, '').toLowerCase()
+
+  test('要点の一文は、どれも 1. の本文から抜き出したもの（日本語・英語）', () => {
+    for (const cards of [FOR_YOU, FOR_YOU_EN]) {
+      for (const [key, { body, keyPoint }] of Object.entries(cards)) {
+        assert.ok(keyPoint, key)
+        assert.ok(normalize(body).includes(normalize(keyPoint)), `${key}: ${keyPoint}`)
+      }
+    }
+  })
+
+  for (const key of CARD_KEYS) {
+    test(`${key}: 3つがそろい、それぞれ 1. の一文・返し方の1つ目・電話窓口の1つ目`, () => {
+      for (const lang of ['ja', 'en']) {
+        const advice = buildAdvice(requestOf(INTAKE_OF[key]), lang)
+        const cards = lang === 'en' ? FOR_YOU_EN : FOR_YOU
+        const [line] = advice.supportLines
+        assert.equal(advice.keyPoints.forYou, (cards[key] ?? cards.default).keyPoint)
+        assert.equal(advice.keyPoints.reply, advice.tryReplies.items[0])
+        assert.equal(advice.keyPoints.supportLine.id, line.id)
+        assert.equal(advice.keyPoints.supportLine.tel, line.tel)
+        assert.equal(advice.keyPoints.supportLine.name, lang === 'en' ? line.en.name : line.name)
+      }
+    })
+  }
+
+  test('「疲れている」「距離を置きたい」では、1つ目がそれぞれに合った一文になる', () => {
+    assert.equal(adviceOf(INTAKE_OF.default).keyPoints.forYou, '相手の考えを変える責任を、あなた一人で背負う必要はありません。')
+    assert.equal(adviceOf(INTAKE_OF.exhausted).keyPoints.forYou, 'まずは、あなたが休むことを優先して大丈夫です。')
+    assert.equal(adviceOf(INTAKE_OF.distance).keyPoints.forYou, '自分を守るための距離は、相手を見捨てることとは違います。')
+  })
+
+  test('結果画面を直接開いたとき（回答なし）も出す', () => {
+    assert.ok(buildAdvice(undefined).keyPoints)
+  })
+
+  test('詳しい内容に危険を示す言葉があるときは出さない（null）', () => {
+    const advice = adviceOf({ freeText: '毎日怒鳴られて、殴られることもあります。' })
+    assert.equal(advice.safetyFirst, true)
+    assert.equal(advice.keyPoints, null)
+    assert.equal(buildAdvice(requestOf({ freeText: 'He hits me and I feel threatened.' }), 'en').keyPoints, null)
   })
 })
 

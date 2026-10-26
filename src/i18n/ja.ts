@@ -119,6 +119,14 @@ export const ja = {
   'result.title': 'あなたへのヒント',
   'result.intro':
     'お話を受け止めました。すぐに全部を解決しようとしなくて大丈夫です。できそうなものから、ひとつずつ。',
+  // 結果画面の最初の要点（#226）。危険を示す言葉があるときは出さない
+  'result.keyPoints.title': 'まずは、この3つだけ',
+  'result.keyPoints.lead': '全部読まなくても大丈夫です。詳しいことは、この下にあります。',
+  'result.keyPoints.forYou': 'あなた自身へ',
+  'result.keyPoints.reply': '使えそうな一言',
+  'result.keyPoints.supportLine': '話せる先',
+  // 読み上げ用。各項目のボタンの最後に付く
+  'result.keyPoints.jumpHint': '（詳しい説明へ移動します）',
   'result.avoidLabel': '避けたい',
   'result.copyHint': 'タップするとコピーできます。使えそうな言葉を選んでみてください。',
   'result.phoneLines': '電話で相談できる窓口',
