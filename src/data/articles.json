@@ -800,5 +800,22 @@
     "sourceType": "media",
     "status": "paused",
     "reviewedAt": "2026-10-26"
+  },
+  {
+    "id": "r30-2",
+    "url": "https://irving-piano.technologyreview.com/2025/10/30/1126839/how-to-help-friends-and-family-dig-out-of-a-conspiracy-theory-black-hole/",
+    "title": "How to help friends and family dig out of a conspiracy theory black hole | MIT Technology Review",
+    "publisher": "irving-piano.technologyreview.com",
+    "summary": "身近な人が陰謀論を信じるようになったとき、どう関わればよいかを、社会心理学者への取材をもとに紹介する記事です。事実で反論するより、情報に操作されうる仕組みを一緒に考える方法などに触れています。",
+    "summaryEn": "A how-to article drawing on a social psychologist's advice for when a friend or family member has come to believe conspiracy theories. It looks at approaches such as showing how people can be manipulated by information, rather than arguing over the facts.",
+    "relationships": ["friend", "relative"],
+    "topics": ["politics_society", "health"],
+    "concerns": ["conversation_breaks_down", "unsure_how_to_respond", "self_exhausted"],
+    "supportTypes": ["coping_tips", "background"],
+    "stance": "keep_connection",
+    "burden": "moderate",
+    "sourceType": "media",
+    "status": "approved",
+    "reviewedAt": "2026-10-27"
   }
 ]
