@@ -1,5 +1,7 @@
 import { Check, ChevronRight, Phone } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import HeroWindow from '../components/HeroWindow'
+import Logo from '../components/Logo'
 import Phrases from '../components/Phrases'
 import ShareSiteButton from '../components/ShareSiteButton'
 import { useI18n } from '../i18n/useI18n'
@@ -10,21 +12,14 @@ export default function Home() {
   const spaced = lang === 'en'
   return (
     <div className="pb-10 lg:pb-16">
-      {/* ヒーロー：スマホは写真 → アクセント色の面。PCは左にコピーとボタン、右に写真 */}
-      <section className="lg:bg-brand">
-        <div className="lg:mx-auto lg:grid lg:max-w-page lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-14 lg:px-8 lg:py-16">
-          {/* 装飾の写真なので alt は空 */}
-          <img
-            src="/home-mugs-800.webp"
-            srcSet="/home-mugs-800.webp 800w, /home-mugs-1536.webp 1536w"
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            width="1536"
-            height="1024"
-            alt=""
-            className="block aspect-video w-full object-cover object-[35%_60%] lg:order-2 lg:aspect-[4/3] lg:rounded-xl"
-          />
-
-          <div className="bg-brand px-5 pb-9 pt-7 text-brand-ink lg:order-1 lg:p-0">
+      {/* ヒーロー：アクセント色の面に、光の差し込むアーチ窓のイラスト（ロゴの窓と同じ「戻ってこられる場所」）。
+          スマホは右下に置き、窓が文字に重ならないよう下に余白を取る。PCはコピーの右に置く */}
+      <section className="relative overflow-hidden bg-brand">
+        <HeroWindow className="absolute bottom-0 right-0 w-[min(80%,20rem)] lg:right-[max(2rem,calc(50%-36.25rem+2rem))] lg:h-[74%] lg:w-auto" />
+        <div className="relative lg:mx-auto lg:max-w-page lg:px-8 lg:py-20">
+          <div className="px-5 pb-48 pt-7 text-brand-ink lg:max-w-xl lg:p-0">
+            {/* スマホにはロゴの入る上部ヘッダーがないので、緑の面の先頭に白抜きのロゴを置く */}
+            <Logo size="hero" tone="inverse" className="mb-5 lg:hidden" />
             <h1 className="text-[clamp(1.25rem,6.2vw,1.5rem)] font-bold leading-[1.6] [word-break:auto-phrase] lg:text-[clamp(1.75rem,2.6vw,2.25rem)] lg:leading-[1.5]">
               {t('app.catchcopy').map((line, i) => (
                 <span key={i} className="block">

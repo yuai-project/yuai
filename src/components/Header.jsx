@@ -2,6 +2,7 @@ import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { APP } from '../config'
 import { useI18n } from '../i18n/useI18n'
+import { WindowLine } from './Logo'
 
 const tones = {
   plain: {
@@ -16,6 +17,8 @@ const tones = {
     back: 'text-brand-ink hover:bg-brand-400 lg:border lg:border-brand-ink/60',
     title: 'text-brand-ink',
     subtitle: 'text-brand-ink',
+    // 帯の右端に、窓の線画を薄く添える
+    decor: 'text-brand-ink/20',
   },
 }
 
@@ -29,8 +32,11 @@ export default function Header({ title, subtitle, back = false, onBack, tone = '
   const { t } = useI18n()
   const s = tones[tone] || tones.plain
   return (
-    <header className={`sticky top-0 z-20 lg:static ${s.wrap}`}>
-      <div className="flex items-center gap-2 px-4 py-3 lg:mx-auto lg:max-w-page lg:gap-3 lg:px-8 lg:pb-2 lg:pt-10">
+    <header className={`sticky top-0 z-20 overflow-hidden lg:relative ${s.wrap}`}>
+      {s.decor && (
+        <WindowLine className={`absolute -bottom-1 right-5 h-14 lg:right-[max(2rem,calc(50%-36.25rem+2rem))] lg:h-24 ${s.decor}`} />
+      )}
+      <div className="relative flex items-center gap-2 px-4 py-3 lg:mx-auto lg:max-w-page lg:gap-3 lg:px-8 lg:pb-2 lg:pt-10">
         {back && (
           <button
             onClick={onBack ?? (() => navigate(-1))}

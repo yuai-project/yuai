@@ -2,6 +2,7 @@ import { Languages } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useI18n } from '../i18n/useI18n'
 import { INFO_PAGES } from '../pages/infoPages'
+import { WindowLine } from './Logo'
 import Phrases from './Phrases'
 
 // どの幅でも出すフッター。ログインやマイページの代わりに、大事な情報への入口をまとめる（#172）。
@@ -10,8 +11,10 @@ import Phrases from './Phrases'
 export default function SiteFooter() {
   const { t, lang } = useI18n()
   return (
-    <footer className="border-t border-line bg-cream pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto max-w-page px-5 py-6 lg:flex lg:items-start lg:justify-between lg:gap-10 lg:px-8 lg:py-8">
+    <footer className="relative overflow-hidden border-t border-line bg-cream pb-[env(safe-area-inset-bottom)]">
+      {/* 右下に窓の線画を薄く添える。ホームのヒーローや結果画面の帯と対にする */}
+      <WindowLine className="absolute -bottom-2 right-4 h-16 text-brand-100 lg:right-[max(2rem,calc(50%-36.25rem+2rem))] lg:h-28" />
+      <div className="relative mx-auto max-w-page px-5 py-6 lg:flex lg:items-start lg:justify-between lg:gap-10 lg:px-8 lg:py-8">
         <div>
           <nav aria-label={t('footer.navLabel')}>
             <ul className="flex flex-wrap gap-x-5 text-sm text-ink-soft">
