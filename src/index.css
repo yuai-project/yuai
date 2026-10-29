@@ -5,8 +5,8 @@
    強い色はアクセント（= brand）だけ。医療・診断サービスのように見せすぎない。
    コントラストの数値は WCAG 2.1 の比（文字は 4.5:1、部品の境界は 3:1 が基準）。 */
 @theme {
-  /* base — 白が基本。cream はごく薄いグレーの補助背景 */
-  --color-surface: #ffffff;
+  /* base — 白が基本。少しだけ温かみのある白にして、ロゴ・スライドの雰囲気と合わせる。cream はごく薄いグレーの補助背景 */
+  --color-surface: #fbfbf9;
   --color-cream: #f3f5f3;
 
   /* brand — 基準色は深緑 #2f5d50。派生色はコントラストを確保するために使い分ける */
@@ -52,6 +52,9 @@
   --container-page: 72.5rem;
   --font-sans: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', system-ui, -apple-system,
     'Segoe UI', Roboto, sans-serif;
+  /* 見出しだけ、ロゴの丸い線に合わせた丸ゴシック。本文は読みやすさを優先して --font-sans のまま。
+     index.html で Google Fonts から読み込む。読み込めないときは本文と同じ字体になる */
+  --font-display: 'Zen Maru Gothic', var(--font-sans);
 }
 
 html {
@@ -66,6 +69,11 @@ body {
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
 }
 
 /* モバイル幅のシェルをPCでは中央に */
