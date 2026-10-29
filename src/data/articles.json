@@ -817,5 +817,22 @@
     "sourceType": "media",
     "status": "approved",
     "reviewedAt": "2026-10-27"
+  },
+  {
+    "id": "r64",
+    "url": "https://studyofhate.ucla.edu/resources/toolkit/",
+    "title": "Toolkit on Mis- and Dis- Information - UCLA Initiative to Study Hate",
+    "publisher": "UCLA Initiative to Study Hate",
+    "summary": "UCLAの研究機関が公開している、誤情報や偽情報への向き合い方をまとめたツールキットです。情報を共有する前に一度立ち止まる、という呼びかけから始まっています。",
+    "summaryEn": "A toolkit from a UCLA research initiative on how to approach misinformation and disinformation. It opens with a reminder to pause for a moment before sharing information.",
+    "relationships": ["any"],
+    "topics": ["politics_society"],
+    "concerns": ["any"],
+    "supportTypes": ["coping_tips"],
+    "stance": "neutral",
+    "burden": "moderate",
+    "sourceType": "academic",
+    "status": "approved",
+    "reviewedAt": "2026-10-29"
   }
 ]
