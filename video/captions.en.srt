@@ -1,0 +1,52 @@
+1
+00:00:00,300 --> 00:00:03,200
+This is Yorido.
+
+2
+00:00:03,800 --> 00:00:08,200
+This is the top page. Just tap the button to start.
+
+3
+00:00:09,000 --> 00:00:11,400
+Next, you answer seven short questions.
+
+4
+00:00:11,600 --> 00:00:13,800
+First, who the person is.
+
+5
+00:00:15,400 --> 00:00:17,400
+You can skip any question.
+
+6
+00:00:17,800 --> 00:00:20,600
+Here, you choose the kind of support you want.
+
+7
+00:00:20,800 --> 00:00:22,600
+Your answers shape your tips.
+
+8
+00:00:23,300 --> 00:00:25,300
+The last one is optional.
+
+9
+00:00:26,400 --> 00:00:28,000
+Here are your tips.
+
+10
+00:00:28,600 --> 00:00:33,400
+Take your time. You don't have to read it all.
+
+11
+00:00:34,400 --> 00:00:38,200
+Most importantly, you get articles picked for your answers.
+
+12
+00:00:38,600 --> 00:00:41,400
+Tap one, and it opens in a new tab.
+
+13
+00:00:42,500 --> 00:00:47,500
+Before getting the facts across,
+first keep the conversation going.
