@@ -7,7 +7,8 @@
 //   「話題を選んだ相談での、話題の合わない記事」「相手との関係の合わない記事」だけ。
 //   stance / burden は専門家の確認（#93 / #99）が済むまで減点にとどめる。
 // - 重み・減点・最大件数は WEIGHTS の1か所だけに書く。
-// - 画面の言語と同じ言語の記事を先に並べる。違う言語の記事は、同じ言語の記事で枠が埋まらないときだけ出る（#243）。
+// - 並びは「減点なし → 減点あり」を「画面の言語と同じ → 違う」より優先する（#243・#250 の orderRank）。
+//   減点は利用者の安全と負担のためのものなので、言語より優先する。
 //   点数は言語で変えない。安全枠はこれまでどおり先頭に入る
 
 import {
@@ -234,11 +235,14 @@ export function isCandidateArticle(article: Article, profile: RecommendationProf
   return true
 }
 
-// 画面の言語と同じ言語の記事を先にする。それぞれの中の順番（点数順）は変えない
-const sameLangFirst = (items: Scored[], lang: DataLang): Scored[] => [
-  ...items.filter((s) => articleLang(s.article) === lang),
-  ...items.filter((s) => articleLang(s.article) !== lang),
-]
+// 並びのまとまり。小さいほうが先。
+// 0: 画面と同じ言語で、減点なし / 1: 違う言語で、減点なし / 2: 同じ言語で、減点あり / 3: 違う言語で、減点あり
+const orderRank = (s: Scored, lang: DataLang): number =>
+  (s.penalties.length > 0 ? 2 : 0) + (articleLang(s.article) === lang ? 0 : 1)
+
+// まとまりの順に並べる。まとまりの中の順番（compareScored の順）は変えない
+const inOrderGroups = (items: Scored[], lang: DataLang): Scored[] =>
+  [0, 1, 2, 3].flatMap((rank) => items.filter((s) => orderRank(s, lang) === rank))
 
 const toResult = ({ article, score, reasons, penalties }: Scored): Recommendation => ({
   article,
@@ -274,7 +278,7 @@ export function recommendArticles(
       .filter((s) => s !== undefined)
       .map((s) => ({ ...s, reasons: [...s.reasons, REASONS.fallback] }))
   }
-  picked = sameLangFirst(picked, lang)
+  picked = inOrderGroups(picked, lang)
 
   if (profile.needsSafetySlot) {
     // 話題を選んでいない相談では、特定の話題の窓口を先頭に入れない（topics: any の窓口だけ）。
