@@ -155,6 +155,9 @@ export const ja = {
   'articles.kindBook': '書籍',
   // 画面の言語と違う言語のページ・窓口に添える（日本語の画面では、日本語の記事・窓口には出さない）
   'articles.inJapanese': '日本語',
+  'articles.inEnglish': '英語',
+  // 出典のリンクに添える、ページの言語
+  'sources.langNote': '（{language}）',
   'supportLines.japaneseOnly': '日本語で対応',
   'intakeSummary.title': '入力した内容のまとめ',
   'intakeSummary.hint': 'タップすると入力した内容を確認できます',

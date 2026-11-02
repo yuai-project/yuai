@@ -183,6 +183,8 @@ export type Article = {
   summary: string
   // 英語の画面に出す要約（任意。無い記事は日本語の要約を出す）
   summaryEn?: string
+  // 記事そのものの言語（任意。無ければ 'ja'）。画面の言語と違うときにラベルを出す
+  lang?: DataLang
   relationships: string[]
   topics: string[]
   concerns: string[]

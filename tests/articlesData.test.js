@@ -16,6 +16,8 @@ import {
   initialIntake,
 } from '../src/data/consultationIntake.ts'
 import { ADVICE_CARDS } from '../src/data/adviceCards.ts'
+import { resolveSources } from '../src/data/adviceSources.ts'
+import { articleLang } from '../src/data/articleTags.ts'
 import { buildAdvice } from '../src/data/mockAdvice.ts'
 import { recommendArticles } from '../src/data/recommendArticles.ts'
 
@@ -178,5 +180,31 @@ describe('専門家ではない書き手が対処法を書いている記事を�
         }
       }
     }
+  })
+})
+
+describe('英語の記事（r64。#243）', () => {
+  test('r64 は approved で、lang が en。ほかの記事は lang を持たないか ja', () => {
+    assert.equal(byId('r64').status, 'approved')
+    assert.equal(byId('r64').lang, 'en')
+    assert.equal(articleLang(byId('r64')), 'en')
+    for (const a of mockArticles.filter((x) => x.id !== 'r64')) {
+      assert.equal(articleLang(a), 'ja', a.id)
+    }
+  })
+
+  test('要約は summary が日本語、summaryEn が英語', () => {
+    assert.match(byId('r64').summary, /[\p{Script=Hiragana}]/u)
+    assert.doesNotMatch(byId('r64').summaryEn, /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u)
+  })
+
+  test('出典にしたとき、ページの言語が en になる。lang の無い記事は ja', () => {
+    assert.equal(resolveSources(['r64'])[0].lang, 'en')
+    assert.equal(resolveSources(['r11'])[0].lang, 'ja')
+  })
+
+  test('話題を選んだ相談では、話題が合わないと出ない（健康には出ない）', () => {
+    const ids = recommendIds({ relationship: 'mother', topics: ['health'], concerns: ['angry_when_disagreed'] })
+    assert.ok(!ids.includes('r64'), ids.join(','))
   })
 })

@@ -7,7 +7,7 @@
 // - 画面に出すときは、推薦と同じ入口の絞り込み（関係・話題が合わない記事、健康の情報の発信元のルール）をかけ、
 //   その人に合わない記事は外す。全部外れたら空（画面には欄ごと出さない）。
 
-import { BOOK_SOURCE_TYPE } from './articleTags.ts'
+import { BOOK_SOURCE_TYPE, articleLang } from './articleTags.ts'
 import { mockArticles } from './articles.ts'
 import { isCandidateArticle, toRecommendationProfile } from './recommendArticles.ts'
 import type { AdviceCard, AdviceSource, Article, DataLang, RequestInput, SupportLine } from './types.ts'
@@ -54,8 +54,10 @@ export function resolveSources(
     .map((id) => articles.find((a) => a.id === id))
     .filter((article) => article !== undefined)
     .filter((article) => isCandidateArticle(article, profile))
-    // 記事はどれも日本語のページ
-    .map(({ id, title, url }) => ({ id, title, url, domain: domainOf(url), lang: 'ja' as const }))
+    .map((article) => {
+      const { id, title, url } = article
+      return { id, title, url, domain: domainOf(url), lang: articleLang(article) }
+    })
 }
 
 // 項目ごとに解決した sources を、重複を除いて出てきた順にまとめる（「このヒントの参考にした情報」用）

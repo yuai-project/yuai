@@ -5,7 +5,8 @@
 import articles from './articles.json' with { type: 'json' }
 import type { Article } from './types.ts'
 
-export const mockArticles: Article[] = articles
+// JSON から読むと lang が string になるので、Article として扱う（値は validate:articles で確かめる）
+export const mockArticles = articles as Article[]
 
 // 一致する記事がないときに出す、人が選んだ固定の記事。
 // approved かつ burden: light のものに限る（検証スクリプトで確かめる）。

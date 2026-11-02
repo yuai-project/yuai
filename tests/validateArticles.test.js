@@ -124,3 +124,18 @@ describe('validate-articles: 書籍（sourceType: book）', () => {
     }
   })
 })
+
+describe('validate-articles: 記事の言語（lang）', () => {
+  test('ja / en は通る。省いてもよい', () => {
+    for (const lang of ['ja', 'en']) assert.equal(validateWith({ ...base, lang }).ok, true, lang)
+    assert.equal(validateWith(base).ok, true)
+  })
+
+  test('ほかの値はエラーになる', () => {
+    for (const lang of ['fr', '', 1, null]) {
+      const result = validateWith({ ...base, lang })
+      assert.equal(result.ok, false, JSON.stringify(lang))
+      assert.match(result.output, /lang /)
+    }
+  })
+})
