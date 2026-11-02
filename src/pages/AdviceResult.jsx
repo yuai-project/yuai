@@ -53,7 +53,7 @@ export default function AdviceResult() {
   )
   const supportLines = a.supportLines ?? getSupportLines({ lang })
   // フォームの回答に合う記事。直接開いた場合は出さない。
-  const recommended = request ? recommendArticles(request) : null
+  const recommended = request ? recommendArticles(request, undefined, { lang }) : null
   // 相談先を求めたときは、電話窓口と「相談できる先」の記事を、ヒントより先に見せる
   const referralFirst = request?.desiredSupport?.includes('professional_referral') ?? false
   const safetyOnTop = a.safetyFirst || referralFirst
