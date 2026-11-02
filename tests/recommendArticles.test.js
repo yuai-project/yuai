@@ -645,3 +645,126 @@ describe('画面の言語で並べる（#243）', () => {
     })
   })
 })
+
+describe('減点のある記事を言語より後ろに回す（#250）', () => {
+  const article = (id, overrides = {}) => ({
+    ...byId('f-coping-angry'),
+    id,
+    url: `https://example.com/penalty/${id}`,
+    relationships: ['any'],
+    topics: ['any'],
+    concerns: ['angry_when_disagreed'],
+    supportTypes: ['background'],
+    stance: 'neutral',
+    burden: 'light',
+    medicalInfo: undefined,
+    ...overrides,
+  })
+  const distance = { concerns: ['angry_when_disagreed'], desiredRelationship: 'more_distance' }
+  const run = (intake, articles, lang) =>
+    ids(recommendArticles(requestOf(intake), articles, { fallbackIds: [], lang }))
+  // 「かなり距離を置きたい」のとき、keep_connection の記事は減点される
+  const jaClean = article('ja-clean')
+  const enClean = article('en-clean', { lang: 'en' })
+  const jaPenalty = article('ja-penalty', { stance: 'keep_connection' })
+  const enPenalty = article('en-penalty', { lang: 'en', stance: 'keep_connection' })
+
+  test('日本語の画面: 同じ言語で減点なし → 違う言語で減点なし → 同じ言語で減点あり', () => {
+    assert.deepEqual(run(distance, [enPenalty, jaPenalty, enClean, jaClean], 'ja'), ['ja-clean', 'en-clean', 'ja-penalty'])
+  })
+
+  test('英語の画面: 同じ言語で減点なし → 違う言語で減点なし → 同じ言語で減点あり', () => {
+    assert.deepEqual(run(distance, [jaPenalty, enPenalty, jaClean, enClean], 'en'), ['en-clean', 'ja-clean', 'en-penalty'])
+  })
+
+  test('減点のある記事どうしは、同じ言語 → 違う言語の順', () => {
+    assert.deepEqual(run(distance, [enPenalty, jaPenalty], 'ja'), ['ja-penalty', 'en-penalty'])
+    assert.deepEqual(run(distance, [jaPenalty, enPenalty], 'en'), ['en-penalty', 'ja-penalty'])
+  })
+
+  test('違う言語で減点なしの記事は、同じ言語で減点ありの記事より先', () => {
+    assert.deepEqual(run(distance, [jaPenalty, enClean], 'ja'), ['en-clean', 'ja-penalty'])
+  })
+
+  test('疲れている人に重い記事（burden: heavy）の減点でも、同じように後ろに回す', () => {
+    const tired = { concerns: ['self_exhausted'] }
+    const heavyEn = article('heavy-en', { lang: 'en', concerns: ['self_exhausted'], burden: 'heavy' })
+    const lightJa = article('light-ja', { concerns: ['self_exhausted'] })
+    assert.deepEqual(run(tired, [heavyEn, lightJa], 'en'), ['light-ja', 'heavy-en'])
+  })
+
+  test('まとまりの中は、今までどおり点数順', () => {
+    // 求めるサポートも一致して点数が高い記事が先
+    const higher = article('higher', { supportTypes: ['coping_tips'], reviewedAt: '2000-01-01' })
+    const lower = article('lower', { reviewedAt: '2099-01-01' })
+    const intake = { ...distance, desiredSupport: ['coping_tips'] }
+    assert.deepEqual(run(intake, [lower, higher], 'ja'), ['higher', 'lower'])
+  })
+
+  test('点数は変わらない', () => {
+    const scoreOf = (lang) =>
+      recommendArticles(requestOf(distance), [jaPenalty, enClean], { fallbackIds: [], lang }).articles
+        .map((r) => [r.article.id, r.score])
+        .sort()
+    assert.deepEqual(scoreOf('ja'), scoreOf('en'))
+    const penalized = recommendArticles(requestOf(distance), [jaPenalty], { fallbackIds: [] }).articles[0]
+    assert.deepEqual(penalized.penalties, [PENALTIES.moreDistanceKeepConnection])
+  })
+
+  test('安全枠は、減点があっても先頭のまま', () => {
+    const consult = article('consult', { stance: 'keep_connection', supportTypes: ['consultation_service'] })
+    const result = recommendArticles(
+      requestOf({ ...distance, freeText: '殴られました' }),
+      [enClean, jaClean, consult],
+      { fallbackIds: [], lang: 'en' },
+    )
+    assert.equal(ids(result)[0], 'consult')
+    assert.ok(result.articles[0].reasons.includes(REASONS.safetySlot))
+    assert.ok(result.articles[0].penalties.length > 0)
+  })
+
+  describe('実データ', () => {
+    const real = (intake, lang) => recommendArticles(requestOf(intake), undefined, { lang }).articles
+    const moreDistance = {
+      relationship: 'mother',
+      topics: ['politics_society'],
+      concerns: ['relationships_worsening'],
+      desiredRelationship: 'more_distance',
+    }
+
+    test('英語の画面で「かなり距離を置きたい」でも、関わり続ける向きの r19・r64 が先に出ない', () => {
+      const result = real(moreDistance, 'en').map((r) => r.article.id)
+      for (const id of ['r19', 'r64']) assert.ok(!result.includes(id), result.join(','))
+    })
+
+    test('減点のない記事があるのに、減点のある記事が先に出る相談が無い（安全枠を除く）', () => {
+      for (const lang of ['ja', 'en']) {
+        for (const relationship of ['', 'father', 'mother', 'partner', 'child', 'sibling']) {
+          for (const topics of [[], ['politics_society'], ['health']]) {
+            for (const concerns of [[], ['self_exhausted'], ['unsure_how_to_respond']]) {
+              for (const desiredRelationship of [null, 'more_distance']) {
+                const i = { relationship, topics, concerns, desiredRelationship }
+                const list = real(i, lang).filter((r) => !r.reasons.includes(REASONS.safetySlot))
+                const flags = list.map((r) => r.penalties.length > 0)
+                assert.deepEqual(flags, [...flags].sort((a, b) => a - b), JSON.stringify({ i, lang }))
+              }
+            }
+          }
+        }
+      }
+    })
+
+    test('日本語の画面で、英語の記事が1番目に来る相談が無い', () => {
+      for (const relationship of ['', 'father', 'mother', 'partner', 'child', 'sibling']) {
+        for (const topics of [[], ['politics_society'], ['health']]) {
+          for (const concerns of [[], ['self_exhausted'], ['angry_when_disagreed']]) {
+            for (const desiredRelationship of [null, 'more_distance']) {
+              const [first] = real({ relationship, topics, concerns, desiredRelationship }, 'ja')
+              assert.notEqual(first?.article.lang, 'en')
+            }
+          }
+        }
+      }
+    })
+  })
+})
