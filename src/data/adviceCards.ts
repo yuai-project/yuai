@@ -52,9 +52,8 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
       ],
       reason:
         '頭ごなしに否定すると、相手は「分かってもらえない」と感じて防御的になり、かえって会話が続きにくくなることがあります。',
-      // r08: 「そんなのはデマだ」と否定しても頑なになるだけ
       // r11: 責め立てたり見下したりすると、相手は心を閉ざす
-      sources: ['r08', 'r11'],
+      sources: ['r11'],
     },
     tryReplies: {
       items: [
@@ -94,9 +93,8 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         '私は少し違う考えだけど、あなたの気持ちは分かりたいと思ってる',
         '今日はこの話、ここまでにしてもいい？',
       ],
-      // r09: 「私はこう考えるけどね」とやんわり伝えて、次の話題に移る
       // r20: そう思うようになったきっかけ（どこから情報を得たのか）を見つける
-      sources: ['r09', 'r20'],
+      sources: ['r20'],
     },
     askNext: {
       items: [
@@ -126,8 +124,7 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         '話は聞くけど、今日は答えを出さなくてもいい？',
       ],
       // r25: 「その話を聞かされるのが自分は辛い」と自分の気持ちを伝える
-      // r08: その話題を出さないようにして、ほかのことに持っていく
-      sources: ['r25', 'r08'],
+      sources: ['r25'],
     },
     askNext: {
       items: [
@@ -135,8 +132,8 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         'この話以外で、最近よかったことある？',
         'また今度、ゆっくり話してもいい？',
       ],
-      // r08: 陰謀論の話題は避けて、家族の思い出話など他のことに持っていく（「この話以外で…」）
-      sources: ['r08'],
+      // 裏づけていた r08 を外したので、今は出典なし（#244）
+      sources: [],
     },
   },
 
@@ -157,9 +154,8 @@ export const ADVICE_CARDS: Record<CardKey, AdviceCard> = {
         'あなたのことを嫌いになったわけじゃないよ',
         'また話せそうになったら、私から連絡するね',
       ],
-      // r08: 話題を出さないようにしつつ、愛情を持って接している姿勢を見せる
       // r25: 生活を共にしていない相手なら、議論の土俵に上がらず心の距離を保つ
-      sources: ['r08', 'r25'],
+      sources: ['r25'],
     },
   },
 }

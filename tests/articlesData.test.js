@@ -1,5 +1,6 @@
-// 実データ（src/data/articles.json）の取り下げ（paused）のテスト（#150）。
-// 週刊誌系の記事（r27・r29・r10）を推薦から外したことを確かめる。
+// 実データ（src/data/articles.json）の取り下げ（paused）のテスト（#150・#244）。
+// 週刊誌系の記事（r27・r29・r10）と、専門家ではない書き手が対処法を書いている記事（r08・r09）を
+// 推薦から外したことを確かめる。
 //
 //   npm test
 
@@ -14,6 +15,8 @@ import {
   buildAdviceRequest,
   initialIntake,
 } from '../src/data/consultationIntake.ts'
+import { ADVICE_CARDS } from '../src/data/adviceCards.ts'
+import { buildAdvice } from '../src/data/mockAdvice.ts'
 import { recommendArticles } from '../src/data/recommendArticles.ts'
 
 const PAUSED_IDS = ['r27', 'r29', 'r10']
@@ -31,8 +34,7 @@ describe('週刊誌系の記事を推薦から外す', () => {
     }
   })
 
-  test('r09（日経ビジネス）と r17（mi-mollet）は approved のまま', () => {
-    assert.equal(byId('r09').status, 'approved')
+  test('r17（mi-mollet）は approved のまま（r09 は #244 で別の理由により paused）', () => {
     assert.equal(byId('r17').status, 'approved')
   })
 
@@ -139,5 +141,42 @@ describe('書籍（b01・b02）', () => {
       (a) => a.status === 'approved' && a.supportTypes.includes('background'),
     )
     assert.deepEqual(background.map((a) => a.id).sort(), ['b01', 'b02', 'r12'])
+  })
+})
+
+describe('専門家ではない書き手が対処法を書いている記事を外す（判定シート No.8・No.9。#244）', () => {
+  const IDS = ['r08', 'r09']
+
+  test('r08・r09 は paused（データは残す）', () => {
+    for (const id of IDS) {
+      assert.ok(byId(id), id)
+      assert.equal(byId(id).status, 'paused', id)
+    }
+  })
+
+  test('どのカードの、どの項目の出典にも入っていない', () => {
+    for (const [key, card] of Object.entries(ADVICE_CARDS)) {
+      for (const section of ['avoid', 'tryReplies', 'askNext']) {
+        for (const id of IDS) assert.ok(!(card[section]?.sources ?? []).includes(id), `${key}.${section}: ${id}`)
+      }
+    }
+  })
+
+  test('どんな相談でも、推薦にも出典にも出ない', () => {
+    for (const relationship of ['father', 'mother', 'partner', 'child', '']) {
+      for (const topics of [[], ['health'], ['politics_society']]) {
+        for (const concerns of [['angry_when_disagreed'], ['self_exhausted'], ['unsure_how_to_respond']]) {
+          for (const desiredRelationship of [null, 'some_distance']) {
+            const request = buildAdviceRequest({ ...initialIntake, relationship, topics, concerns, desiredRelationship })
+            const recommended = recommendArticles(request).articles.map((r) => r.article.id)
+            const sources = buildAdvice(request).sources.map((s) => s.id)
+            for (const id of IDS) {
+              assert.ok(!recommended.includes(id), `推薦 ${id} ${JSON.stringify(request)}`)
+              assert.ok(!sources.includes(id), `出典 ${id} ${JSON.stringify(request)}`)
+            }
+          }
+        }
+      }
+    }
   })
 })
