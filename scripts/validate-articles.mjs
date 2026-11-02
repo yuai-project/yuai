@@ -12,6 +12,7 @@ import {
   ARTICLE_MULTI_AXES,
   ARTICLE_OPTIONAL_BOOLEAN_FIELDS,
   ARTICLE_OPTIONAL_DATE_FIELDS,
+  ARTICLE_LANGS,
   ARTICLE_OPTIONAL_TEXT_FIELDS,
   ARTICLE_REQUIRED_TEXT_FIELDS,
   ARTICLE_SINGLE_AXES,
@@ -31,6 +32,7 @@ const KNOWN_FIELDS = new Set([
   ...ARTICLE_REQUIRED_TEXT_FIELDS,
   ...ARTICLE_OPTIONAL_DATE_FIELDS,
   ...ARTICLE_OPTIONAL_TEXT_FIELDS,
+  'lang',
   ...ARTICLE_OPTIONAL_BOOLEAN_FIELDS,
   ...ARTICLE_BOOK_REQUIRED_TEXT_FIELDS,
   ...Object.keys(ARTICLE_MULTI_AXES),
@@ -72,6 +74,9 @@ function validateArticle(a, label) {
   // 任意の文字列項目は、書くなら空でない文字列
   for (const field of ARTICLE_OPTIONAL_TEXT_FIELDS) {
     if (field in a && !isNonEmptyString(a[field])) err(`"${field}" は空でない文字列にする`)
+  }
+  if ('lang' in a && !ARTICLE_LANGS.includes(a.lang)) {
+    err(`lang "${a.lang}" は ${ARTICLE_LANGS.join(' / ')} のどれかにする`)
   }
   for (const field of ARTICLE_OPTIONAL_DATE_FIELDS) {
     if (a[field] !== undefined && !isValidDate(a[field])) {

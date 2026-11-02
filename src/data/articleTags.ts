@@ -7,7 +7,7 @@
 // - 検証は scripts/validate-articles.mjs。推薦処理（変換・スコア計算）は #104。
 
 import { CONCERNS, RELATIONSHIPS, TOPICS } from './consultationIntake.ts'
-import type { Article, MultiAxis, Option } from './types.ts'
+import type { Article, DataLang, MultiAxis, Option } from './types.ts'
 
 export const TAG_ANY = 'any'
 
@@ -87,6 +87,9 @@ export const ARTICLE_REQUIRED_TEXT_FIELDS = [
 export const ARTICLE_OPTIONAL_DATE_FIELDS = ['publishedAt']
 // 任意の文字列項目。summaryEn は英語の画面に出す要約（#217。無い記事は日本語の要約を出す）
 export const ARTICLE_OPTIONAL_TEXT_FIELDS = ['summaryEn']
+// 記事そのものの言語（任意）。無ければ日本語の記事として扱う（#243）
+export const ARTICLE_LANGS = ['ja', 'en']
+export const articleLang = (article: Pick<Article, 'lang'>): DataLang => article.lang ?? 'ja'
 
 // 書籍（sourceType: book）のときだけ必須になる文字列項目。author はほかの記事では使わない。
 export const BOOK_SOURCE_TYPE = 'book'

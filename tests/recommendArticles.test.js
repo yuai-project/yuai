@@ -531,3 +531,117 @@ describe('recommendArticles', () => {
     assert.ok(result.articles.every((r) => r.article.status === 'approved'))
   })
 })
+
+describe('画面の言語で並べる（#243）', () => {
+  // 困りごとが一致して採用される記事。どれも同じ点数になるよう、同じタグにする
+  const article = (id, overrides = {}) => ({
+    ...byId('f-coping-angry'),
+    id,
+    url: `https://example.com/lang/${id}`,
+    relationships: ['any'],
+    topics: ['any'],
+    concerns: ['angry_when_disagreed'],
+    supportTypes: ['background'],
+    medicalInfo: undefined,
+    ...overrides,
+  })
+  const intake = { concerns: ['angry_when_disagreed'] }
+  const run = (articles, lang) =>
+    ids(recommendArticles(requestOf(intake), articles, { fallbackIds: [], lang }))
+  // 同点のときは新しい順なので、言語を見なければ1番目に来る英語の記事
+  const en = article('en', { lang: 'en', reviewedAt: '2099-01-01' })
+
+  test('日本語の画面: 同じ言語の記事で3枠が埋まるなら、英語の記事は出ない', () => {
+    const articles = [en, article('j1'), article('j2'), article('j3')]
+    // 言語を見なければ（lang を外すと全部日本語の扱い）、英語の記事が1番目に来る
+    assert.equal(run(articles.map(({ lang: _lang, ...a }) => a), 'ja')[0], 'en')
+    assert.deepEqual(run(articles, 'ja'), ['j1', 'j2', 'j3'])
+    // lang を省くと日本語の画面と同じ
+    assert.deepEqual(run(articles, undefined), ['j1', 'j2', 'j3'])
+  })
+
+  test('日本語の画面: 同じ言語の記事が足りないときは、英語の記事が後ろに出る', () => {
+    assert.deepEqual(run([en, article('j1'), article('j2')], 'ja'), ['j1', 'j2', 'en'])
+    assert.deepEqual(run([en], 'ja'), ['en'])
+  })
+
+  test('英語の画面: 英語の記事を先に出し、残りを日本語の記事で埋める', () => {
+    assert.deepEqual(run([article('j1'), article('j2'), article('j3'), en], 'en'), ['en', 'j1', 'j2'])
+  })
+
+  test('採用の条件に合わない記事は、言語が同じでも出さない', () => {
+    const unmatched = article('en-off', { lang: 'en', concerns: ['money_worries'] })
+    assert.deepEqual(run([unmatched, article('j1')], 'en'), ['j1'])
+  })
+
+  test('点数は言語で変わらない', () => {
+    const scoreOf = (lang) =>
+      recommendArticles(requestOf(intake), [en, article('j1')], { fallbackIds: [], lang }).articles
+        .map((r) => [r.article.id, r.score])
+        .sort()
+    assert.deepEqual(scoreOf('ja'), scoreOf('en'))
+  })
+
+  test('安全枠は、英語の画面でも先頭のまま（日本語の窓口でも）', () => {
+    const consult = article('consult', { concerns: ['money_worries'], supportTypes: ['consultation_service'] })
+    const result = recommendArticles(
+      requestOf({ concerns: ['angry_when_disagreed'], freeText: '殴られました' }),
+      [en, consult, article('j1')],
+      { fallbackIds: [], lang: 'en' },
+    )
+    assert.equal(ids(result)[0], 'consult')
+    assert.ok(result.articles[0].reasons.includes(REASONS.safetySlot))
+    assert.equal(ids(result)[1], 'en')
+  })
+
+  describe('実データ（r64）', () => {
+    const real = (intake, lang) =>
+      recommendArticles(requestOf(intake), undefined, { lang }).articles.map((r) => r.article.id)
+    const politics = {
+      relationship: 'partner',
+      topics: ['politics_society'],
+      concerns: ['angry_when_disagreed'],
+      desiredSupport: ['coping_tips'],
+    }
+
+    test('日本語の画面: 同じ言語の記事が足りているときは r64 が出ない（lang を省いても同じ）', () => {
+      assert.ok(!real(politics, 'ja').includes('r64'))
+      assert.deepEqual(real(politics), real(politics, 'ja'))
+    })
+
+    test('日本語の画面: 同じ言語の記事が足りないときは、r64 が最後に出る', () => {
+      const result = real({ relationship: 'sibling', concerns: ['angry_when_disagreed'] }, 'ja')
+      assert.equal(result.at(-1), 'r64')
+      assert.equal(result.length, 3)
+    })
+
+    test('英語の画面: r64 が優先される', () => {
+      assert.equal(real(politics, 'en')[0], 'r64')
+    })
+
+    test('英語の画面: 英語の記事が足りているときは、3枠とも英語の記事になる', () => {
+      const result = recommendArticles(requestOf(politics), undefined, { lang: 'en' }).articles
+      assert.equal(result.length, 3)
+      for (const { article } of result) assert.equal(article.lang, 'en', article.id)
+    })
+
+    test('同じ記事の r30-2 は paused なので、r30 と並んで出ない', () => {
+      const intake = { relationship: 'friend', topics: ['politics_society'], concerns: ['unsure_how_to_respond'], desiredSupport: ['coping_tips'] }
+      for (const lang of ['ja', 'en']) assert.ok(!real(intake, lang).includes('r30-2'), lang)
+    })
+
+    test('日本語の画面では、英語の記事が1番目に来る相談が無い', () => {
+      for (const relationship of ['', 'father', 'mother', 'partner', 'sibling', 'child', 'friend']) {
+        for (const topics of [[], ['politics_society']]) {
+          for (const concerns of [[], ['angry_when_disagreed'], ['unsure_how_to_respond'], ['money_worries']]) {
+            for (const desiredSupport of [[], ['coping_tips'], ['professional_referral']]) {
+              const i = { relationship, topics, concerns, desiredSupport }
+              const [first] = recommendArticles(requestOf(i), undefined, { lang: 'ja' }).articles
+              assert.notEqual(first?.article.lang, 'en', JSON.stringify(i))
+            }
+          }
+        }
+      }
+    })
+  })
+})

@@ -16,6 +16,8 @@ import {
   initialIntake,
 } from '../src/data/consultationIntake.ts'
 import { ADVICE_CARDS } from '../src/data/adviceCards.ts'
+import { resolveSources } from '../src/data/adviceSources.ts'
+import { articleLang } from '../src/data/articleTags.ts'
 import { buildAdvice } from '../src/data/mockAdvice.ts'
 import { recommendArticles } from '../src/data/recommendArticles.ts'
 
@@ -178,5 +180,59 @@ describe('専門家ではない書き手が対処法を書いている記事を�
         }
       }
     }
+  })
+})
+
+describe('英語の記事（#243）', () => {
+  // ページの言語を1本ずつ確かめた結果（2026-11-02）。r30-2 は r30 と同じ記事なので paused
+  const ENGLISH_IDS = ['r18', 'r19', 'r21', 'r24', 'r30', 'r30-2', 'r31', 'r34', 'r64']
+  const JAPANESE = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u
+
+  test('英語の記事は lang が en。ほかの記事は日本語（lang が無いか ja）', () => {
+    for (const a of mockArticles) {
+      assert.equal(articleLang(a), ENGLISH_IDS.includes(a.id) ? 'en' : 'ja', a.id)
+    }
+  })
+
+  test('approved の記事のうち、タイトルに日本語を含まないものは lang が en', () => {
+    const noJapaneseTitle = mockArticles.filter((a) => a.status === 'approved' && !JAPANESE.test(a.title))
+    assert.ok(noJapaneseTitle.length > 0)
+    for (const a of noJapaneseTitle) assert.equal(a.lang, 'en', a.id)
+  })
+
+  test('lang が en の記事のタイトルは原文のまま（「（英語）」などを足さない）', () => {
+    for (const a of mockArticles.filter((x) => x.lang === 'en')) {
+      assert.doesNotMatch(a.title, JAPANESE, a.id)
+    }
+  })
+
+  test('英語の記事にはすべて、日本語の要約と英語の要約がある', () => {
+    for (const a of mockArticles.filter((x) => x.lang === 'en')) {
+      assert.match(a.summary, JAPANESE, a.id)
+      assert.ok(a.summaryEn?.trim(), a.id)
+      assert.doesNotMatch(a.summaryEn, JAPANESE, a.id)
+    }
+  })
+
+  test('r30 と r30-2 は同じ記事。公式の URL の r30 を残し、r30-2 は paused（消さない）', () => {
+    assert.equal(byId('r30').status, 'approved')
+    assert.equal(byId('r30').publisher, 'MIT Technology Review')
+    assert.ok(byId('r30').url.startsWith('https://www.technologyreview.com/'))
+    assert.equal(byId('r30-2').status, 'paused')
+  })
+
+  test('要約は summary が日本語、summaryEn が英語', () => {
+    assert.match(byId('r64').summary, /[\p{Script=Hiragana}]/u)
+    assert.doesNotMatch(byId('r64').summaryEn, /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u)
+  })
+
+  test('出典にしたとき、ページの言語が en になる。lang の無い記事は ja', () => {
+    assert.equal(resolveSources(['r64'])[0].lang, 'en')
+    assert.equal(resolveSources(['r11'])[0].lang, 'ja')
+  })
+
+  test('話題を選んだ相談では、話題が合わないと出ない（健康には出ない）', () => {
+    const ids = recommendIds({ relationship: 'mother', topics: ['health'], concerns: ['angry_when_disagreed'] })
+    assert.ok(!ids.includes('r64'), ids.join(','))
   })
 })

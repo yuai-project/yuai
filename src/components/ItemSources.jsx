@@ -89,9 +89,15 @@ function SourceLink({ source, withTitle = false, className = 'inline', children 
   )
 }
 
-// 英語の画面で、日本語のページへのリンクに「Japanese」と添える（#217）。日本語の画面では何も出さない
+// 画面の言語と違う言語のページへのリンクに、ページの言語を添える（#217・#243）。
+// 英語の画面の日本語のページ → (Japanese)、日本語の画面の英語のページ → （英語）。同じ言語なら何も出さない
 export function SourceLangNote({ source, className = '' }) {
   const { t, lang } = useI18n()
-  if (lang !== 'en' || source.lang !== 'ja') return null
-  return <span className={`inline-block whitespace-nowrap text-ink-faint ${className}`}>({t('articles.inJapanese')})</span>
+  if (source.lang === lang) return null
+  const language = t(source.lang === 'en' ? 'articles.inEnglish' : 'articles.inJapanese')
+  return (
+    <span className={`inline-block whitespace-nowrap text-ink-faint ${className}`}>
+      {t('sources.langNote', { language })}
+    </span>
+  )
 }

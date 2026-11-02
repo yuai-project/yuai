@@ -1,6 +1,6 @@
 import { ExternalLink } from 'lucide-react'
 import { useId } from 'react'
-import { BOOK_SOURCE_TYPE } from '../data/articleTags'
+import { BOOK_SOURCE_TYPE, articleLang } from '../data/articleTags'
 import { DESIRED_SUPPORT, labelsOf } from '../data/consultationIntake'
 import { REASONS, SUPPORT_TYPE_BY_DESIRED } from '../data/recommendArticles'
 import { useI18n } from '../i18n/useI18n'
@@ -56,10 +56,12 @@ export default function ArticleRecommendations({ result, desiredSupport = [], cl
               <span className="block text-sm font-bold leading-relaxed text-ink transition group-hover:text-brand-700">
                 {reasons.includes(REASONS.safetySlot) && <Kind>{t('articles.kindSupport')}</Kind>}
                 {article.sourceType === BOOK_SOURCE_TYPE && <Kind>{t('articles.kindBook')}</Kind>}
-                {/* タイトルは原文のまま。英語の画面では、日本語の記事だと分かるようにする（#217） */}
-                {lang !== 'ja' && <Kind>{t('articles.inJapanese')}</Kind>}
+                {/* タイトルは原文のまま。画面の言語と違う記事は、その言語だと分かるようにする（#217・#243） */}
+                {articleLang(article) !== lang && (
+                  <Kind>{t(articleLang(article) === 'en' ? 'articles.inEnglish' : 'articles.inJapanese')}</Kind>
+                )}
                 <span
-                  lang={lang !== 'ja' ? 'ja' : undefined}
+                  lang={articleLang(article) !== lang ? articleLang(article) : undefined}
                   className="break-words underline decoration-line underline-offset-4 group-hover:decoration-brand-600"
                 >
                   {article.title}
@@ -73,7 +75,7 @@ export default function ArticleRecommendations({ result, desiredSupport = [], cl
                 <span className="sr-only">{t('common.opensInNewTab')}</span>
               </span>
               <span
-                lang={lang !== 'ja' ? 'ja' : undefined}
+                lang={articleLang(article) !== lang ? articleLang(article) : undefined}
                 className="mt-0.5 block break-words text-xs text-ink-faint"
               >
                 {article.sourceType === BOOK_SOURCE_TYPE

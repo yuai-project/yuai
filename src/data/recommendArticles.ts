@@ -7,12 +7,15 @@
 //   「話題を選んだ相談での、話題の合わない記事」「相手との関係の合わない記事」だけ。
 //   stance / burden は専門家の確認（#93 / #99）が済むまで減点にとどめる。
 // - 重み・減点・最大件数は WEIGHTS の1か所だけに書く。
+// - 画面の言語と同じ言語の記事を先に並べる。違う言語の記事は、同じ言語の記事で枠が埋まらないときだけ出る（#243）。
+//   点数は言語で変えない。安全枠はこれまでどおり先頭に入る
 
 import {
   ARTICLE_SINGLE_AXES,
   BOOK_SOURCE_TYPE,
   HEALTH_TOPIC,
   TAG_ANY,
+  articleLang,
   isRestrictedMedicalArticle,
 } from './articleTags.ts'
 import { FALLBACK_ARTICLE_IDS, mockArticles } from './articles.ts'
@@ -20,6 +23,7 @@ import { mergeFreeText } from './freeTextKeywords.ts'
 import type {
   AdviceRequest,
   Article,
+  DataLang,
   Recommendation,
   RecommendationProfile,
   Recommendations,
@@ -230,6 +234,12 @@ export function isCandidateArticle(article: Article, profile: RecommendationProf
   return true
 }
 
+// 画面の言語と同じ言語の記事を先にする。それぞれの中の順番（点数順）は変えない
+const sameLangFirst = (items: Scored[], lang: DataLang): Scored[] => [
+  ...items.filter((s) => articleLang(s.article) === lang),
+  ...items.filter((s) => articleLang(s.article) !== lang),
+]
+
 const toResult = ({ article, score, reasons, penalties }: Scored): Recommendation => ({
   article,
   score,
@@ -240,10 +250,14 @@ const toResult = ({ article, score, reasons, penalties }: Scored): Recommendatio
 // 戻り値: { articles: [{ article, score, reasons, penalties }], isFallback }
 // reasons は一致した軸と選ばれ方、penalties は効いた減点（無ければ []）。
 // options.fallbackIds はテスト用。省略時は articles.ts の FALLBACK_ARTICLE_IDS。
+// options.lang は画面の言語。省略時は 'ja'。
 export function recommendArticles(
   request: Partial<AdviceRequest>,
   articles: Article[] = mockArticles,
-  { fallbackIds = FALLBACK_ARTICLE_IDS }: { fallbackIds?: string[] } = {},
+  {
+    fallbackIds = FALLBACK_ARTICLE_IDS,
+    lang = 'ja',
+  }: { fallbackIds?: string[]; lang?: DataLang } = {},
 ): Recommendations {
   const profile = toRecommendationProfile(request)
   const scored = articles
@@ -260,6 +274,7 @@ export function recommendArticles(
       .filter((s) => s !== undefined)
       .map((s) => ({ ...s, reasons: [...s.reasons, REASONS.fallback] }))
   }
+  picked = sameLangFirst(picked, lang)
 
   if (profile.needsSafetySlot) {
     // 話題を選んでいない相談では、特定の話題の窓口を先頭に入れない（topics: any の窓口だけ）。
