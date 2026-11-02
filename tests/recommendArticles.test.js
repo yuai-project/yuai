@@ -619,13 +619,25 @@ describe('画面の言語で並べる（#243）', () => {
       assert.equal(real(politics, 'en')[0], 'r64')
     })
 
-    test('日本語の画面では、r64 が1番目に来る相談が無い', () => {
+    test('英語の画面: 英語の記事が足りているときは、3枠とも英語の記事になる', () => {
+      const result = recommendArticles(requestOf(politics), undefined, { lang: 'en' }).articles
+      assert.equal(result.length, 3)
+      for (const { article } of result) assert.equal(article.lang, 'en', article.id)
+    })
+
+    test('同じ記事の r30-2 は paused なので、r30 と並んで出ない', () => {
+      const intake = { relationship: 'friend', topics: ['politics_society'], concerns: ['unsure_how_to_respond'], desiredSupport: ['coping_tips'] }
+      for (const lang of ['ja', 'en']) assert.ok(!real(intake, lang).includes('r30-2'), lang)
+    })
+
+    test('日本語の画面では、英語の記事が1番目に来る相談が無い', () => {
       for (const relationship of ['', 'father', 'mother', 'partner', 'sibling', 'child', 'friend']) {
         for (const topics of [[], ['politics_society']]) {
           for (const concerns of [[], ['angry_when_disagreed'], ['unsure_how_to_respond'], ['money_worries']]) {
             for (const desiredSupport of [[], ['coping_tips'], ['professional_referral']]) {
               const i = { relationship, topics, concerns, desiredSupport }
-              assert.notEqual(real(i, 'ja')[0], 'r64', JSON.stringify(i))
+              const [first] = recommendArticles(requestOf(i), undefined, { lang: 'ja' }).articles
+              assert.notEqual(first?.article.lang, 'en', JSON.stringify(i))
             }
           }
         }
