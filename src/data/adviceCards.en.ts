@@ -70,8 +70,6 @@ export const ADVICE_CARDS_EN: Record<CardKey, AdviceCardText> = {
       items: [
         'Can I ask what made you start thinking that way?',
         "So that's what worries you most.",
-        'I see it a little differently, but I want to understand how you feel.',
-        'Could we leave this topic here for today?',
       ],
     },
     askNext: {
@@ -92,7 +90,6 @@ export const ADVICE_CARDS_EN: Record<CardKey, AdviceCardText> = {
     tryReplies: {
       items: [
         "I'm a bit tired today, so tell me another time.",
-        'Could we keep that topic short?',
         "Sorry, I might not be able to listen well right now. Let's talk again when things are calmer.",
         "I'll listen, but is it okay if we don't settle anything today?",
       ],
@@ -100,7 +97,6 @@ export const ADVICE_CARDS_EN: Record<CardKey, AdviceCardText> = {
     askNext: {
       items: [
         'How have you been feeling lately?',
-        'Apart from this, has anything good happened lately?',
         'Could we talk again another time, without rushing?',
       ],
     },
@@ -115,9 +111,7 @@ export const ADVICE_CARDS_EN: Record<CardKey, AdviceCardText> = {
     tryReplies: {
       title: 'Things you could say when stepping back',
       items: [
-        "Let's take a break from this topic for a while.",
-        'You matter to me. I just need a little time.',
-        "It's not that I've come to dislike you.",
+        'Hearing about that is hard for me.',
         "When I feel ready to talk again, I'll reach out to you.",
       ],
     },

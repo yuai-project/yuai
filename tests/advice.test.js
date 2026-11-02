@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 import { ADVICE_CARDS, FOR_YOU, SAFETY } from '../src/data/adviceCards.ts'
-import { FOR_YOU_EN } from '../src/data/adviceCards.en.ts'
+import { ADVICE_CARDS_EN, FOR_YOU_EN } from '../src/data/adviceCards.en.ts'
 import {
   CONCERNS,
   DESIRED_RELATIONSHIP,
@@ -294,5 +294,71 @@ describe('続柄が文章に出ない', () => {
     assert.match('お母さまの話を聞いてみる', KINSHIP)
     assert.match('夫と話すのがつらい', KINSHIP)
     assert.doesNotMatch('無理に話さなくて大丈夫', KINSHIP)
+  })
+})
+
+describe('r08・r09 だけを根拠にしていた文を外す（#248）', () => {
+  const REMOVED_JA = [
+    '私は少し違う考えだけど、あなたの気持ちは分かりたいと思ってる',
+    '今日はこの話、ここまでにしてもいい？',
+    'その話は少しだけにしてもいい？',
+    'この話以外で、最近よかったことある？',
+    'しばらく、この話はお休みにさせてね',
+    'あなたのことは大事に思ってる。ただ、少し時間がほしい',
+    'あなたのことを嫌いになったわけじゃないよ',
+  ]
+  const REMOVED_EN = [
+    'I see it a little differently, but I want to understand how you feel.',
+    'Could we leave this topic here for today?',
+    'Could we keep that topic short?',
+    'Apart from this, has anything good happened lately?',
+    "Let's take a break from this topic for a while.",
+    'You matter to me. I just need a little time.',
+    "It's not that I've come to dislike you.",
+  ]
+  const itemsOf = (cards) =>
+    Object.values(cards).flatMap((c) => ['avoid', 'tryReplies', 'askNext'].flatMap((s) => c[s]?.items ?? []))
+
+  test('7つの文が、日本語のカードにも英語のカードにも無い', () => {
+    for (const text of REMOVED_JA) assert.ok(!itemsOf(ADVICE_CARDS).includes(text), text)
+    for (const text of REMOVED_EN) assert.ok(!itemsOf(ADVICE_CARDS_EN).includes(text), text)
+  })
+
+  test('もともと出典のない文は残っている', () => {
+    const items = itemsOf(ADVICE_CARDS)
+    for (const text of ['最近、体調はどう？', 'また今度、ゆっくり話してもいい？', 'また話せそうになったら、私から連絡するね', '話は聞くけど、今日は答えを出さなくてもいい？']) {
+      assert.ok(items.includes(text), text)
+    }
+  })
+
+  test('どのカードのどの項目にも、文が2つ以上ある（日英とも同じ数）', () => {
+    for (const [key, card] of Object.entries(ADVICE_CARDS)) {
+      for (const section of ['avoid', 'tryReplies', 'askNext']) {
+        if (!card[section]) continue
+        assert.ok(card[section].items.length >= 2, `${key}.${section}`)
+        assert.equal(ADVICE_CARDS_EN[key][section].items.length, card[section].items.length, `${key}.${section}`)
+      }
+    }
+  })
+
+  test('距離を置くカードの返し方: 足した文を先頭に置き、根拠の r25 を出典にする', () => {
+    assert.equal(ADVICE_CARDS.distance.tryReplies.items[0], 'その話を聞くのは、私にはつらいんだ')
+    assert.equal(ADVICE_CARDS_EN.distance.tryReplies.items[0], 'Hearing about that is hard for me.')
+    assert.deepEqual(ADVICE_CARDS.distance.tryReplies.sources, ['r25'])
+  })
+
+  test('「まずは、この3つだけ」の返し方も、足した文になる', () => {
+    const request = requestOf({ desiredRelationship: 'some_distance' })
+    assert.equal(buildAdvice(request, 'ja').keyPoints.reply, 'その話を聞くのは、私にはつらいんだ')
+    assert.equal(buildAdvice(request, 'en').keyPoints.reply, 'Hearing about that is hard for me.')
+  })
+
+  test('消した文が、結果画面のどこにも出ない', () => {
+    for (const lang of ['ja', 'en']) {
+      for (const intake of [{ concerns: ['angry_when_disagreed'] }, { concerns: ['self_exhausted'] }, { desiredRelationship: 'more_distance' }]) {
+        const json = JSON.stringify(buildAdvice(requestOf(intake), lang))
+        for (const text of [...REMOVED_JA, ...REMOVED_EN]) assert.ok(!json.includes(text), text)
+      }
+    }
   })
 })
