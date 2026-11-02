@@ -150,7 +150,7 @@
     "stance": "distance",
     "burden": "moderate",
     "sourceType": "media",
-    "status": "approved",
+    "status": "paused",
     "reviewedAt": "2026-10-13"
   },
   {
@@ -167,7 +167,7 @@
     "stance": "keep_connection",
     "burden": "moderate",
     "sourceType": "media",
-    "status": "approved",
+    "status": "paused",
     "reviewedAt": "2026-10-13"
   },
   {

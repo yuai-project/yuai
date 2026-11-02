@@ -104,21 +104,21 @@ describe('invalidSourceIds', () => {
 
 describe('resolveSources', () => {
   test('画面に出す形（タイトル・URL・ドメイン・ページの言語）にする。www. はドメインから外す', () => {
-    assert.deepEqual(resolveSources(['r08']), [
+    assert.deepEqual(resolveSources(['r11']), [
       {
-        id: 'r08',
-        title: byId('r08').title,
-        url: 'https://www.businessinsider.jp/article/260362/',
-        domain: 'businessinsider.jp',
+        id: 'r11',
+        title: byId('r11').title,
+        url: 'https://www.technologyreview.jp/s/254076/how-to-talk-to-vaccine-hesitant-people/',
+        domain: 'technologyreview.jp',
         lang: 'ja',
       },
     ])
   })
 
-  test('引用してはいけない ID は、画面に出す形からも外す', () => {
+  test('引用してはいけない ID は、画面に出す形からも外す（paused にした r08・r09 も。#244）', () => {
     assert.deepEqual(
-      resolveSources(['r08', 'nope', 'r27', 'b01']).map((s) => s.id),
-      ['r08'],
+      resolveSources(['r11', 'nope', 'r27', 'b01', 'r08', 'r09']).map((s) => s.id),
+      ['r11'],
     )
   })
 })
@@ -264,19 +264,24 @@ describe('その人に合わない記事は、出典から外す（推薦と同�
     }
   })
 
-  test('父 ＋ 健康なら、r09 が返し方の項目に出る', () => {
-    const intake = { relationship: 'father', topics: ['health'], concerns: ['angry_when_disagreed'] }
-    assert.ok(sourcesOf(intake).includes('r09'))
-    assert.ok(sectionSourcesOf(intake).includes('tryReplies:r09'), sectionSourcesOf(intake).join(','))
+  test('関係が合う記事は出る（母 ＋ 健康なら、r20 が返し方の項目に出る）', () => {
+    const intake = { relationship: 'mother', topics: ['health'], concerns: ['angry_when_disagreed'] }
+    assert.ok(sourcesOf(intake).includes('r20'))
+    assert.ok(sectionSourcesOf(intake).includes('tryReplies:r20'), sectionSourcesOf(intake).join(','))
   })
 
-  test('話題が合わない記事も外す（政治を選ぶと、健康の話題の r09 は父でも出ない）', () => {
+  test('関係が合わない記事は外す（父を選ぶと、母・パートナーの記事の r20 は出ない）', () => {
+    const intake = { relationship: 'father', topics: ['health'], concerns: ['angry_when_disagreed'] }
+    assert.ok(!sourcesOf(intake).includes('r20'), sourcesOf(intake).join(','))
+  })
+
+  test('話題が合わない記事も外す（政治を選ぶと、健康の話題の r20 は母でも出ない）', () => {
     const ids = sourcesOf({
-      relationship: 'father',
+      relationship: 'mother',
       topics: ['politics_society'],
       concerns: ['angry_when_disagreed'],
     })
-    assert.ok(!ids.includes('r09'), ids.join(','))
+    assert.ok(!ids.includes('r20'), ids.join(','))
   })
 
   test('全部外れたら空になる（子ども ＋ 政治の default カード）', () => {
