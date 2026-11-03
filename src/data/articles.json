@@ -843,5 +843,22 @@
     "sourceType": "academic",
     "status": "approved",
     "reviewedAt": "2026-10-29"
+  },
+  {
+    "id": "r61",
+    "url": "https://www.moj.go.jp/content/001448893.pdf",
+    "title": "違法・有害情報相談センター 相談実績と事例紹介",
+    "publisher": "www.moj.go.jp",
+    "summary": "（要約はまだありません）",
+    "summaryEn": "No summary yet.",
+    "relationships": ["any"],
+    "topics": ["any"],
+    "concerns": ["any"],
+    "supportTypes": ["consultation_service"],
+    "stance": "neutral",
+    "burden": "moderate",
+    "sourceType": "media",
+    "status": "paused",
+    "reviewedAt": "2026-11-03"
   }
 ]
